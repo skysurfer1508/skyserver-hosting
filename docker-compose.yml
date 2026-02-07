@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  skyserver-web:
+    container_name: skyserver_website
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Mappt Port 8080 auf deinem Server zu Port 80 im Container
+    # Du erreichst die Seite dann unter http://dein-server-ip:8080
+    ports:
+      - "7012:80" 
+    restart: always
