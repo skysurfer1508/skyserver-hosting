@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Zap } from 'lucide-react';
+import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -73,10 +74,10 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <a
-                  href="https://discord.gg/skyserver"
+                  href={DISCORD_INVITE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full rounded-lg bg-primary/10 border border-primary/30 px-4 py-2 text-center text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                  className="block w-full rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/30 px-4 py-2 text-center text-sm font-medium text-[#5865F2] hover:bg-[#5865F2]/20 transition-colors"
                 >
                   Open Discord
                 </a>

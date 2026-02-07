@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, Server } from 'lucide-react';
+import { ExternalLink, Server, MessageCircle } from 'lucide-react';
+import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export function Footer() {
   return (
@@ -19,12 +20,13 @@ export function Footer() {
           {/* Links */}
           <nav className="flex items-center gap-6">
             <a
-              href="https://discord.gg/skyserver"
+              href={DISCORD_INVITE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#5865F2] transition-colors"
             >
-              Discord
+              <MessageCircle className="h-4 w-4" />
+              Join our Discord
               <ExternalLink className="h-3 w-3" />
             </a>
             <Link
