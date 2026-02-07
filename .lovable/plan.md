@@ -1,94 +1,96 @@
 
-# Plan: Switch to Nginx for Production Serving
 
-## Problem
-Vite 5.4.19 has a security feature that blocks requests from unrecognized hosts. The `allowedHosts: true` configuration option is not being respected by the preview server, causing persistent "Blocked request" errors for your domain.
+# Plan: Fix Nginx Configuration for Proper Health Checks
 
-## Solution
-Switch the Docker container from Vite's preview server to nginx. You already have a well-configured `nginx.conf` file in the project - we just need to update the Dockerfile to use it.
+## Problem Analysis
+You're experiencing:
+- **Black screen**: Likely due to failed asset loading or routing issues
+- **Unhealthy status**: The healthcheck may be probing the wrong port
+- **405 Method Not Allowed**: API requests hitting nginx instead of your backend
 
-**Why nginx is better for production:**
-- No host checking restrictions
-- Better performance and caching
-- Smaller container image size
-- Industry standard for serving static files
-- Already configured with gzip, security headers, and SPA routing
+## Current Configuration Status
+Your current setup (`7012:80` mapping) is actually valid, but there's a mismatch in your docker-compose healthcheck which references port 7012 instead of letting Docker use the internal check.
 
-## Changes Required
+## Proposed Fixes
 
-### 1. Update Dockerfile
-
-Replace the current Node-based production stage with nginx:
-
-```dockerfile
-# Build stage
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy source code
-COPY . .
-
-# Build the application
-RUN npm run build
-
-# Production stage - use nginx
-FROM nginx:alpine AS production
-
-# Copy built assets to nginx html directory
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Expose port 7012
-EXPOSE 7012
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:7012/health || exit 1
-
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-### 2. Update nginx.conf
-
-Change the listen port from 80 to 7012 to match your Docker setup:
+### 1. Simplify nginx.conf
+Replace the complex nginx.conf with a minimal configuration that listens on port 80 (standard for containers):
 
 ```nginx
 server {
-    listen 7012;  # Changed from 80
+    listen 80;
     server_name localhost;
-    # ... rest stays the same
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+
+    # Fix for React Router (SPA) - redirects 404s to index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Error pages
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
 }
 ```
 
-## After These Changes
+### 2. Update Dockerfile
+Keep the Dockerfile as-is since it correctly:
+- Exposes port 80
+- Health checks `localhost:80/health`
 
-The request flow will be:
-- External request to www.skyserver1508.org 
-- Host:7012 → Container:7012 → nginx (no host checking!)
+### 3. Fix docker-compose.yml
+Remove any external healthcheck that references port 7012, since Docker's internal health check handles this:
 
-## Deployment Steps
-After approving, rebuild your container:
-```bash
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+```yaml
+version: '3.8'
+
+services:
+  skyserver-web:
+    container_name: skyserver_website
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7012:80"
+    restart: always
 ```
 
 ## Technical Details
 
-| Aspect | Current (Vite) | New (nginx) |
-|--------|---------------|-------------|
-| Base image | node:20-alpine (~180MB) | nginx:alpine (~40MB) |
-| Host checking | Yes (problematic) | No |
-| Performance | Development-grade | Production-grade |
-| Caching | Basic | Advanced (already configured) |
-| Gzip | No | Yes (already configured) |
+| Component | Port Inside Container | Port on Host |
+|-----------|----------------------|--------------|
+| Nginx | 80 | 7012 |
+| Health Check | 80 (internal) | N/A |
+
+## Request Flow
+```text
+External Request → Host:7012 → Container:80 → Nginx → Static Files/SPA
+```
+
+## Why the 405 Error Occurs
+The "405 Method Not Allowed" happens when:
+1. Your frontend makes API calls to relative paths (e.g., `/api/something`)
+2. These hit nginx instead of your actual backend
+3. Nginx returns 405 because it's a static file server
+
+**Solution**: Ensure your frontend uses absolute URLs for API calls (e.g., `https://ccomlhxhigqqmoexpmyy.supabase.co/...`) - which your Supabase client already does.
+
+## After Deployment
+Run these commands:
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+docker-compose ps  # Verify health status
+```
+
