@@ -19,8 +19,8 @@ export function HeroSection() {
         <div 
           ref={heroRef}
           className={cn(
-            "mx-auto max-w-4xl text-center opacity-0",
-            isHeroVisible && "animate-reveal-up"
+            "mx-auto max-w-4xl text-center reveal-on-scroll",
+            isHeroVisible && "is-visible"
           )}
         >
           {/* Badge */}
@@ -63,10 +63,10 @@ export function HeroSection() {
         <div 
           ref={statsRef}
           className={cn(
-            "mt-16 grid grid-cols-3 gap-8 opacity-0",
-            isStatsVisible && "animate-reveal-up"
+            "mt-16 grid grid-cols-3 gap-8 reveal-on-scroll",
+            isStatsVisible && "is-visible"
           )}
-          style={{ animationDelay: isStatsVisible ? '200ms' : '0ms' }}
+          style={{ transitionDelay: isStatsVisible ? '200ms' : '0ms' }}
         >
           <div className="text-center">
             <div className="font-display text-3xl font-bold text-primary">50+</div>

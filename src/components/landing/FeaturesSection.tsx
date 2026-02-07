@@ -95,7 +95,6 @@ export function FeaturesSection() {
   const [selectedGame, setSelectedGame] = useState<GameName | undefined>();
 
   const [headerRef, isHeaderVisible] = useScrollReveal<HTMLDivElement>();
-  const [gamesRef, isGamesVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
   const [benefitsHeaderRef, isBenefitsHeaderVisible] = useScrollReveal<HTMLDivElement>();
   const [benefitsRef, isBenefitsVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
 
@@ -116,8 +115,8 @@ export function FeaturesSection() {
           <div 
             ref={headerRef}
             className={cn(
-              "opacity-0",
-              isHeaderVisible && "animate-reveal-up"
+              "reveal-on-scroll",
+              isHeaderVisible && "is-visible"
             )}
           >
             <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
@@ -133,30 +132,20 @@ export function FeaturesSection() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div 
-              ref={gamesRef}
-              className="grid gap-6 md:grid-cols-3"
-            >
-              {gameData.map((game, index) => (
-                <div
+            <div className="grid gap-6 md:grid-cols-3">
+              {/* Game cards WITHOUT scroll animation to ensure visibility */}
+              {gameData.map((game) => (
+                <GameCard
                   key={game.gameName}
-                  className={cn(
-                    "opacity-0",
-                    isGamesVisible && "animate-reveal-up"
-                  )}
-                  style={{ animationDelay: isGamesVisible ? `${index * 150}ms` : '0ms' }}
-                >
-                  <GameCard
-                    gameName={game.gameName}
-                    title={game.title}
-                    icon={game.icon}
-                    description={game.description}
-                    tags={game.tags}
-                    accentColor={game.accentColor}
-                    limit={getGameLimit(game.gameName)}
-                    onSelect={handleSelectGame}
-                  />
-                </div>
+                  gameName={game.gameName}
+                  title={game.title}
+                  icon={game.icon}
+                  description={game.description}
+                  tags={game.tags}
+                  accentColor={game.accentColor}
+                  limit={getGameLimit(game.gameName)}
+                  onSelect={handleSelectGame}
+                />
               ))}
             </div>
           )}
@@ -174,8 +163,8 @@ export function FeaturesSection() {
           <div 
             ref={benefitsHeaderRef}
             className={cn(
-              "opacity-0",
-              isBenefitsHeaderVisible && "animate-reveal-up"
+              "reveal-on-scroll",
+              isBenefitsHeaderVisible && "is-visible"
             )}
           >
             <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
@@ -194,10 +183,12 @@ export function FeaturesSection() {
               <div
                 key={benefit.title}
                 className={cn(
-                  "opacity-0",
-                  isBenefitsVisible && "animate-reveal-up"
+                  "reveal-on-scroll",
+                  isBenefitsVisible && "is-visible"
                 )}
-                style={{ animationDelay: isBenefitsVisible ? `${index * 100}ms` : '0ms' }}
+                style={{ 
+                  transitionDelay: isBenefitsVisible ? `${index * 100}ms` : '0ms' 
+                }}
               >
                 <Card className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary h-full">
                   <CardHeader>
