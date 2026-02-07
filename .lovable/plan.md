@@ -1,273 +1,238 @@
 
-# Content & Navigation Update Plan
+
+# Admin Panel Overhaul - Command Center Architecture
 
 ## Overview
 
-This plan updates the platform to reflect that advanced features (FTP access, mod support) are now live, and reorganizes the header to put Login/Dashboard buttons directly on the top bar while adding a new "Game Panel" external link.
+This plan transforms the current Admin Panel into a professional 4-tab "Command Center" with enhanced management capabilities including user statistics, advanced request workflow with rejection reasons, user management, and organized settings.
 
 ---
 
-## Changes Summary
+## Database Changes Required
 
-### 1. Header Component (`Header.tsx`)
+### 1. Add `rejection_reason` column to `server_requests` table
+- **Column**: `rejection_reason` (text, nullable)
+- **Purpose**: Store the admin's reason when rejecting a request
 
-**Layout Changes:**
-- Move Login/Dashboard buttons OUT of the hamburger menu to the top bar (between logo and hamburger icon)
-- Add "Game Panel" link to the navigation menu inside the drawer
-- Keep hamburger menu for navigation links only
+### 2. Add `is_banned` column to `profiles` table
+- **Column**: `is_banned` (boolean, default false)
+- **Purpose**: Track whether a user account is disabled
 
-**New Navigation Item:**
-```typescript
-{ name: 'Game Panel', href: 'https://panel.skyserver.io', icon: Terminal, external: true }
-```
+---
 
-**Top Bar Structure:**
+## New File Structure
+
 ```text
-[Logo] -------- [Login/Dashboard Buttons] [Hamburger Icon]
+src/
+  pages/
+    Admin.tsx                    (Major refactor - tab structure)
+  components/
+    admin/
+      AdminOverview.tsx          (NEW - Stats cards & KPIs)
+      AdminRequests.tsx          (NEW - Enhanced request table)
+      AdminUsers.tsx             (NEW - User management table)
+      AdminSettings.tsx          (NEW - Organized settings)
+      RejectModal.tsx            (NEW - Rejection reason dialog)
+      StatCard.tsx               (NEW - Reusable stat card)
+      SlotUsageChart.tsx         (NEW - Circular progress)
+  hooks/
+    useAdminUsers.tsx            (NEW - User management hook)
+    useAdminRequests.tsx         (Update - add rejection with reason)
+    useAdminStats.tsx            (NEW - Statistics aggregation)
 ```
 
 ---
 
-### 2. Roadmap Section (`RoadmapSection.tsx`)
+## Tab-by-Tab Implementation
 
-**Phase 1 (Current - Beta Launch)** - Updated items:
-- Minecraft, Terraria & Satisfactory support
-- User registration & authentication
-- Server request system with admin approval
-- Full FTP Access (File Management)
-- Mod & Plugin Support
-- DDoS Protection
+### Tab 1: Overview (New Feature)
 
-**Phase 2 (Upcoming - Automation)** - New goals:
-- One-Click Modpack Installer
-- Automated World Backups
-- Scheduled server restarts
-- Discord Bot Integration
+**Visual Layout:**
+- 4 stat cards in a responsive grid (2x2 on mobile, 4x1 on desktop)
+- Each card shows: icon, label, value, and optional trend indicator
 
-**Phase 3 (Future - Community)** - Updated items:
-- Community voting for new games
-- Custom subdomains (myserver.skyserver.io)
-- Public server browser
-- Advanced analytics dashboard
+**Stat Cards:**
+| Card | Data Source | Visual |
+|------|-------------|--------|
+| Total Users | `COUNT(*) FROM profiles` | Number with Users icon |
+| Active Servers | `COUNT(*) FROM server_requests WHERE status='active'` | Number with Server icon |
+| Pending Requests | `COUNT(*) FROM server_requests WHERE status='pending'` | Number with Clock icon |
+| Slot Usage | Sum of all game limits used vs total | Circular progress bar |
 
----
-
-### 3. Features Section (`FeaturesSection.tsx`)
-
-**Add two new benefit cards:**
-
-| Title | Icon | Description |
-|-------|------|-------------|
-| Full FTP Access | FolderOpen | Access your server files directly. Upload your own worlds, configs, and mods without restrictions. |
-| Modding Supported | Puzzle | Want to play Modded Minecraft or TModLoader? You have full write access to install whatever you want. |
-
-**Updated benefits array (8 total cards):**
-1. Free Hosting
-2. Full FTP Access (NEW)
-3. Modding Supported (NEW)
-4. Low Latency
-5. High Uptime
-6. DDoS Protection
-7. Instant Setup
-8. Easy Control
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/layout/Header.tsx` | Move auth buttons to top bar, add Game Panel link |
-| `src/components/landing/RoadmapSection.tsx` | Update phase content |
-| `src/components/landing/FeaturesSection.tsx` | Add FTP and Modding cards |
-
----
-
-## Technical Details
-
-### Header.tsx Changes
-
-**New imports:**
+**New Hook: `useAdminStats.tsx`**
 ```typescript
-import { Terminal } from 'lucide-react';
+// Returns: totalUsers, activeServers, pendingRequests, 
+//          totalSlotsUsed, totalSlotsMax, usagePercentage
 ```
 
-**Add to navItems array:**
+---
+
+### Tab 2: Requests (Enhanced Workflow)
+
+**Table Columns:**
+| User | Discord | Game | Server | Status | Date | Actions |
+
+**Action Buttons:**
+- **Approve** (green): Opens existing credential modal
+- **Reject** (red): Opens new rejection reason modal
+- **Delete** (gray): Removes the request
+
+**Rejection Modal (`RejectModal.tsx`):**
+- Title: "Reject Request"
+- Textarea: "Please provide a reason for rejection..."
+- Actions: Cancel, Confirm Rejection
+
+**Database Update on Reject:**
+```sql
+UPDATE server_requests 
+SET status = 'rejected', rejection_reason = '[admin input]'
+WHERE id = '[request_id]'
+```
+
+**User Dashboard Update:**
+When `status = 'rejected'` and `rejection_reason` exists, show:
+```text
++-----------------------------------------------+
+| [X] Request Rejected                          |
+| Reason: "Your description was too short."    |
+| Please submit a new request or contact us.    |
++-----------------------------------------------+
+```
+
+---
+
+### Tab 3: Users (New Feature)
+
+**Table Columns:**
+| Email | Discord | Role | Joined | Actions |
+
+**Getting Discord Username:**
+- Join `profiles` with `server_requests` to get the user's discord_username from their most recent request
+
+**Actions:**
+| Action | Implementation |
+|--------|----------------|
+| Ban/Unban Toggle | Updates `profiles.is_banned` |
+| Make Admin Toggle | Inserts/deletes from `user_roles` table |
+
+**New Hook: `useAdminUsers.tsx`**
 ```typescript
-{ name: 'Game Panel', href: 'https://panel.skyserver.io', icon: Terminal, external: true }
+// Functions: fetchUsers, banUser, unbanUser, promoteToAdmin, demoteFromAdmin
+// Uses RLS: Only admins can view all profiles via existing policy
 ```
 
-**Top bar layout (between logo and hamburger):**
+**Search Feature:**
+- Filter by email (client-side for simplicity)
+
+---
+
+### Tab 4: Settings (Cleanup)
+
+**Layout: Two Cards Side-by-Side**
+
+**Card 1: Capacity Management**
+- Minecraft slots slider + active toggle
+- Terraria slots slider + active toggle  
+- Satisfactory slots slider + active toggle
+- Progress bars showing current usage
+- Save button
+
+**Card 2: System Announcements**
+- Maintenance Mode toggle (with description)
+- Global Alert Message textarea
+- Save button
+
+**Removed:**
+- "Total Slots (Legacy)" input - no longer needed since we use per-game limits
+
+---
+
+## Technical Implementation Details
+
+### Admin.tsx Refactor
+
+**Structure:**
 ```tsx
-{/* Auth Buttons - Visible on top bar */}
-<div className="flex items-center gap-2">
-  {user ? (
-    <Link to="/dashboard">
-      <Button variant="outline" size="sm">
-        <User className="h-4 w-4 mr-2" />
-        Dashboard
-      </Button>
-    </Link>
-  ) : (
-    <>
-      <Link to="/login">
-        <Button variant="ghost" size="sm">Login</Button>
-      </Link>
-      <Link to="/register">
-        <Button size="sm" className="glow-primary">Get Started</Button>
-      </Link>
-    </>
-  )}
-  {/* Hamburger menu trigger */}
-</div>
+<Layout>
+  <Tabs defaultValue="overview">
+    <TabsList>
+      <TabsTrigger value="overview">Overview</TabsTrigger>
+      <TabsTrigger value="requests">Requests</TabsTrigger>
+      <TabsTrigger value="users">Users</TabsTrigger>
+      <TabsTrigger value="settings">Settings</TabsTrigger>
+    </TabsList>
+    
+    <TabsContent value="overview">
+      <AdminOverview />
+    </TabsContent>
+    <TabsContent value="requests">
+      <AdminRequests />
+    </TabsContent>
+    <TabsContent value="users">
+      <AdminUsers />
+    </TabsContent>
+    <TabsContent value="settings">
+      <AdminSettings />
+    </TabsContent>
+  </Tabs>
+</Layout>
 ```
 
-**Game Panel link handling (external URL):**
-```typescript
-const handleNavClick = (href: string, external?: boolean) => {
-  setMenuOpen(false);
-  if (external) {
-    window.open(href, '_blank');
-    return;
-  }
-  // ... existing logic
-};
+### ServerStatusCard.tsx Update
+
+Add rejection reason display when `status === 'rejected'`:
+```tsx
+{request.status === 'rejected' && (
+  <Alert variant="destructive">
+    <AlertTitle>Request Rejected</AlertTitle>
+    <AlertDescription>
+      Reason: {request.rejection_reason || 'No reason provided'}
+    </AlertDescription>
+  </Alert>
+)}
 ```
-
-### RoadmapSection.tsx - Updated Phases Array
-
-```typescript
-const phases = [
-  {
-    phase: 'Phase 1',
-    status: 'current',
-    title: 'Beta Launch',
-    description: 'Full-featured game servers with FTP access and mod support.',
-    icon: CheckCircle2,
-    items: [
-      'Minecraft, Terraria & Satisfactory support',
-      'User registration & server request system',
-      'Full FTP Access for file management',
-      'Mod & Plugin support (install your own)',
-      'DDoS Protection included',
-      'Admin approval workflow',
-    ],
-  },
-  {
-    phase: 'Phase 2',
-    status: 'upcoming',
-    title: 'Automation',
-    description: 'One-click installers and automated backups.',
-    icon: Clock,
-    items: [
-      'One-Click Modpack Installer',
-      'Automated World Backups',
-      'Scheduled server restarts',
-      'Discord Bot for server status',
-      'Server console access',
-    ],
-  },
-  {
-    phase: 'Phase 3',
-    status: 'future',
-    title: 'Community Features',
-    description: 'Community voting and custom subdomains.',
-    icon: Rocket,
-    items: [
-      'Community voting for new games',
-      'Custom subdomains (myserver.skyserver.io)',
-      'Public server browser',
-      'Advanced analytics dashboard',
-    ],
-  },
-];
-```
-
-### FeaturesSection.tsx - Updated Benefits Array
-
-```typescript
-import { FolderOpen, Puzzle } from 'lucide-react';
-
-const benefits = [
-  {
-    icon: Zap,
-    title: 'Free Hosting',
-    description: 'No credit card required. No subscription fees. Completely free forever.',
-  },
-  {
-    icon: FolderOpen,
-    title: 'Full FTP Access',
-    description: 'Access your server files directly. Upload your own worlds, configs, and mods without restrictions.',
-  },
-  {
-    icon: Puzzle,
-    title: 'Modding Supported',
-    description: 'Want to play Modded Minecraft or TModLoader? You have full write access to install whatever you want.',
-  },
-  {
-    icon: Globe,
-    title: 'Low Latency',
-    description: 'Servers located in Switzerland for excellent European connectivity.',
-  },
-  {
-    icon: Clock,
-    title: 'High Uptime',
-    description: '99.9% uptime guarantee with automatic backups and monitoring.',
-  },
-  {
-    icon: Shield,
-    title: 'DDoS Protection',
-    description: 'Enterprise-grade protection to keep your server online.',
-  },
-  {
-    icon: Server,
-    title: 'Instant Setup',
-    description: 'Your server is ready within minutes after approval.',
-  },
-  {
-    icon: Gamepad2,
-    title: 'Easy Control',
-    description: 'Simple dashboard to manage your server with one click.',
-  },
-];
-```
-
-**Grid layout update for 8 cards:**
-- The existing `lg:grid-cols-3` layout works well
-- Cards will display as 3-3-2 on large screens
-- Consider using `lg:grid-cols-4` for a 4-4 layout if preferred
 
 ---
 
-## Visual Preview
+## Implementation Order
 
-### Header Layout (After Changes)
-```text
-+------------------------------------------------------------------+
-| [Logo] SkyServer          [Login] [Get Started]  [Hamburger]     |
-+------------------------------------------------------------------+
+1. **Database Migration** - Add `rejection_reason` and `is_banned` columns
+2. **Create useAdminStats hook** - Statistics aggregation
+3. **Create useAdminUsers hook** - User management functions
+4. **Update useAdminRequests hook** - Add rejection with reason
+5. **Create admin component files:**
+   - StatCard.tsx
+   - SlotUsageChart.tsx (circular progress)
+   - AdminOverview.tsx
+   - AdminRequests.tsx
+   - RejectModal.tsx
+   - AdminUsers.tsx
+   - AdminSettings.tsx
+6. **Refactor Admin.tsx** - Tab structure with new components
+7. **Update ServerStatusCard.tsx** - Show rejection reason
+8. **Update useServerRequest.tsx** - Include rejection_reason in type
 
-OR (when logged in):
+---
 
-+------------------------------------------------------------------+
-| [Logo] SkyServer                    [Dashboard]  [Hamburger]     |
-+------------------------------------------------------------------+
-```
+## RLS Considerations
 
-### Drawer Menu (After Changes)
-```text
-+----------------------------------+
-| SkyServer                        |
-+----------------------------------+
-| Home                             |
-| Games (Collapsible)              |
-| Features                         |
-| Roadmap                          |
-| FAQ                              |
-| Tech Stack                       |
-| Game Panel (External) ->         |
-+----------------------------------+
-| Admin Panel (if admin)           |
-| Logout                           |
-+----------------------------------+
-```
+The existing RLS policies are already configured correctly:
+- Admins can view all profiles via `is_admin(auth.uid())`
+- Admins can manage user_roles via `is_admin(auth.uid())`
+- Admins can update/delete server_requests
+
+No new RLS policies are required.
+
+---
+
+## Summary of Changes
+
+| Type | Files |
+|------|-------|
+| Database | 1 migration (2 columns) |
+| New Hooks | 2 (`useAdminStats`, `useAdminUsers`) |
+| Updated Hooks | 2 (`useAdminRequests`, `useServerRequest`) |
+| New Components | 7 admin components |
+| Updated Components | 1 (`ServerStatusCard`) |
+| Refactored Pages | 1 (`Admin.tsx`) |
+
