@@ -19,6 +19,18 @@ interface ServerRequest {
   created_at: string;
   updated_at: string;
   user_email?: string;
+  // New credential fields
+  assigned_ip: string | null;
+  panel_url: string | null;
+  panel_username: string | null;
+  panel_password: string | null;
+}
+
+interface ApprovalData {
+  assignedIp: string;
+  panelUrl: string;
+  panelUsername: string;
+  panelPassword: string;
 }
 
 export function useAdminRequests() {
@@ -71,14 +83,16 @@ export function useAdminRequests() {
     fetchRequests();
   }, []);
 
-  const approveRequest = async (requestId: string, ipAddress: string, port: number) => {
+  const approveRequest = async (requestId: string, approvalData: ApprovalData) => {
     try {
       const { error } = await supabase
         .from('server_requests')
         .update({
           status: 'active' as RequestStatus,
-          ip_address: ipAddress,
-          port: port,
+          assigned_ip: approvalData.assignedIp,
+          panel_url: approvalData.panelUrl,
+          panel_username: approvalData.panelUsername,
+          panel_password: approvalData.panelPassword,
         })
         .eq('id', requestId);
 

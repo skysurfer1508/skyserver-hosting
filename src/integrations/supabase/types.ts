@@ -64,12 +64,16 @@ export type Database = {
       }
       server_requests: {
         Row: {
+          assigned_ip: string | null
           created_at: string
           description: string | null
           discord_username: string
           game_type: Database["public"]["Enums"]["game_type"]
           id: string
           ip_address: string | null
+          panel_password: string | null
+          panel_url: string | null
+          panel_username: string | null
           port: number | null
           server_config: Json | null
           server_name: string
@@ -78,12 +82,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_ip?: string | null
           created_at?: string
           description?: string | null
           discord_username: string
           game_type: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
+          panel_password?: string | null
+          panel_url?: string | null
+          panel_username?: string | null
           port?: number | null
           server_config?: Json | null
           server_name: string
@@ -92,12 +100,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_ip?: string | null
           created_at?: string
           description?: string | null
           discord_username?: string
           game_type?: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
+          panel_password?: string | null
+          panel_url?: string | null
+          panel_username?: string | null
           port?: number | null
           server_config?: Json | null
           server_name?: string

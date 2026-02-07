@@ -68,9 +68,11 @@ export default function Admin() {
 
   const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all');
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const [ipAddress, setIpAddress] = useState('');
-  const [port, setPort] = useState('');
+  const [selectedRequest, setSelectedRequest] = useState<typeof requests[0] | null>(null);
+  const [assignedIp, setAssignedIp] = useState('');
+  const [panelUrl, setPanelUrl] = useState('https://panel.skyserver.io');
+  const [panelUsername, setPanelUsername] = useState('');
+  const [panelPassword, setPanelPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Settings state
@@ -114,25 +116,43 @@ export default function Admin() {
     statusFilter === 'all' ? true : r.status === statusFilter
   );
 
-  const handleApproveClick = (requestId: string) => {
-    setSelectedRequestId(requestId);
-    setIpAddress('');
-    setPort('');
+  const handleApproveClick = (request: typeof requests[0]) => {
+    setSelectedRequest(request);
+    setAssignedIp('');
+    setPanelUrl('https://panel.skyserver.io');
+    setPanelUsername('');
+    setPanelPassword('');
     setApproveDialogOpen(true);
   };
 
   const handleApproveSubmit = async () => {
-    if (!selectedRequestId || !ipAddress || !port) {
+    if (!selectedRequest) return;
+    
+    if (!assignedIp.trim()) {
       toast({
         title: 'Missing information',
-        description: 'Please enter both IP address and port.',
+        description: 'Please enter the server IP address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!panelUsername.trim() || !panelPassword.trim()) {
+      toast({
+        title: 'Missing information',
+        description: 'Please enter panel username and password.',
         variant: 'destructive',
       });
       return;
     }
 
     setIsSubmitting(true);
-    const { error } = await approveRequest(selectedRequestId, ipAddress, parseInt(port));
+    const { error } = await approveRequest(selectedRequest.id, {
+      assignedIp: assignedIp.trim(),
+      panelUrl: panelUrl.trim(),
+      panelUsername: panelUsername.trim(),
+      panelPassword: panelPassword.trim(),
+    });
     setIsSubmitting(false);
 
     if (error) {
@@ -145,11 +165,13 @@ export default function Admin() {
     }
 
     toast({
-      title: 'Request approved',
-      description: 'The server has been activated.',
+      title: 'Server activated',
+      description: `Server for ${selectedRequest.user_email} has been activated.`,
     });
     setApproveDialogOpen(false);
+    setSelectedRequest(null);
     refetchSettings();
+    refetchGameLimits();
   };
 
   const handleReject = async (requestId: string) => {
@@ -342,7 +364,7 @@ export default function Admin() {
                                         size="sm"
                                         variant="ghost"
                                         className="text-success hover:text-success hover:bg-success/10"
-                                        onClick={() => handleApproveClick(request.id)}
+                                        onClick={() => handleApproveClick(request)}
                                       >
                                         <Check className="h-4 w-4" />
                                       </Button>
@@ -572,34 +594,60 @@ export default function Admin() {
       <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
         <DialogContent className="gaming-card border-border/50">
           <DialogHeader>
-            <DialogTitle className="font-display">Approve Server Request</DialogTitle>
+            <DialogTitle className="font-display">
+              Activate Server for {selectedRequest?.user_email || 'User'}
+            </DialogTitle>
             <DialogDescription>
-              Assign an IP address and port to activate this server
+              Enter the server connection details and panel credentials
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Server details */}
             <div className="space-y-2">
-              <Label htmlFor="ipAddress">IP Address</Label>
+              <Label htmlFor="assignedIp">Server IP Address *</Label>
               <Input
-                id="ipAddress"
-                placeholder="192.168.1.100"
-                value={ipAddress}
-                onChange={(e) => setIpAddress(e.target.value)}
+                id="assignedIp"
+                placeholder="192.168.1.100:25565"
+                value={assignedIp}
+                onChange={(e) => setAssignedIp(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Include the port (e.g., 192.168.1.100:25565)
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="port">Port</Label>
+              <Label htmlFor="panelUrl">Control Panel URL</Label>
               <Input
-                id="port"
-                type="number"
-                placeholder="25565"
-                value={port}
-                onChange={(e) => setPort(e.target.value)}
-                min={1}
-                max={65535}
+                id="panelUrl"
+                placeholder="https://panel.skyserver.io"
+                value={panelUrl}
+                onChange={(e) => setPanelUrl(e.target.value)}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="panelUsername">Panel Username *</Label>
+                <Input
+                  id="panelUsername"
+                  placeholder="user123"
+                  value={panelUsername}
+                  onChange={(e) => setPanelUsername(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="panelPassword">Panel Password *</Label>
+                <Input
+                  id="panelPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={panelPassword}
+                  onChange={(e) => setPanelPassword(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
@@ -615,12 +663,12 @@ export default function Admin() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Approving...
+                  Activating...
                 </>
               ) : (
                 <>
                   <Check className="mr-2 h-4 w-4" />
-                  Approve
+                  Confirm Activation
                 </>
               )}
             </Button>
