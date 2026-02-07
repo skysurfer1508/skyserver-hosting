@@ -6,8 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # Mappt Port 8080 auf deinem Server zu Port 80 im Container
-    # Du erreichst die Seite dann unter http://dein-server-ip:8080
+    # Maps port 7012 on host to port 7012 in container
     ports:
-      - "7012:80" 
+      - "7012:7012"
     restart: always
