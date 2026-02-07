@@ -5,8 +5,6 @@ const games = [
   { name: 'Minecraft', icon: '⛏️', color: 'bg-green-500/20 text-green-400' },
   { name: 'Terraria', icon: '🌳', color: 'bg-amber-500/20 text-amber-400' },
   { name: 'Satisfactory', icon: '🏭', color: 'bg-orange-500/20 text-orange-400' },
-  { name: 'Valheim', icon: '⚔️', color: 'bg-blue-500/20 text-blue-400' },
-  { name: 'ARK', icon: '🦖', color: 'bg-purple-500/20 text-purple-400' },
 ];
 
 const benefits = [

@@ -54,8 +54,6 @@ const gameLabels: Record<string, { label: string; icon: string }> = {
   minecraft: { label: 'Minecraft', icon: '⛏️' },
   terraria: { label: 'Terraria', icon: '🌳' },
   satisfactory: { label: 'Satisfactory', icon: '🏭' },
-  valheim: { label: 'Valheim', icon: '⚔️' },
-  ark: { label: 'ARK', icon: '🦖' },
 };
 
 export default function Admin() {
@@ -279,6 +277,7 @@ export default function Admin() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>User</TableHead>
+                          <TableHead>Discord</TableHead>
                           <TableHead>Game</TableHead>
                           <TableHead>Server</TableHead>
                           <TableHead>Status</TableHead>
@@ -293,6 +292,9 @@ export default function Admin() {
                             <TableRow key={request.id}>
                               <TableCell className="font-medium">
                                 {request.user_email || 'Unknown'}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {request.discord_username || '-'}
                               </TableCell>
                               <TableCell>
                                 <span className="flex items-center gap-2">

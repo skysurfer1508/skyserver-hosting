@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -20,49 +21,103 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useServerRequest } from '@/hooks/useServerRequest';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useToast } from '@/hooks/use-toast';
 import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2 } from 'lucide-react';
-import { Database } from '@/integrations/supabase/types';
+import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
+import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
+import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
 
-type GameType = Database['public']['Enums']['game_type'];
+type GameType = 'minecraft' | 'terraria' | 'satisfactory';
+type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig;
 
 const gameOptions: { value: GameType; label: string; icon: string }[] = [
   { value: 'minecraft', label: 'Minecraft', icon: '⛏️' },
   { value: 'terraria', label: 'Terraria', icon: '🌳' },
   { value: 'satisfactory', label: 'Satisfactory', icon: '🏭' },
-  { value: 'valheim', label: 'Valheim', icon: '⚔️' },
-  { value: 'ark', label: 'ARK', icon: '🦖' },
 ];
 
 export function ServerStatusCard() {
-  const { request, isLoading, createRequest, refetch } = useServerRequest();
+  const { request, isLoading, createRequest, hasActiveRequest, refetch } = useServerRequest();
   const { settings, isFull } = useSystemSettings();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType | ''>('');
   const [serverName, setServerName] = useState('');
+  const [discordUsername, setDiscordUsername] = useState('');
+  const [description, setDescription] = useState('');
+  const [serverConfig, setServerConfig] = useState<Partial<ServerConfig>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = () => {
+    setSelectedGame('');
+    setServerName('');
+    setDiscordUsername('');
+    setDescription('');
+    setServerConfig({});
+  };
+
+  const validateForm = (): string | null => {
+    if (!selectedGame) return 'Please select a game.';
+    if (!serverName.trim()) return 'Please enter a server name.';
+    if (!discordUsername.trim()) return 'Please enter your Discord username.';
+
+    // Game-specific validation
+    if (selectedGame === 'minecraft') {
+      const config = serverConfig as Partial<MinecraftConfig>;
+      if (!config.edition) return 'Please select a Minecraft edition.';
+      if (!config.software) return 'Please select server software.';
+      if (!config.version?.trim()) return 'Please enter a Minecraft version.';
+      if (!config.eula_accepted) return 'You must accept the Minecraft EULA.';
+    }
+
+    if (selectedGame === 'terraria') {
+      const config = serverConfig as Partial<TerrariaConfig>;
+      if (!config.software) return 'Please select Terraria software.';
+      if (!config.world_size) return 'Please select a world size.';
+      if (!config.difficulty) return 'Please select a difficulty.';
+    }
+
+    if (selectedGame === 'satisfactory') {
+      const config = serverConfig as Partial<SatisfactoryConfig>;
+      if (!config.branch) return 'Please select a Satisfactory branch.';
+    }
+
+    return null;
+  };
+
   const handleSubmit = async () => {
-    if (!selectedGame || !serverName.trim()) {
+    const error = validateForm();
+    if (error) {
       toast({
         title: 'Missing information',
-        description: 'Please select a game and enter a server name.',
+        description: error,
         variant: 'destructive',
       });
       return;
     }
 
     setIsSubmitting(true);
-    const { error } = await createRequest(selectedGame, serverName.trim());
+    const { error: submitError } = await createRequest(
+      selectedGame as GameType,
+      serverName.trim(),
+      discordUsername.trim(),
+      description.trim() || null,
+      { ...serverConfig }
+    );
     setIsSubmitting(false);
 
-    if (error) {
+    if (submitError) {
       toast({
         title: 'Request Failed',
-        description: '⚠️ Sync Issue: Please open a ticket on Discord.',
+        description: submitError.message || '⚠️ Sync Issue: Please open a ticket on Discord.',
         variant: 'destructive',
       });
       return;
@@ -73,9 +128,13 @@ export function ServerStatusCard() {
       description: 'Your server request has been submitted for approval.',
     });
     setIsDialogOpen(false);
-    setSelectedGame('');
-    setServerName('');
+    resetForm();
     refetch();
+  };
+
+  const handleGameChange = (game: GameType) => {
+    setSelectedGame(game);
+    setServerConfig({}); // Reset config when game changes
   };
 
   const copyToClipboard = (text: string) => {
@@ -114,7 +173,7 @@ export function ServerStatusCard() {
     }
   };
 
-  const getGameInfo = (gameType: GameType) => {
+  const getGameInfo = (gameType: string) => {
     return gameOptions.find((g) => g.value === gameType);
   };
 
@@ -130,7 +189,18 @@ export function ServerStatusCard() {
 
   // No request - show request button
   if (!request) {
-    const canRequest = !settings?.maintenance_mode && !isFull;
+    const canRequest = !settings?.maintenance_mode && !isFull && !hasActiveRequest;
+
+    const RequestButton = (
+      <Button 
+        className="w-full gap-2 glow-primary" 
+        size="lg"
+        disabled={!canRequest}
+      >
+        <Plus className="h-5 w-5" />
+        Request Server
+      </Button>
+    );
 
     return (
       <Card className="gaming-card border-border/50">
@@ -145,30 +215,38 @@ export function ServerStatusCard() {
         </CardHeader>
         <CardContent>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                className="w-full gap-2 glow-primary" 
-                size="lg"
-                disabled={!canRequest}
-              >
-                <Plus className="h-5 w-5" />
-                Request Server
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="gaming-card border-border/50">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <DialogTrigger asChild disabled={!canRequest}>
+                      {RequestButton}
+                    </DialogTrigger>
+                  </div>
+                </TooltipTrigger>
+                {hasActiveRequest && (
+                  <TooltipContent>
+                    <p>You already have a server request</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            
+            <DialogContent className="gaming-card border-border/50 max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display">Request a Server</DialogTitle>
                 <DialogDescription>
-                  Choose your game and give your server a name
+                  Fill in the details below to request your game server
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 py-4">
+                {/* Game Selection */}
                 <div className="space-y-2">
-                  <Label>Game</Label>
+                  <Label>Game *</Label>
                   <Select
                     value={selectedGame}
-                    onValueChange={(value) => setSelectedGame(value as GameType)}
+                    onValueChange={(value) => handleGameChange(value as GameType)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a game" />
@@ -186,8 +264,9 @@ export function ServerStatusCard() {
                   </Select>
                 </div>
 
+                {/* Server Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="serverName">Server Name</Label>
+                  <Label htmlFor="serverName">Server Name *</Label>
                   <Input
                     id="serverName"
                     placeholder="My Awesome Server"
@@ -196,6 +275,54 @@ export function ServerStatusCard() {
                     maxLength={50}
                   />
                 </div>
+
+                {/* Discord Username */}
+                <div className="space-y-2">
+                  <Label htmlFor="discordUsername">Discord Username *</Label>
+                  <Input
+                    id="discordUsername"
+                    placeholder="username#1234 or username"
+                    value={discordUsername}
+                    onChange={(e) => setDiscordUsername(e.target.value)}
+                    maxLength={50}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    We'll use this to contact you about your server
+                  </p>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Tell us about your project..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    maxLength={500}
+                    rows={3}
+                  />
+                </div>
+
+                {/* Game-specific config forms */}
+                {selectedGame === 'minecraft' && (
+                  <MinecraftConfigForm
+                    config={serverConfig as Partial<MinecraftConfig>}
+                    onChange={setServerConfig}
+                  />
+                )}
+                {selectedGame === 'terraria' && (
+                  <TerrariaConfigForm
+                    config={serverConfig as Partial<TerrariaConfig>}
+                    onChange={setServerConfig}
+                  />
+                )}
+                {selectedGame === 'satisfactory' && (
+                  <SatisfactoryConfigForm
+                    config={serverConfig as Partial<SatisfactoryConfig>}
+                    onChange={setServerConfig}
+                  />
+                )}
               </div>
 
               <DialogFooter>
@@ -220,6 +347,8 @@ export function ServerStatusCard() {
             <p className="mt-4 text-center text-sm text-muted-foreground">
               {settings?.maintenance_mode
                 ? 'Server requests are disabled during maintenance.'
+                : hasActiveRequest
+                ? 'You already have an active server request.'
                 : 'We are currently at full capacity. Please try again later.'}
             </p>
           )}
