@@ -14,12 +14,6 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   LogOut,
   User,
   Settings,
@@ -32,6 +26,7 @@ import {
   HelpCircle,
   Cpu,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -53,16 +48,17 @@ export function Header() {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [gamesOpen, setGamesOpen] = useState(false);
 
   const handleSignOut = async () => {
+    setMenuOpen(false);
     await signOut();
     navigate('/');
   };
 
   const handleNavClick = (href: string) => {
-    setMobileOpen(false);
+    setMenuOpen(false);
     if (href.startsWith('#')) {
       // If we're on the home page, scroll to section
       if (location.pathname === '/') {
@@ -72,6 +68,9 @@ export function Header() {
         // Navigate to home page with hash
         navigate('/' + href);
       }
+    } else if (href === '/') {
+      navigate('/');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -80,7 +79,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg">
       <div className="container flex h-16 items-center justify-between">
-        {/* Logo */}
+        {/* Logo - Left */}
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary glow-primary">
             <Server className="h-5 w-5 text-primary-foreground" />
@@ -90,190 +89,112 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {isHomePage && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleNavClick('/')}
-                className="gap-2"
-              >
-                <Home className="h-4 w-4" />
-                Home
-              </Button>
-
-              {/* Games Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Gamepad2 className="h-4 w-4" />
-                    Games
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  {games.map((game) => (
-                    <DropdownMenuItem
-                      key={game.name}
-                      onClick={() => handleNavClick(game.href)}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <span>{game.icon}</span>
-                      <span>{game.name}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {navItems.slice(1).map((item) => (
-                <Button
-                  key={item.name}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleNavClick(item.href)}
-                  className="gap-2"
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Button>
-              ))}
-            </>
-          )}
-        </nav>
-
-        {/* Right Side - Auth Buttons */}
-        <div className="hidden md:flex items-center gap-2">
-          {user ? (
-            <>
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
-                  Dashboard
-                </Button>
-              </Link>
-              {isAdmin && (
-                <Link to="/admin">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Settings className="h-4 w-4" />
-                    Admin
-                  </Button>
-                </Link>
-              )}
-              <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2">
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button variant="ghost" size="sm">Login</Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm" className="glow-primary">Get Started</Button>
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Menu - Sheet */}
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
+        {/* Hamburger Menu - Right */}
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
               <Menu className="h-6 w-6" />
+              <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-80 bg-background border-border">
-            <SheetHeader className="border-b border-border pb-4">
-              <SheetTitle className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <Server className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="font-display text-xl font-bold text-primary">
-                  SkyServer
-                </span>
-              </SheetTitle>
+          <SheetContent 
+            side="right" 
+            className="w-80 bg-card border-l border-border p-0 flex flex-col"
+          >
+            {/* Header */}
+            <SheetHeader className="border-b border-border p-4">
+              <div className="flex items-center justify-between">
+                <SheetTitle className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                    <Server className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <span className="font-display text-xl font-bold text-primary">
+                    SkyServer
+                  </span>
+                </SheetTitle>
+              </div>
             </SheetHeader>
 
-            <nav className="flex flex-col gap-1 py-4">
+            {/* Navigation Links */}
+            <nav className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
               {/* Home */}
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 h-12"
+                className="w-full justify-start gap-3 h-12 text-base"
                 onClick={() => handleNavClick('/')}
               >
                 <Home className="h-5 w-5" />
                 Home
               </Button>
 
-              {/* Games Collapsible */}
+              {/* Games Collapsible - only on home page */}
               {isHomePage && (
-                <>
-                  <Collapsible open={gamesOpen} onOpenChange={setGamesOpen}>
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-between gap-3 h-12"
-                      >
-                        <span className="flex items-center gap-3">
-                          <Gamepad2 className="h-5 w-5" />
-                          Games
-                        </span>
-                        <ChevronDown
-                          className={`h-4 w-4 transition-transform ${
-                            gamesOpen ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pl-8 space-y-1">
-                      {games.map((game) => (
-                        <Button
-                          key={game.name}
-                          variant="ghost"
-                          className="w-full justify-start gap-3 h-10"
-                          onClick={() => handleNavClick(game.href)}
-                        >
-                          <span>{game.icon}</span>
-                          {game.name}
-                        </Button>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {navItems.slice(1).map((item) => (
+                <Collapsible open={gamesOpen} onOpenChange={setGamesOpen}>
+                  <CollapsibleTrigger asChild>
                     <Button
-                      key={item.name}
                       variant="ghost"
-                      className="w-full justify-start gap-3 h-12"
-                      onClick={() => handleNavClick(item.href)}
+                      className="w-full justify-between gap-3 h-12 text-base"
                     >
-                      <item.icon className="h-5 w-5" />
-                      {item.name}
+                      <span className="flex items-center gap-3">
+                        <Gamepad2 className="h-5 w-5" />
+                        Games
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform duration-200 ${
+                          gamesOpen ? 'rotate-180' : ''
+                        }`}
+                      />
                     </Button>
-                  ))}
-                </>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pl-8 space-y-1 mt-1">
+                    {games.map((game) => (
+                      <Button
+                        key={game.name}
+                        variant="ghost"
+                        className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
+                        onClick={() => handleNavClick(game.href)}
+                      >
+                        <span className="text-lg">{game.icon}</span>
+                        {game.name}
+                      </Button>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
-              {/* Divider */}
-              <div className="border-t border-border my-4" />
+              {/* Other nav items - only on home page */}
+              {isHomePage &&
+                navItems.slice(1).map((item) => (
+                  <Button
+                    key={item.name}
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-12 text-base"
+                    onClick={() => handleNavClick(item.href)}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.name}
+                  </Button>
+                ))}
 
-              {/* Auth Section */}
+              {/* Spacer */}
+              <div className="flex-1" />
+            </nav>
+
+            {/* Auth Section - Bottom */}
+            <div className="border-t border-border p-4 space-y-2">
               {user ? (
                 <>
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                  <div className="px-3 py-2 text-sm text-muted-foreground truncate">
                     {user.email}
                   </div>
-                  <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                  <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start gap-3 h-12">
                       <User className="h-5 w-5" />
                       Dashboard
                     </Button>
                   </Link>
                   {isAdmin && (
-                    <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                    <Link to="/admin" onClick={() => setMenuOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start gap-3 h-12">
                         <Settings className="h-5 w-5" />
                         Admin Panel
@@ -282,7 +203,7 @@ export function Header() {
                   )}
                   <Button
                     variant="outline"
-                    className="w-full justify-start gap-3 h-12 mt-2"
+                    className="w-full justify-start gap-3 h-12"
                     onClick={handleSignOut}
                   >
                     <LogOut className="h-5 w-5" />
@@ -290,20 +211,20 @@ export function Header() {
                   </Button>
                 </>
               ) : (
-                <>
-                  <Link to="/login" onClick={() => setMobileOpen(false)}>
-                    <Button variant="ghost" className="w-full h-12">
+                <div className="space-y-2">
+                  <Link to="/login" onClick={() => setMenuOpen(false)}>
+                    <Button variant="outline" className="w-full h-12">
                       Login
                     </Button>
                   </Link>
-                  <Link to="/register" onClick={() => setMobileOpen(false)}>
+                  <Link to="/register" onClick={() => setMenuOpen(false)}>
                     <Button className="w-full h-12 glow-primary">
                       Get Started
                     </Button>
                   </Link>
-                </>
+                </div>
               )}
-            </nav>
+            </div>
           </SheetContent>
         </Sheet>
       </div>
