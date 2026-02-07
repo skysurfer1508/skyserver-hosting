@@ -46,6 +46,7 @@ const navItems = [
   { name: 'FAQ', href: '#faq', icon: HelpCircle },
   { name: 'Tech Stack', href: '#tech-stack', icon: Cpu },
   { name: 'Help Center', href: '/help', icon: HelpCircle, isRoute: true },
+  { name: 'Imprint', href: '/imprint', icon: Server, isRoute: true },
 ];
 
 export function Header() {
