@@ -1,262 +1,273 @@
 
-# Dynamic Slot Availability System
+# Content & Navigation Update Plan
 
 ## Overview
 
-This plan implements a per-game slot management system to replace the current global slot counter. Each game (Minecraft, Terraria, Satisfactory) will have its own maximum capacity, with real-time calculation of used slots based on active/pending server requests.
+This plan updates the platform to reflect that advanced features (FTP access, mod support) are now live, and reorganizes the header to put Login/Dashboard buttons directly on the top bar while adding a new "Game Panel" external link.
 
 ---
 
-## Phase 1: Database Schema Update
+## Changes Summary
 
-### 1.1 Create New `game_limits` Table
+### 1. Header Component (`Header.tsx`)
 
-A dedicated table to store per-game slot configurations:
+**Layout Changes:**
+- Move Login/Dashboard buttons OUT of the hamburger menu to the top bar (between logo and hamburger icon)
+- Add "Game Panel" link to the navigation menu inside the drawer
+- Keep hamburger menu for navigation links only
 
-| Column | Type | Nullable | Default | Purpose |
-|--------|------|----------|---------|---------|
-| `game_name` | TEXT | No | - | Primary Key (minecraft, terraria, satisfactory) |
-| `max_slots` | INTEGER | No | 10 | Maximum servers allowed |
-| `is_active` | BOOLEAN | No | true | Enable/disable game for requests |
-| `created_at` | TIMESTAMPTZ | No | now() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | No | now() | Last update timestamp |
-
-### 1.2 Insert Initial Data
-
-```sql
-INSERT INTO game_limits (game_name, max_slots, is_active) VALUES
-  ('minecraft', 20, true),
-  ('terraria', 10, true),
-  ('satisfactory', 10, true);
-```
-
-### 1.3 Create Database Function for Slot Counting
-
-Create a function to calculate used slots per game dynamically:
-
-```sql
-CREATE FUNCTION get_game_slot_usage(game TEXT)
-RETURNS INTEGER AS $$
-  SELECT COUNT(*)::INTEGER
-  FROM server_requests
-  WHERE game_type::text = game
-    AND status IN ('pending', 'active')
-$$ LANGUAGE SQL STABLE;
-```
-
-### 1.4 RLS Policies
-
-- **Public read access**: Anyone can view game limits (for landing page display)
-- **Admin-only update**: Only admins can modify slot limits
-
----
-
-## Phase 2: Create New React Hook
-
-### 2.1 `useGameLimits` Hook
-
-Location: `src/hooks/useGameLimits.tsx`
-
-This hook will:
-- Fetch game limits from the `game_limits` table
-- Calculate used slots for each game by counting server_requests
-- Return availability data for UI display
-
-**Returns:**
+**New Navigation Item:**
 ```typescript
-interface GameSlotData {
-  game_name: 'minecraft' | 'terraria' | 'satisfactory';
-  max_slots: number;
-  used_slots: number;
-  available_slots: number;
-  is_active: boolean;
-  is_full: boolean;
-}
+{ name: 'Game Panel', href: 'https://panel.skyserver.io', icon: Terminal, external: true }
 ```
 
----
-
-## Phase 3: Update Landing Page - FeaturesSection
-
-### 3.1 Refactor Games Display
-
-Transform the simple game badges into interactive cards showing:
-
-- Game icon and name
-- Progress bar showing capacity (used/max)
-- "X / Y Servers Claimed" text
-- Visual status:
-  - **Available** (green accent): Normal "Select" button
-  - **Full** (red/grey accent): Disabled "Sold Out" button
-
-### 3.2 UI States
-
-| Condition | Progress Bar Color | Button Text | Button State |
-|-----------|-------------------|-------------|--------------|
-| Available | Primary (green/blue) | "Select Game" | Enabled |
-| Almost Full (>80%) | Warning (amber) | "Select Game" | Enabled |
-| Full (used >= max) | Destructive (red) | "Sold Out" | Disabled |
-| Game Disabled | Muted (grey) | "Unavailable" | Disabled |
-
----
-
-## Phase 4: Admin Panel - Game Capacity Management
-
-### 4.1 Add New Section
-
-Add a "Game Capacity Management" card to the Admin sidebar with:
-
-- List of all 3 games
-- Current usage display: "X / Y active"
-- Editable `max_slots` input for each game
-- Toggle switch for `is_active` status
-- Save button to update limits
-
-### 4.2 Visual Layout
-
+**Top Bar Structure:**
 ```text
-+----------------------------------+
-| Game Capacity Management         |
-+----------------------------------+
-| ⛏️ Minecraft                     |
-| [======----] 12 / 20 active      |
-| Max Slots: [20 ▼]  Active: [✓]   |
-+----------------------------------+
-| 🌳 Terraria                      |
-| [====------]  4 / 10 active      |
-| Max Slots: [10 ▼]  Active: [✓]   |
-+----------------------------------+
-| 🏭 Satisfactory                  |
-| [----------]  0 / 10 active      |
-| Max Slots: [10 ▼]  Active: [✓]   |
-+----------------------------------+
-| [       Save Changes       ]     |
-+----------------------------------+
+[Logo] -------- [Login/Dashboard Buttons] [Hamburger Icon]
 ```
 
 ---
 
-## Phase 5: Request Form Integration
+### 2. Roadmap Section (`RoadmapSection.tsx`)
 
-### 5.1 Update ServerStatusCard
+**Phase 1 (Current - Beta Launch)** - Updated items:
+- Minecraft, Terraria & Satisfactory support
+- User registration & authentication
+- Server request system with admin approval
+- Full FTP Access (File Management)
+- Mod & Plugin Support
+- DDoS Protection
 
-When selecting a game in the request modal:
-- Check if that game `is_active`
-- Check if `used_slots < max_slots`
-- If game is full or disabled, show warning and disable submit
+**Phase 2 (Upcoming - Automation)** - New goals:
+- One-Click Modpack Installer
+- Automated World Backups
+- Scheduled server restarts
+- Discord Bot Integration
 
-### 5.2 Real-Time Feedback
-
-Display slot availability info next to game dropdown:
-- "5 slots available" (green)
-- "Only 2 slots left!" (amber warning)
-- "No slots available" (red, disabled)
+**Phase 3 (Future - Community)** - Updated items:
+- Community voting for new games
+- Custom subdomains (myserver.skyserver.io)
+- Public server browser
+- Advanced analytics dashboard
 
 ---
 
-## Files to be Modified
+### 3. Features Section (`FeaturesSection.tsx`)
+
+**Add two new benefit cards:**
+
+| Title | Icon | Description |
+|-------|------|-------------|
+| Full FTP Access | FolderOpen | Access your server files directly. Upload your own worlds, configs, and mods without restrictions. |
+| Modding Supported | Puzzle | Want to play Modded Minecraft or TModLoader? You have full write access to install whatever you want. |
+
+**Updated benefits array (8 total cards):**
+1. Free Hosting
+2. Full FTP Access (NEW)
+3. Modding Supported (NEW)
+4. Low Latency
+5. High Uptime
+6. DDoS Protection
+7. Instant Setup
+8. Easy Control
+
+---
+
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| Database | New `game_limits` table + function |
-| `src/hooks/useGameLimits.tsx` | **New file** - Hook for game slot data |
-| `src/components/landing/FeaturesSection.tsx` | Add slot display with progress bars |
-| `src/pages/Admin.tsx` | Add Game Capacity Management section |
-| `src/components/dashboard/ServerStatusCard.tsx` | Check game availability before submit |
-| `src/integrations/supabase/types.ts` | Auto-updated by migration |
+| `src/components/layout/Header.tsx` | Move auth buttons to top bar, add Game Panel link |
+| `src/components/landing/RoadmapSection.tsx` | Update phase content |
+| `src/components/landing/FeaturesSection.tsx` | Add FTP and Modding cards |
 
 ---
 
 ## Technical Details
 
-### Database Migration SQL
+### Header.tsx Changes
 
-```sql
--- Create game_limits table
-CREATE TABLE public.game_limits (
-  game_name TEXT PRIMARY KEY,
-  max_slots INTEGER NOT NULL DEFAULT 10,
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Enable RLS
-ALTER TABLE public.game_limits ENABLE ROW LEVEL SECURITY;
-
--- Public can read
-CREATE POLICY "Anyone can read game limits"
-  ON public.game_limits FOR SELECT
-  USING (true);
-
--- Admins can update
-CREATE POLICY "Admins can update game limits"
-  ON public.game_limits FOR UPDATE
-  USING (public.is_admin(auth.uid()));
-
--- Insert initial data
-INSERT INTO public.game_limits (game_name, max_slots, is_active) VALUES
-  ('minecraft', 20, true),
-  ('terraria', 10, true),
-  ('satisfactory', 10, true);
-
--- Create function to get slot usage per game
-CREATE OR REPLACE FUNCTION public.get_game_slot_usage(game_name_param TEXT)
-RETURNS INTEGER
-LANGUAGE SQL
-STABLE
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-  SELECT COUNT(*)::INTEGER
-  FROM public.server_requests
-  WHERE game_type::text = game_name_param
-    AND status IN ('pending', 'active')
-$$;
-
--- Update timestamp trigger
-CREATE TRIGGER update_game_limits_updated_at
-  BEFORE UPDATE ON public.game_limits
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+**New imports:**
+```typescript
+import { Terminal } from 'lucide-react';
 ```
 
-### useGameLimits Hook Structure
+**Add to navItems array:**
+```typescript
+{ name: 'Game Panel', href: 'https://panel.skyserver.io', icon: Terminal, external: true }
+```
+
+**Top bar layout (between logo and hamburger):**
+```tsx
+{/* Auth Buttons - Visible on top bar */}
+<div className="flex items-center gap-2">
+  {user ? (
+    <Link to="/dashboard">
+      <Button variant="outline" size="sm">
+        <User className="h-4 w-4 mr-2" />
+        Dashboard
+      </Button>
+    </Link>
+  ) : (
+    <>
+      <Link to="/login">
+        <Button variant="ghost" size="sm">Login</Button>
+      </Link>
+      <Link to="/register">
+        <Button size="sm" className="glow-primary">Get Started</Button>
+      </Link>
+    </>
+  )}
+  {/* Hamburger menu trigger */}
+</div>
+```
+
+**Game Panel link handling (external URL):**
+```typescript
+const handleNavClick = (href: string, external?: boolean) => {
+  setMenuOpen(false);
+  if (external) {
+    window.open(href, '_blank');
+    return;
+  }
+  // ... existing logic
+};
+```
+
+### RoadmapSection.tsx - Updated Phases Array
 
 ```typescript
-interface GameLimit {
-  game_name: string;
-  max_slots: number;
-  is_active: boolean;
-  used_slots: number;
-  available_slots: number;
-  is_full: boolean;
-}
-
-function useGameLimits() {
-  // 1. Fetch all game_limits rows
-  // 2. For each game, call RPC to get used_slots count
-  // 3. Calculate available_slots and is_full
-  // 4. Return array of GameLimit objects + update function
-}
+const phases = [
+  {
+    phase: 'Phase 1',
+    status: 'current',
+    title: 'Beta Launch',
+    description: 'Full-featured game servers with FTP access and mod support.',
+    icon: CheckCircle2,
+    items: [
+      'Minecraft, Terraria & Satisfactory support',
+      'User registration & server request system',
+      'Full FTP Access for file management',
+      'Mod & Plugin support (install your own)',
+      'DDoS Protection included',
+      'Admin approval workflow',
+    ],
+  },
+  {
+    phase: 'Phase 2',
+    status: 'upcoming',
+    title: 'Automation',
+    description: 'One-click installers and automated backups.',
+    icon: Clock,
+    items: [
+      'One-Click Modpack Installer',
+      'Automated World Backups',
+      'Scheduled server restarts',
+      'Discord Bot for server status',
+      'Server console access',
+    ],
+  },
+  {
+    phase: 'Phase 3',
+    status: 'future',
+    title: 'Community Features',
+    description: 'Community voting and custom subdomains.',
+    icon: Rocket,
+    items: [
+      'Community voting for new games',
+      'Custom subdomains (myserver.skyserver.io)',
+      'Public server browser',
+      'Advanced analytics dashboard',
+    ],
+  },
+];
 ```
 
-### Slot Calculation Logic
+### FeaturesSection.tsx - Updated Benefits Array
 
-```text
-used_slots = COUNT(*) FROM server_requests 
-             WHERE game_type = game AND status IN ('pending', 'active')
+```typescript
+import { FolderOpen, Puzzle } from 'lucide-react';
 
-available_slots = max_slots - used_slots
-is_full = used_slots >= max_slots
+const benefits = [
+  {
+    icon: Zap,
+    title: 'Free Hosting',
+    description: 'No credit card required. No subscription fees. Completely free forever.',
+  },
+  {
+    icon: FolderOpen,
+    title: 'Full FTP Access',
+    description: 'Access your server files directly. Upload your own worlds, configs, and mods without restrictions.',
+  },
+  {
+    icon: Puzzle,
+    title: 'Modding Supported',
+    description: 'Want to play Modded Minecraft or TModLoader? You have full write access to install whatever you want.',
+  },
+  {
+    icon: Globe,
+    title: 'Low Latency',
+    description: 'Servers located in Switzerland for excellent European connectivity.',
+  },
+  {
+    icon: Clock,
+    title: 'High Uptime',
+    description: '99.9% uptime guarantee with automatic backups and monitoring.',
+  },
+  {
+    icon: Shield,
+    title: 'DDoS Protection',
+    description: 'Enterprise-grade protection to keep your server online.',
+  },
+  {
+    icon: Server,
+    title: 'Instant Setup',
+    description: 'Your server is ready within minutes after approval.',
+  },
+  {
+    icon: Gamepad2,
+    title: 'Easy Control',
+    description: 'Simple dashboard to manage your server with one click.',
+  },
+];
 ```
+
+**Grid layout update for 8 cards:**
+- The existing `lg:grid-cols-3` layout works well
+- Cards will display as 3-3-2 on large screens
+- Consider using `lg:grid-cols-4` for a 4-4 layout if preferred
 
 ---
 
-## Summary
+## Visual Preview
 
-1. **Database**: New `game_limits` table with per-game max_slots and is_active flags
-2. **Slot Calculation**: Dynamic counting from `server_requests` (not stored values)
-3. **Landing Page**: Game cards with progress bars and availability status
-4. **Admin Panel**: New section to manage per-game capacity
-5. **Request Form**: Validate game availability before allowing submission
+### Header Layout (After Changes)
+```text
++------------------------------------------------------------------+
+| [Logo] SkyServer          [Login] [Get Started]  [Hamburger]     |
++------------------------------------------------------------------+
+
+OR (when logged in):
+
++------------------------------------------------------------------+
+| [Logo] SkyServer                    [Dashboard]  [Hamburger]     |
++------------------------------------------------------------------+
+```
+
+### Drawer Menu (After Changes)
+```text
++----------------------------------+
+| SkyServer                        |
++----------------------------------+
+| Home                             |
+| Games (Collapsible)              |
+| Features                         |
+| Roadmap                          |
+| FAQ                              |
+| Tech Stack                       |
+| Game Panel (External) ->         |
++----------------------------------+
+| Admin Panel (if admin)           |
+| Logout                           |
++----------------------------------+
+```
