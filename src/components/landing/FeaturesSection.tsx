@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Gamepad2, Globe, Shield, Zap, Server, Clock, Loader2 } from 'lucide-react';
+import { Gamepad2, Globe, Shield, Zap, Server, Clock, Loader2, FolderOpen, Puzzle } from 'lucide-react';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,16 @@ const benefits = [
     icon: Zap,
     title: 'Free Hosting',
     description: 'No credit card required. No subscription fees. Completely free forever.',
+  },
+  {
+    icon: FolderOpen,
+    title: 'Full FTP Access',
+    description: 'Access your server files directly. Upload your own worlds, configs, and mods without restrictions.',
+  },
+  {
+    icon: Puzzle,
+    title: 'Modding Supported',
+    description: 'Want to play Modded Minecraft or TModLoader? You have full write access to install whatever you want.',
   },
   {
     icon: Globe,
@@ -162,7 +172,7 @@ export function FeaturesSection() {
             Built by gamers, for gamers
           </p>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {benefits.map((benefit) => (
               <Card key={benefit.title} className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary">
                 <CardHeader>
