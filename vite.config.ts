@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
   preview: {
     host: "0.0.0.0",
     port: 7012,
-    allowedHosts: true,
+    allowedHosts: ["www.skyserver1508.org", "skyserver1508.org", "localhost", ".localhost"],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
