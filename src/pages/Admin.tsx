@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { useAdminRequests } from '@/hooks/useAdminRequests';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
 import {
   Settings,
@@ -45,8 +47,10 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Gamepad2,
 } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
+import { cn } from '@/lib/utils';
 
 type RequestStatus = Database['public']['Enums']['request_status'];
 
@@ -59,6 +63,7 @@ const gameLabels: Record<string, { label: string; icon: string }> = {
 export default function Admin() {
   const { requests, isLoading: requestsLoading, approveRequest, rejectRequest, deleteRequest } = useAdminRequests();
   const { settings, activeSlots, isLoading: settingsLoading, updateSettings, refetch: refetchSettings } = useSystemSettings();
+  const { gameLimits, isLoading: gameLimitsLoading, updateGameLimit, refetch: refetchGameLimits } = useGameLimits();
   const { toast } = useToast();
 
   const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all');
@@ -74,14 +79,36 @@ export default function Admin() {
   const [alertMessage, setAlertMessage] = useState(settings?.global_alert_message || '');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
+  // Game capacity state
+  const [editedGameLimits, setEditedGameLimits] = useState<Record<GameName, { maxSlots: number; isActive: boolean }>>({
+    minecraft: { maxSlots: 20, isActive: true },
+    terraria: { maxSlots: 10, isActive: true },
+    satisfactory: { maxSlots: 10, isActive: true },
+  });
+  const [isSavingGameLimits, setIsSavingGameLimits] = useState(false);
+
   // Sync settings state when loaded
-  useState(() => {
+  useEffect(() => {
     if (settings) {
       setTotalSlots(settings.total_slots.toString());
       setMaintenanceMode(settings.maintenance_mode);
       setAlertMessage(settings.global_alert_message || '');
     }
-  });
+  }, [settings]);
+
+  // Sync game limits state when loaded
+  useEffect(() => {
+    if (gameLimits.length > 0) {
+      const newState = { ...editedGameLimits };
+      gameLimits.forEach((limit) => {
+        newState[limit.game_name] = {
+          maxSlots: limit.max_slots,
+          isActive: limit.is_active,
+        };
+      });
+      setEditedGameLimits(newState);
+    }
+  }, [gameLimits]);
 
   const filteredRequests = requests.filter((r) =>
     statusFilter === 'all' ? true : r.status === statusFilter
@@ -352,31 +379,123 @@ export default function Admin() {
 
           {/* Settings Sidebar */}
           <div className="space-y-6">
-            {/* Capacity Card */}
+            {/* Game Capacity Management */}
             <Card className="gaming-card border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Server className="h-4 w-4" />
-                  Slot Usage
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Gamepad2 className="h-5 w-5 text-primary" />
+                  Game Capacity
                 </CardTitle>
+                <CardDescription>
+                  Manage per-game slot limits
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <span className="font-display text-3xl font-bold text-primary">
-                    {settingsLoading ? '...' : activeSlots}
-                  </span>
-                  <span className="text-muted-foreground">
-                    / {settings?.total_slots || 50} slots
-                  </span>
-                </div>
-                <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all duration-500"
-                    style={{
-                      width: `${((activeSlots || 0) / (settings?.total_slots || 50)) * 100}%`,
-                    }}
-                  />
-                </div>
+              <CardContent className="space-y-4">
+                {gameLimitsLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  gameLimits.map((limit) => {
+                    const game = gameLabels[limit.game_name];
+                    const edited = editedGameLimits[limit.game_name];
+                    const percentage = limit.max_slots > 0
+                      ? Math.min(100, (limit.used_slots / limit.max_slots) * 100)
+                      : 0;
+
+                    return (
+                      <div key={limit.game_name} className="space-y-3 p-3 rounded-lg bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{game?.icon}</span>
+                          <span className="font-medium">{game?.label}</span>
+                        </div>
+                        
+                        {/* Progress bar */}
+                        <div className="space-y-1">
+                          <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                            <div
+                              className={cn(
+                                'h-full transition-all duration-500',
+                                limit.is_full ? 'bg-destructive' : 'bg-primary'
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {limit.used_slots} / {limit.max_slots} active
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Max Slots</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={edited?.maxSlots ?? limit.max_slots}
+                              onChange={(e) =>
+                                setEditedGameLimits((prev) => ({
+                                  ...prev,
+                                  [limit.game_name]: {
+                                    ...prev[limit.game_name],
+                                    maxSlots: parseInt(e.target.value) || 1,
+                                  },
+                                }))
+                              }
+                              className="h-8"
+                            />
+                          </div>
+                          <div className="flex items-end justify-end">
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs">Active</Label>
+                              <Switch
+                                checked={edited?.isActive ?? limit.is_active}
+                                onCheckedChange={(checked) =>
+                                  setEditedGameLimits((prev) => ({
+                                    ...prev,
+                                    [limit.game_name]: {
+                                      ...prev[limit.game_name],
+                                      isActive: checked,
+                                    },
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={async () => {
+                    setIsSavingGameLimits(true);
+                    for (const gameName of Object.keys(editedGameLimits) as GameName[]) {
+                      const edited = editedGameLimits[gameName];
+                      await updateGameLimit(gameName, edited.maxSlots, edited.isActive);
+                    }
+                    setIsSavingGameLimits(false);
+                    toast({
+                      title: 'Game limits saved',
+                      description: 'Capacity settings have been updated.',
+                    });
+                    refetchGameLimits();
+                  }}
+                  disabled={isSavingGameLimits}
+                >
+                  {isSavingGameLimits ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Game Limits'
+                  )}
+                </Button>
               </CardContent>
             </Card>
 
@@ -390,7 +509,7 @@ export default function Admin() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="totalSlots">Total Slots</Label>
+                  <Label htmlFor="totalSlots">Total Slots (Legacy)</Label>
                   <Input
                     id="totalSlots"
                     type="number"
@@ -399,6 +518,9 @@ export default function Admin() {
                     min={1}
                     max={1000}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Use Game Capacity above for per-game limits
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between">

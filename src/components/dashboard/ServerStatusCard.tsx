@@ -29,11 +29,13 @@ import {
 } from '@/components/ui/tooltip';
 import { useServerRequest } from '@/hooks/useServerRequest';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2 } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2, AlertTriangle } from 'lucide-react';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
+import { cn } from '@/lib/utils';
 
 type GameType = 'minecraft' | 'terraria' | 'satisfactory';
 type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig;
@@ -47,6 +49,7 @@ const gameOptions: { value: GameType; label: string; icon: string }[] = [
 export function ServerStatusCard() {
   const { request, isLoading, createRequest, hasActiveRequest, refetch } = useServerRequest();
   const { settings, isFull } = useSystemSettings();
+  const { gameLimits, isLoading: gameLimitsLoading } = useGameLimits();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType | ''>('');
@@ -64,10 +67,35 @@ export function ServerStatusCard() {
     setServerConfig({});
   };
 
+  // Get game availability info
+  const getGameLimit = (gameName: GameType) => {
+    return gameLimits.find((l) => l.game_name === gameName);
+  };
+
+  const isGameAvailable = (gameName: GameType) => {
+    const limit = getGameLimit(gameName);
+    if (!limit) return true; // Allow if we can't check
+    return limit.is_active && !limit.is_full;
+  };
+
+  const getGameAvailabilityText = (gameName: GameType) => {
+    const limit = getGameLimit(gameName);
+    if (!limit) return '';
+    if (!limit.is_active) return 'Unavailable';
+    if (limit.is_full) return 'Sold Out';
+    if (limit.available_slots <= 2) return `Only ${limit.available_slots} left!`;
+    return `${limit.available_slots} slots available`;
+  };
+
   const validateForm = (): string | null => {
     if (!selectedGame) return 'Please select a game.';
     if (!serverName.trim()) return 'Please enter a server name.';
     if (!discordUsername.trim()) return 'Please enter your Discord username.';
+
+    // Check game availability
+    const limit = getGameLimit(selectedGame as GameType);
+    if (limit && !limit.is_active) return 'This game is currently unavailable.';
+    if (limit && limit.is_full) return 'This game has no available slots.';
 
     // Game-specific validation
     if (selectedGame === 'minecraft') {
@@ -252,16 +280,56 @@ export function ServerStatusCard() {
                       <SelectValue placeholder="Select a game" />
                     </SelectTrigger>
                     <SelectContent>
-                      {gameOptions.map((game) => (
-                        <SelectItem key={game.value} value={game.value}>
-                          <span className="flex items-center gap-2">
-                            <span>{game.icon}</span>
-                            <span>{game.label}</span>
-                          </span>
-                        </SelectItem>
-                      ))}
+                      {gameOptions.map((game) => {
+                        const limit = getGameLimit(game.value);
+                        const available = isGameAvailable(game.value);
+                        
+                        return (
+                          <SelectItem 
+                            key={game.value} 
+                            value={game.value}
+                            disabled={!available}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{game.icon}</span>
+                              <span className={cn(!available && 'text-muted-foreground')}>
+                                {game.label}
+                              </span>
+                              {limit && (
+                                <span className={cn(
+                                  'ml-auto text-xs',
+                                  !limit.is_active || limit.is_full
+                                    ? 'text-destructive'
+                                    : limit.available_slots <= 2
+                                    ? 'text-warning'
+                                    : 'text-muted-foreground'
+                                )}>
+                                  {!limit.is_active ? 'Disabled' : limit.is_full ? 'Full' : `${limit.available_slots} left`}
+                                </span>
+                              )}
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
+                  
+                  {/* Availability feedback */}
+                  {selectedGame && (
+                    <div className={cn(
+                      'flex items-center gap-2 text-sm',
+                      !isGameAvailable(selectedGame as GameType)
+                        ? 'text-destructive'
+                        : getGameLimit(selectedGame as GameType)?.available_slots! <= 2
+                        ? 'text-warning'
+                        : 'text-muted-foreground'
+                    )}>
+                      {!isGameAvailable(selectedGame as GameType) && (
+                        <AlertTriangle className="h-4 w-4" />
+                      )}
+                      {getGameAvailabilityText(selectedGame as GameType)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Server Name */}
