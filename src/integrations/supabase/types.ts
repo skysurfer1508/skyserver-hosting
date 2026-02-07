@@ -128,6 +128,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_announcements: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
