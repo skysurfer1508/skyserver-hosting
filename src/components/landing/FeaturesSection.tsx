@@ -1,14 +1,43 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Gamepad2, Globe, Shield, Zap, Server, Clock, Loader2, FolderOpen, Puzzle } from 'lucide-react';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
-import { cn } from '@/lib/utils';
+import { GameCard } from './GameCard';
+import { ServerRequestModal } from './ServerRequestModal';
 
-const gameInfo: Record<GameName, { name: string; icon: string }> = {
-  minecraft: { name: 'Minecraft', icon: '⛏️' },
-  terraria: { name: 'Terraria', icon: '🌳' },
-  satisfactory: { name: 'Satisfactory', icon: '🏭' },
-};
+const gameData: {
+  gameName: GameName;
+  title: string;
+  icon: string;
+  description: string;
+  tags: string[];
+  accentColor: 'green' | 'purple' | 'orange';
+}[] = [
+  {
+    gameName: 'minecraft',
+    title: 'Minecraft',
+    icon: '⛏️',
+    description: 'Build, explore, and survive in infinite worlds. Full support for Spigot, Paper, and Forge.',
+    tags: ['Java & Bedrock', 'Mods & Plugins', '24/7 Online'],
+    accentColor: 'green',
+  },
+  {
+    gameName: 'terraria',
+    title: 'Terraria',
+    icon: '🌳',
+    description: 'Dig, fight, explore, and build. The world is at your fingertips as you fight for survival, fortune, and glory.',
+    tags: ['tModLoader Supported', 'Large Worlds', 'Journey Mode'],
+    accentColor: 'purple',
+  },
+  {
+    gameName: 'satisfactory',
+    title: 'Satisfactory',
+    icon: '🏭',
+    description: 'Construct massive factories and automate production on an alien planet. Perfect for co-op sessions.',
+    tags: ['Experimental Branch', 'Unlimited Saves', 'High Performance'],
+    accentColor: 'orange',
+  },
+];
 
 const benefits = [
   {
@@ -55,19 +84,16 @@ const benefits = [
 
 export function FeaturesSection() {
   const { gameLimits, isLoading } = useGameLimits();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<GameName | undefined>();
 
-  const getProgressColor = (usedSlots: number, maxSlots: number, isActive: boolean) => {
-    if (!isActive) return 'bg-muted';
-    const percentage = (usedSlots / maxSlots) * 100;
-    if (percentage >= 100) return 'bg-destructive';
-    if (percentage >= 80) return 'bg-warning';
-    return 'bg-primary';
+  const handleSelectGame = (gameName: GameName) => {
+    setSelectedGame(gameName);
+    setModalOpen(true);
   };
 
-  const getStatusText = (limit: { used_slots: number; max_slots: number; is_active: boolean; is_full: boolean }) => {
-    if (!limit.is_active) return 'Unavailable';
-    if (limit.is_full) return 'Sold Out';
-    return `${limit.used_slots} / ${limit.max_slots} Claimed`;
+  const getGameLimit = (gameName: GameName) => {
+    return gameLimits.find((l) => l.game_name === gameName);
   };
 
   return (
@@ -88,79 +114,28 @@ export function FeaturesSection() {
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-3">
-              {gameLimits.map((limit) => {
-                const game = gameInfo[limit.game_name];
-                const percentage = limit.max_slots > 0 
-                  ? Math.min(100, (limit.used_slots / limit.max_slots) * 100)
-                  : 0;
-                const progressColor = getProgressColor(limit.used_slots, limit.max_slots, limit.is_active);
-
-                return (
-                  <Card
-                    key={limit.game_name}
-                    className={cn(
-                      'gaming-card border-border/50 transition-all',
-                      limit.is_full || !limit.is_active
-                        ? 'opacity-75'
-                        : 'hover:border-primary/50 hover:glow-primary'
-                    )}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center gap-3">
-                        <span className="text-3xl">{game.icon}</span>
-                        <CardTitle className="text-xl">{game.name}</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Progress bar */}
-                      <div className="space-y-2">
-                        <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
-                          <div
-                            className={cn('h-full transition-all duration-500', progressColor)}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <p className={cn(
-                          'text-sm font-medium',
-                          !limit.is_active
-                            ? 'text-muted-foreground'
-                            : limit.is_full
-                            ? 'text-destructive'
-                            : limit.available_slots <= 2
-                            ? 'text-warning'
-                            : 'text-muted-foreground'
-                        )}>
-                          {getStatusText(limit)}
-                        </p>
-                      </div>
-
-                      {/* Availability badge */}
-                      <div className={cn(
-                        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium',
-                        !limit.is_active
-                          ? 'bg-muted text-muted-foreground'
-                          : limit.is_full
-                          ? 'bg-destructive/20 text-destructive'
-                          : limit.available_slots <= 2
-                          ? 'bg-warning/20 text-warning'
-                          : 'bg-primary/20 text-primary'
-                      )}>
-                        {!limit.is_active ? (
-                          'Currently Disabled'
-                        ) : limit.is_full ? (
-                          'No Slots Available'
-                        ) : limit.available_slots <= 2 ? (
-                          `Only ${limit.available_slots} left!`
-                        ) : (
-                          `${limit.available_slots} slots available`
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {gameData.map((game) => (
+                <GameCard
+                  key={game.gameName}
+                  gameName={game.gameName}
+                  title={game.title}
+                  icon={game.icon}
+                  description={game.description}
+                  tags={game.tags}
+                  accentColor={game.accentColor}
+                  limit={getGameLimit(game.gameName)}
+                  onSelect={handleSelectGame}
+                />
+              ))}
             </div>
           )}
+
+          {/* Server Request Modal */}
+          <ServerRequestModal
+            open={modalOpen}
+            onOpenChange={setModalOpen}
+            preSelectedGame={selectedGame}
+          />
         </div>
 
         {/* Benefits Section */}
