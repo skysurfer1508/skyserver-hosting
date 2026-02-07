@@ -85,21 +85,29 @@ export function useAdminRequests() {
 
   const approveRequest = async (requestId: string, approvalData: ApprovalData) => {
     try {
-      const { error } = await supabase
-        .from('server_requests')
-        .update({
-          status: 'active' as RequestStatus,
-          assigned_ip: approvalData.assignedIp,
-          panel_url: approvalData.panelUrl,
-          panel_username: approvalData.panelUsername,
-          panel_password: approvalData.panelPassword,
-        })
-        .eq('id', requestId);
+      // Use edge function to encrypt and store credentials securely
+      const response = await supabase.functions.invoke('encrypt-credentials', {
+        body: {
+          requestId,
+          assignedIp: approvalData.assignedIp,
+          panelUrl: approvalData.panelUrl,
+          panelUsername: approvalData.panelUsername,
+          panelPassword: approvalData.panelPassword,
+        },
+      });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to encrypt credentials');
+      }
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Failed to approve request');
+      }
+
       await fetchRequests();
       return { error: null };
     } catch (error) {
+      console.error('Error approving request:', error);
       return { error: error as Error };
     }
   };
