@@ -228,10 +228,12 @@ export function Header() {
                 </Collapsible>
               )}
 
-              {/* Other nav items - only on home page (except Help Center) */}
+              {/* Other nav items */}
               {navItems.slice(1).map((item) => {
-                // Always show Help Center, others only on home page
-                if (!item.isRoute && !isHomePage) return null;
+                // On home page, show all items; elsewhere, only show route-based items
+                const shouldShow = isHomePage || item.isRoute;
+                if (!shouldShow) return null;
+                
                 return (
                   <Button
                     key={item.name}
