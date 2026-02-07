@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Globe, Shield, Zap, Server, Clock, Loader2, FolderOpen, Puzzle } from 'lucide-react';
+import { Gamepad2, Globe, Shield, Zap, Server, Clock, Loader2, FolderOpen, Puzzle, Users } from 'lucide-react';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { GameCard } from './GameCard';
 import { ServerRequestModal } from './ServerRequestModal';
@@ -47,13 +47,18 @@ const benefits = [
   },
   {
     icon: FolderOpen,
-    title: 'Full FTP Access',
-    description: 'Access your server files directly. Upload your own worlds, configs, and mods without restrictions.',
+    title: 'Full SFTP Access',
+    description: 'Access your server files directly via SFTP or the web file browser. Upload worlds, configs, and mods.',
+  },
+  {
+    icon: Users,
+    title: 'Team Management',
+    description: "Don't manage alone. Invite friends as Sub-Users and assign them granular permissions to help run your server.",
   },
   {
     icon: Puzzle,
     title: 'Modding Supported',
-    description: 'Want to play Modded Minecraft or TModLoader? You have full write access to install whatever you want.',
+    description: 'Install any mods, plugins, or modpacks you want. Full support for Forge, Fabric, Spigot, and more.',
   },
   {
     icon: Globe,
@@ -62,8 +67,8 @@ const benefits = [
   },
   {
     icon: Clock,
-    title: 'High Uptime',
-    description: '99.9% uptime guarantee with automatic backups and monitoring.',
+    title: 'Scheduled Tasks',
+    description: 'Set up auto-restarts, automated commands, and scheduled backups with ease.',
   },
   {
     icon: Shield,
@@ -72,13 +77,13 @@ const benefits = [
   },
   {
     icon: Server,
-    title: 'Instant Setup',
-    description: 'Your server is ready within minutes after approval.',
+    title: 'MySQL Databases',
+    description: 'Free MySQL databases included for plugins that need persistent data storage.',
   },
   {
     icon: Gamepad2,
-    title: 'Easy Control',
-    description: 'Simple dashboard to manage your server with one click.',
+    title: 'Web Console',
+    description: 'Full control panel with live console, CPU/RAM monitoring, and one-click management.',
   },
 ];
 
