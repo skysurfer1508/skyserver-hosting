@@ -24,6 +24,8 @@ interface ServerRequest {
   panel_url: string | null;
   panel_username: string | null;
   panel_password: string | null;
+  // Rejection field
+  rejection_reason: string | null;
 }
 
 export function useServerRequest() {
@@ -57,23 +59,20 @@ export function useServerRequest() {
         setRequest(activeData as ServerRequest);
         setHasActiveRequest(true);
       } else {
-        // If no active/pending request, check for any request to display (including rejected)
-        const { data: anyData, error: anyError } = await supabase
+        // If no active/pending request, check for rejected requests to display the reason
+        const { data: rejectedData, error: rejectedError } = await supabase
           .from('server_requests')
           .select('*')
           .eq('user_id', user.id)
+          .eq('status', 'rejected')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (anyError) throw anyError;
+        if (rejectedError) throw rejectedError;
         
-        // Only show rejected requests if they exist, otherwise null
-        if (anyData && anyData.status === 'rejected') {
-          setRequest(null); // Don't show rejected requests, allow new request
-        } else {
-          setRequest(anyData as ServerRequest | null);
-        }
+        // Show rejected request so user can see the rejection reason
+        setRequest(rejectedData as ServerRequest | null);
         setHasActiveRequest(false);
       }
     } catch (error) {

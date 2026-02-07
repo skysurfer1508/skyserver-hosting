@@ -104,12 +104,13 @@ export function useAdminRequests() {
     }
   };
 
-  const rejectRequest = async (requestId: string) => {
+  const rejectRequest = async (requestId: string, rejectionReason?: string) => {
     try {
       const { error } = await supabase
         .from('server_requests')
         .update({
           status: 'rejected' as RequestStatus,
+          rejection_reason: rejectionReason || null,
         })
         .eq('id', requestId);
 

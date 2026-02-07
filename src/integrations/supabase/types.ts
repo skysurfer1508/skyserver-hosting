@@ -43,6 +43,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_banned: boolean
           updated_at: string
           username: string | null
         }
@@ -50,6 +51,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          is_banned?: boolean
           updated_at?: string
           username?: string | null
         }
@@ -57,6 +59,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_banned?: boolean
           updated_at?: string
           username?: string | null
         }
@@ -75,6 +78,7 @@ export type Database = {
           panel_url: string | null
           panel_username: string | null
           port: number | null
+          rejection_reason: string | null
           server_config: Json | null
           server_name: string
           status: Database["public"]["Enums"]["request_status"]
@@ -93,6 +97,7 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
+          rejection_reason?: string | null
           server_config?: Json | null
           server_name: string
           status?: Database["public"]["Enums"]["request_status"]
@@ -111,6 +116,7 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
+          rejection_reason?: string | null
           server_config?: Json | null
           server_name?: string
           status?: Database["public"]["Enums"]["request_status"]
