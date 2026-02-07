@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Zap, Server } from 'lucide-react';
+import { ArrowRight, Zap, Server, MessageCircle } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
+import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export function HeroSection() {
   const [heroRef, isHeroVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.1 });
@@ -43,17 +44,35 @@ export function HeroSection() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg" className="gap-2 glow-primary text-lg px-8 py-6">
-                <Server className="h-5 w-5" />
-                Get Started
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <a href="#features">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                Learn More
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/register">
+                <Button size="lg" className="gap-2 glow-primary text-lg px-8 py-6">
+                  <Server className="h-5 w-5" />
+                  Get Started
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+              <a href="#features">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+                  Learn More
+                </Button>
+              </a>
+            </div>
+            
+            {/* Discord Community Button */}
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 text-muted-foreground hover:text-[#5865F2] hover:bg-[#5865F2]/10 transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Join Community on Discord
               </Button>
             </a>
           </div>

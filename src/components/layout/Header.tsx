@@ -28,8 +28,10 @@ import {
   ChevronDown,
   Terminal,
   ExternalLink,
+  MessageCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { DISCORD_INVITE_URL, EXTERNAL_LINKS } from '@/config/constants';
 
 const games = [
   { name: 'Minecraft', icon: '⛏️', href: '#features' },
@@ -94,11 +96,28 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Auth Buttons + Game Panel + Hamburger Menu - Right */}
+        {/* Auth Buttons + Game Panel + Discord + Hamburger Menu - Right */}
         <div className="flex items-center gap-2">
+          {/* Discord Button */}
+          <a
+            href={DISCORD_INVITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex"
+          >
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hover:bg-[#5865F2]/10 hover:text-[#5865F2] transition-colors"
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span className="sr-only">Join Discord</span>
+            </Button>
+          </a>
+
           {/* Game Panel - Always Visible */}
           <a
-            href="https://panel.skyserver1508.org"
+            href={EXTERNAL_LINKS.gamePanel}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex"
@@ -217,9 +236,29 @@ export function Header() {
                   </Button>
                 ))}
 
+              {/* Discord - Mobile only (shown in menu) */}
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sm:hidden"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between gap-3 h-12 text-base hover:bg-[#5865F2]/10 hover:text-[#5865F2]"
+                >
+                  <span className="flex items-center gap-3">
+                    <MessageCircle className="h-5 w-5" />
+                    Join Discord
+                  </span>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </a>
+
               {/* Game Panel - Mobile only (shown in menu) */}
               <a
-                href="https://panel.skyserver1508.org"
+                href={EXTERNAL_LINKS.gamePanel}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sm:hidden"
