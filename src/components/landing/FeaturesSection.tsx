@@ -6,6 +6,7 @@ import { GameCard } from './GameCard';
 import { ServerRequestModal } from './ServerRequestModal';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const gameData: {
   gameName: GameName;
@@ -180,7 +181,7 @@ export function FeaturesSection() {
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
           >
             {benefits.map((benefit, index) => (
-              <div
+              <motion.div
                 key={benefit.title}
                 className={cn(
                   "reveal-on-scroll",
@@ -189,19 +190,36 @@ export function FeaturesSection() {
                 style={{ 
                   transitionDelay: isBenefitsVisible ? `${index * 100}ms` : '0ms' 
                 }}
+                whileHover={{ 
+                  y: -5,
+                  transition: { duration: 0.3, ease: 'easeOut' }
+                }}
               >
-                <Card className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary h-full">
+                <Card 
+                  className="gaming-card border-border/50 transition-all duration-300 hover:border-primary/50 h-full"
+                  style={{ boxShadow: 'none' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(99, 102, 241, 0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
                   <CardHeader>
-                    <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <motion.div 
+                      className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
                       <benefit.icon className="h-6 w-6 text-primary" />
-                    </div>
+                    </motion.div>
                     <CardTitle className="text-xl">{benefit.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">{benefit.description}</p>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
