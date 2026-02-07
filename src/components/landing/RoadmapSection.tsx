@@ -70,8 +70,8 @@ export function RoadmapSection() {
         <div 
           ref={headerRef}
           className={cn(
-            "text-center mb-12 opacity-0",
-            isHeaderVisible && "animate-reveal-up"
+            "text-center mb-12 reveal-on-scroll",
+            isHeaderVisible && "is-visible"
           )}
         >
           <h2 className="font-display text-3xl font-bold text-foreground mb-4">
@@ -94,10 +94,10 @@ export function RoadmapSection() {
                 className={cn(
                   `relative lg:flex ${
                     index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'
-                  } items-center gap-8 opacity-0`,
-                  isTimelineVisible && "animate-reveal-up"
+                  } items-center gap-8 reveal-on-scroll`,
+                  isTimelineVisible && "is-visible"
                 )}
-                style={{ animationDelay: isTimelineVisible ? `${index * 200}ms` : '0ms' }}
+                style={{ transitionDelay: isTimelineVisible ? `${index * 200}ms` : '0ms' }}
               >
                 {/* Timeline dot */}
                 <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 h-12 w-12 items-center justify-center rounded-full bg-background border-4 border-primary">

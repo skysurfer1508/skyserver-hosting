@@ -14,8 +14,8 @@ export function AboutSection() {
           <div 
             ref={headerRef}
             className={cn(
-              "opacity-0",
-              isHeaderVisible && "animate-reveal-up"
+              "reveal-on-scroll",
+              isHeaderVisible && "is-visible"
             )}
           >
             <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
@@ -29,10 +29,10 @@ export function AboutSection() {
           <div
             ref={cardRef}
             className={cn(
-              "opacity-0",
-              isCardVisible && "animate-reveal-up"
+              "reveal-on-scroll",
+              isCardVisible && "is-visible"
             )}
-            style={{ animationDelay: isCardVisible ? '150ms' : '0ms' }}
+            style={{ transitionDelay: isCardVisible ? '150ms' : '0ms' }}
           >
             <Card className="gaming-card border-border/50 overflow-hidden">
               <CardContent className="p-8">

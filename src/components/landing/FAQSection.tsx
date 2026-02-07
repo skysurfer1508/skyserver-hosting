@@ -60,8 +60,8 @@ export function FAQSection() {
         <div 
           ref={headerRef}
           className={cn(
-            "text-center mb-12 opacity-0",
-            isHeaderVisible && "animate-reveal-up"
+            "text-center mb-12 reveal-on-scroll",
+            isHeaderVisible && "is-visible"
           )}
         >
           <h2 className="font-display text-3xl font-bold text-foreground mb-4">
@@ -81,10 +81,10 @@ export function FAQSection() {
               <div
                 key={index}
                 className={cn(
-                  "opacity-0",
-                  isAccordionVisible && "animate-reveal-up"
+                  "reveal-on-scroll",
+                  isAccordionVisible && "is-visible"
                 )}
-                style={{ animationDelay: isAccordionVisible ? `${index * 80}ms` : '0ms' }}
+                style={{ transitionDelay: isAccordionVisible ? `${index * 80}ms` : '0ms' }}
               >
                 <AccordionItem
                   value={`item-${index}`}

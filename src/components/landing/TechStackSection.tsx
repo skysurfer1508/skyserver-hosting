@@ -49,8 +49,8 @@ export function TechStackSection() {
         <div 
           ref={headerRef}
           className={cn(
-            "text-center mb-12 opacity-0",
-            isHeaderVisible && "animate-reveal-up"
+            "text-center mb-12 reveal-on-scroll",
+            isHeaderVisible && "is-visible"
           )}
         >
           <h2 className="font-display text-3xl font-bold text-foreground mb-4">
@@ -66,10 +66,10 @@ export function TechStackSection() {
             <div
               key={tech.title}
               className={cn(
-                "opacity-0",
-                isCardsVisible && "animate-reveal-up"
+                "reveal-on-scroll",
+                isCardsVisible && "is-visible"
               )}
-              style={{ animationDelay: isCardsVisible ? `${index * 100}ms` : '0ms' }}
+              style={{ transitionDelay: isCardsVisible ? `${index * 100}ms` : '0ms' }}
             >
               <Card
                 className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary group h-full"
@@ -96,10 +96,10 @@ export function TechStackSection() {
         <div 
           ref={badgeRef}
           className={cn(
-            "mt-12 text-center opacity-0",
-            isBadgeVisible && "animate-reveal-up"
+            "mt-12 text-center reveal-on-scroll",
+            isBadgeVisible && "is-visible"
           )}
-          style={{ animationDelay: isBadgeVisible ? '200ms' : '0ms' }}
+          style={{ transitionDelay: isBadgeVisible ? '200ms' : '0ms' }}
         >
           <div className="inline-flex items-center gap-3 rounded-full border border-border/50 bg-card/50 px-6 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
