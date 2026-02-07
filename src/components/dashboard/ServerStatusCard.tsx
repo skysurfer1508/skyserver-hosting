@@ -31,7 +31,8 @@ import { useServerRequest } from '@/hooks/useServerRequest';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
@@ -446,6 +447,22 @@ export function ServerStatusCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Rejection Alert */}
+        {request.status === 'rejected' && (
+          <Alert variant="destructive" className="border-destructive/50">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Request Rejected</AlertTitle>
+            <AlertDescription className="mt-2 space-y-2">
+              <p>
+                <strong>Reason:</strong> {request.rejection_reason || 'No reason provided'}
+              </p>
+              <p className="text-xs">
+                Please submit a new request or contact us on Discord for assistance.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {request.status === 'pending' && (
           <div className="rounded-lg bg-warning/10 border border-warning/30 p-4 text-center">
             <Clock className="mx-auto h-8 w-8 text-warning mb-2" />
