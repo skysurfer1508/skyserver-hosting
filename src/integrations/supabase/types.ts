@@ -72,6 +72,7 @@ export type Database = {
         Row: {
           assigned_ip: string | null
           created_at: string
+          credentials_encrypted: boolean | null
           description: string | null
           discord_username: string
           game_type: Database["public"]["Enums"]["game_type"]
@@ -91,6 +92,7 @@ export type Database = {
         Insert: {
           assigned_ip?: string | null
           created_at?: string
+          credentials_encrypted?: boolean | null
           description?: string | null
           discord_username: string
           game_type: Database["public"]["Enums"]["game_type"]
@@ -110,6 +112,7 @@ export type Database = {
         Update: {
           assigned_ip?: string | null
           created_at?: string
+          credentials_encrypted?: boolean | null
           description?: string | null
           discord_username?: string
           game_type?: Database["public"]["Enums"]["game_type"]
@@ -232,6 +235,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_credential: {
+        Args: { ciphertext: string; encryption_key: string }
+        Returns: string
+      }
+      encrypt_credential: {
+        Args: { encryption_key: string; plaintext: string }
+        Returns: string
+      }
       get_active_slots_count: { Args: never; Returns: number }
       get_game_slot_usage: {
         Args: { game_name_param: string }
