@@ -1,0 +1,113 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+export type GameName = 'minecraft' | 'terraria' | 'satisfactory';
+
+export interface GameLimit {
+  game_name: GameName;
+  max_slots: number;
+  is_active: boolean;
+  used_slots: number;
+  available_slots: number;
+  is_full: boolean;
+}
+
+export interface GameLimitsState {
+  gameLimits: GameLimit[];
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+  updateGameLimit: (gameName: GameName, maxSlots: number, isActive: boolean) => Promise<{ error: Error | null }>;
+}
+
+export function useGameLimits(): GameLimitsState {
+  const [gameLimits, setGameLimits] = useState<GameLimit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchGameLimits = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Fetch game limits from the table
+      const { data: limitsData, error: limitsError } = await supabase
+        .from('game_limits')
+        .select('*');
+
+      if (limitsError) throw limitsError;
+
+      if (!limitsData || limitsData.length === 0) {
+        setGameLimits([]);
+        return;
+      }
+
+      // For each game, get the used slot count
+      const limitsWithUsage: GameLimit[] = await Promise.all(
+        limitsData.map(async (limit) => {
+          const { data: usedSlots, error: rpcError } = await supabase.rpc(
+            'get_game_slot_usage',
+            { game_name_param: limit.game_name }
+          );
+
+          if (rpcError) {
+            console.error(`Error fetching slot usage for ${limit.game_name}:`, rpcError);
+          }
+
+          const used = usedSlots ?? 0;
+          const available = Math.max(0, limit.max_slots - used);
+
+          return {
+            game_name: limit.game_name as GameName,
+            max_slots: limit.max_slots,
+            is_active: limit.is_active,
+            used_slots: used,
+            available_slots: available,
+            is_full: used >= limit.max_slots,
+          };
+        })
+      );
+
+      setGameLimits(limitsWithUsage);
+    } catch (err) {
+      console.error('Error fetching game limits:', err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const updateGameLimit = async (
+    gameName: GameName,
+    maxSlots: number,
+    isActive: boolean
+  ): Promise<{ error: Error | null }> => {
+    try {
+      const { error: updateError } = await supabase
+        .from('game_limits')
+        .update({ max_slots: maxSlots, is_active: isActive })
+        .eq('game_name', gameName);
+
+      if (updateError) throw updateError;
+
+      // Refetch to get updated data
+      await fetchGameLimits();
+      return { error: null };
+    } catch (err) {
+      console.error('Error updating game limit:', err);
+      return { error: err as Error };
+    }
+  };
+
+  useEffect(() => {
+    fetchGameLimits();
+  }, [fetchGameLimits]);
+
+  return {
+    gameLimits,
+    isLoading,
+    error,
+    refetch: fetchGameLimits,
+    updateGameLimit,
+  };
+}

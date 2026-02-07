@@ -1,11 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Globe, Shield, Zap, Server, Clock } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Gamepad2, Globe, Shield, Zap, Server, Clock, Loader2 } from 'lucide-react';
+import { useGameLimits, GameName } from '@/hooks/useGameLimits';
+import { cn } from '@/lib/utils';
 
-const games = [
-  { name: 'Minecraft', icon: '⛏️', color: 'bg-green-500/20 text-green-400' },
-  { name: 'Terraria', icon: '🌳', color: 'bg-amber-500/20 text-amber-400' },
-  { name: 'Satisfactory', icon: '🏭', color: 'bg-orange-500/20 text-orange-400' },
-];
+const gameInfo: Record<GameName, { name: string; icon: string }> = {
+  minecraft: { name: 'Minecraft', icon: '⛏️' },
+  terraria: { name: 'Terraria', icon: '🌳' },
+  satisfactory: { name: 'Satisfactory', icon: '🏭' },
+};
 
 const benefits = [
   {
@@ -41,6 +44,22 @@ const benefits = [
 ];
 
 export function FeaturesSection() {
+  const { gameLimits, isLoading } = useGameLimits();
+
+  const getProgressColor = (usedSlots: number, maxSlots: number, isActive: boolean) => {
+    if (!isActive) return 'bg-muted';
+    const percentage = (usedSlots / maxSlots) * 100;
+    if (percentage >= 100) return 'bg-destructive';
+    if (percentage >= 80) return 'bg-warning';
+    return 'bg-primary';
+  };
+
+  const getStatusText = (limit: { used_slots: number; max_slots: number; is_active: boolean; is_full: boolean }) => {
+    if (!limit.is_active) return 'Unavailable';
+    if (limit.is_full) return 'Sold Out';
+    return `${limit.used_slots} / ${limit.max_slots} Claimed`;
+  };
+
   return (
     <section id="features" className="py-20 bg-card/30">
       <div className="container">
@@ -52,18 +71,86 @@ export function FeaturesSection() {
           <p className="mb-10 text-center text-muted-foreground">
             Host your favorite multiplayer games with ease
           </p>
-          
-          <div className="flex flex-wrap justify-center gap-4">
-            {games.map((game) => (
-              <div
-                key={game.name}
-                className={`flex items-center gap-3 rounded-xl px-6 py-4 ${game.color} border border-border/50 transition-transform hover:scale-105`}
-              >
-                <span className="text-2xl">{game.icon}</span>
-                <span className="font-medium">{game.name}</span>
-              </div>
-            ))}
-          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-3">
+              {gameLimits.map((limit) => {
+                const game = gameInfo[limit.game_name];
+                const percentage = limit.max_slots > 0 
+                  ? Math.min(100, (limit.used_slots / limit.max_slots) * 100)
+                  : 0;
+                const progressColor = getProgressColor(limit.used_slots, limit.max_slots, limit.is_active);
+
+                return (
+                  <Card
+                    key={limit.game_name}
+                    className={cn(
+                      'gaming-card border-border/50 transition-all',
+                      limit.is_full || !limit.is_active
+                        ? 'opacity-75'
+                        : 'hover:border-primary/50 hover:glow-primary'
+                    )}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{game.icon}</span>
+                        <CardTitle className="text-xl">{game.name}</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Progress bar */}
+                      <div className="space-y-2">
+                        <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
+                          <div
+                            className={cn('h-full transition-all duration-500', progressColor)}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <p className={cn(
+                          'text-sm font-medium',
+                          !limit.is_active
+                            ? 'text-muted-foreground'
+                            : limit.is_full
+                            ? 'text-destructive'
+                            : limit.available_slots <= 2
+                            ? 'text-warning'
+                            : 'text-muted-foreground'
+                        )}>
+                          {getStatusText(limit)}
+                        </p>
+                      </div>
+
+                      {/* Availability badge */}
+                      <div className={cn(
+                        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium',
+                        !limit.is_active
+                          ? 'bg-muted text-muted-foreground'
+                          : limit.is_full
+                          ? 'bg-destructive/20 text-destructive'
+                          : limit.available_slots <= 2
+                          ? 'bg-warning/20 text-warning'
+                          : 'bg-primary/20 text-primary'
+                      )}>
+                        {!limit.is_active ? (
+                          'Currently Disabled'
+                        ) : limit.is_full ? (
+                          'No Slots Available'
+                        ) : limit.available_slots <= 2 ? (
+                          `Only ${limit.available_slots} left!`
+                        ) : (
+                          `${limit.available_slots} slots available`
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Benefits Section */}

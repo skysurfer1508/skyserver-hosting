@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      game_limits: {
+        Row: {
+          created_at: string
+          game_name: string
+          is_active: boolean
+          max_slots: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          game_name: string
+          is_active?: boolean
+          max_slots?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          game_name?: string
+          is_active?: boolean
+          max_slots?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -137,6 +161,10 @@ export type Database = {
     }
     Functions: {
       get_active_slots_count: { Args: never; Returns: number }
+      get_game_slot_usage: {
+        Args: { game_name_param: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
