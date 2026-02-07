@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,8 +30,9 @@ import {
 import { useServerRequest } from '@/hooks/useServerRequest';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
+import { useDecryptedCredentials } from '@/hooks/useDecryptedCredentials';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal, Shield } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
@@ -54,6 +55,7 @@ export function ServerStatusCard() {
   const { request, isLoading, createRequest, hasActiveRequest, refetch } = useServerRequest();
   const { settings, isFull } = useSystemSettings();
   const { gameLimits, isLoading: gameLimitsLoading } = useGameLimits();
+  const { decryptCredentials, decryptedCredentials, isDecrypting, clearCredentials } = useDecryptedCredentials();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType | ''>('');
@@ -63,6 +65,24 @@ export function ServerStatusCard() {
   const [serverConfig, setServerConfig] = useState<Partial<ServerConfig>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [credentialsLoaded, setCredentialsLoaded] = useState(false);
+
+  // Decrypt credentials when active server request is loaded
+  useEffect(() => {
+    if (request?.status === 'active' && request.id && !credentialsLoaded) {
+      decryptCredentials(request.id).then(() => {
+        setCredentialsLoaded(true);
+      });
+    }
+  }, [request?.id, request?.status, decryptCredentials, credentialsLoaded]);
+
+  // Reset credentials state when request changes
+  useEffect(() => {
+    if (!request || request.status !== 'active') {
+      clearCredentials();
+      setCredentialsLoaded(false);
+    }
+  }, [request?.id, request?.status, clearCredentials]);
 
   const resetForm = () => {
     setSelectedGame('');
@@ -477,106 +497,126 @@ export function ServerStatusCard() {
 
         {request.status === 'active' && request.assigned_ip && (
           <div className="space-y-4">
+            {/* Security Badge */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Shield className="h-3 w-3 text-success" />
+              <span>Credentials are encrypted and securely stored</span>
+            </div>
+
+            {/* Loading State for Decryption */}
+            {isDecrypting && (
+              <div className="rounded-lg bg-muted/50 border border-border p-4 text-center">
+                <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary mb-2" />
+                <p className="text-sm text-muted-foreground">Loading secure credentials...</p>
+              </div>
+            )}
+
             {/* Server Connection Card */}
-            <div className="rounded-lg bg-success/10 border border-success/30 p-4 space-y-4">
-              <div className="flex items-center gap-2 text-success font-medium">
-                <CheckCircle2 className="h-5 w-5" />
-                Your Server is Active
-              </div>
-
-              {/* Server IP */}
-              <div className="space-y-1">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Server Address</span>
-                <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
-                  <span className="font-mono text-sm">{request.assigned_ip}</span>
-                  <CopyButton text={request.assigned_ip!} label="Server IP" />
+            {!isDecrypting && decryptedCredentials && (
+              <div className="rounded-lg bg-success/10 border border-success/30 p-4 space-y-4">
+                <div className="flex items-center gap-2 text-success font-medium">
+                  <CheckCircle2 className="h-5 w-5" />
+                  Your Server is Active
                 </div>
-              </div>
 
-              {/* Control Panel */}
-              {request.panel_url && (
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Control Panel</span>
-                  <a
-                    href={request.panel_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-background/50 rounded-md p-2 text-primary hover:text-primary/80 transition-colors"
-                  >
-                    <span className="font-mono text-sm truncate">{request.panel_url}</span>
-                    <ExternalLink className="h-4 w-4 shrink-0" />
-                  </a>
-                </div>
-              )}
-
-              {/* Panel Credentials */}
-              {request.panel_username && (
-                <div className="grid grid-cols-2 gap-3">
+                {/* Server IP */}
+                {decryptedCredentials.assigned_ip && (
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Username</span>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Server Address</span>
                     <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
-                      <span className="font-mono text-sm">{request.panel_username}</span>
-                      <CopyButton text={request.panel_username!} label="Username" />
+                      <span className="font-mono text-sm">{decryptedCredentials.assigned_ip}</span>
+                      <CopyButton text={decryptedCredentials.assigned_ip} label="Server IP" />
                     </div>
                   </div>
+                )}
 
+                {/* Control Panel */}
+                {decryptedCredentials.panel_url && (
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Password</span>
-                    <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
-                      <AnimatePresence mode="wait">
-                        <motion.span 
-                          key={showPassword ? 'visible' : 'hidden'}
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          transition={{ duration: 0.15 }}
-                          className="font-mono text-sm"
-                        >
-                          {showPassword ? request.panel_password : '••••••••'}
-                        </motion.span>
-                      </AnimatePresence>
-                      <div className="flex items-center gap-1">
-                        <motion.button
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <AnimatePresence mode="wait" initial={false}>
-                            {showPassword ? (
-                              <motion.div
-                                key="hide"
-                                initial={{ rotate: -90, opacity: 0 }}
-                                animate={{ rotate: 0, opacity: 1 }}
-                                exit={{ rotate: 90, opacity: 0 }}
-                                transition={{ duration: 0.15 }}
-                              >
-                                <EyeOff className="h-4 w-4" />
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                key="show"
-                                initial={{ rotate: 90, opacity: 0 }}
-                                animate={{ rotate: 0, opacity: 1 }}
-                                exit={{ rotate: -90, opacity: 0 }}
-                                transition={{ duration: 0.15 }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.button>
-                        <CopyButton text={request.panel_password!} label="Password" />
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Control Panel</span>
+                    <a
+                      href={decryptedCredentials.panel_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-background/50 rounded-md p-2 text-primary hover:text-primary/80 transition-colors"
+                    >
+                      <span className="font-mono text-sm truncate">{decryptedCredentials.panel_url}</span>
+                      <ExternalLink className="h-4 w-4 shrink-0" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Panel Credentials */}
+                {decryptedCredentials.panel_username && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Username</span>
+                      <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
+                        <span className="font-mono text-sm">{decryptedCredentials.panel_username}</span>
+                        <CopyButton text={decryptedCredentials.panel_username} label="Username" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Password</span>
+                      <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
+                        <AnimatePresence mode="wait">
+                          <motion.span 
+                            key={showPassword ? 'visible' : 'hidden'}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.15 }}
+                            className="font-mono text-sm"
+                          >
+                            {showPassword ? decryptedCredentials.panel_password : '••••••••'}
+                          </motion.span>
+                        </AnimatePresence>
+                        <div className="flex items-center gap-1">
+                          <motion.button
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <AnimatePresence mode="wait" initial={false}>
+                              {showPassword ? (
+                                <motion.div
+                                  key="hide"
+                                  initial={{ rotate: -90, opacity: 0 }}
+                                  animate={{ rotate: 0, opacity: 1 }}
+                                  exit={{ rotate: 90, opacity: 0 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  <EyeOff className="h-4 w-4" />
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key="show"
+                                  initial={{ rotate: 90, opacity: 0 }}
+                                  animate={{ rotate: 0, opacity: 1 }}
+                                  exit={{ rotate: -90, opacity: 0 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.button>
+                          {decryptedCredentials.panel_password && (
+                            <CopyButton text={decryptedCredentials.panel_password} label="Password" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Primary Action Button */}
-            {request.panel_url && (
+            {decryptedCredentials?.panel_url && (
               <a
-                href={request.panel_url}
+                href={decryptedCredentials.panel_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full"
