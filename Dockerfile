@@ -15,21 +15,22 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine AS production
+# Production stage - use Node to run preview server
+FROM node:20-alpine AS production
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
+WORKDIR /app
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy built assets and package files from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
 
-# Expose port 80
-EXPOSE 80
+# Expose port 7012
+EXPOSE 7012
 
-# Health check
+# Health check on port 7012
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:7012 || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the preview server on port 7012
+CMD ["npm", "run", "preview", "--", "--port", "7012", "--host"]
