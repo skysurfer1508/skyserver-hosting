@@ -54,10 +54,10 @@ export default function Register() {
     }
 
     toast({
-      title: 'Check your email!',
-      description: 'We sent you a confirmation link. Please verify your email to continue.',
+      title: 'Account created!',
+      description: 'You can now log in with your credentials.',
     });
-    navigate('/login');
+    navigate('/dashboard');
   };
 
   return (
