@@ -73,7 +73,7 @@ export default function Register() {
               <User className="h-6 w-6 text-primary-foreground" />
             </div>
             <CardTitle className="font-display text-2xl">Create Account</CardTitle>
-            <CardDescription>Join SkyServer1508 and get your free game server</CardDescription>
+            <CardDescription>Join SkyServer and get your free game server</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

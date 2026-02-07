@@ -7,7 +7,7 @@ export function AboutSection() {
       <div className="container">
         <div className="mx-auto max-w-4xl">
           <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
-            About SkyServer1508
+            About SkyServer
           </h2>
           <p className="mb-10 text-center text-muted-foreground">
             A fair student project from the heart of Switzerland
@@ -55,7 +55,7 @@ export function AboutSection() {
 
               <div className="mt-8 rounded-lg bg-muted/50 p-6 text-center">
                 <p className="text-lg text-foreground">
-                  "SkyServer1508 is a fair student project. We offer high-performance hosting with no compromises. 
+                  "SkyServer is a fair student project. We offer high-performance hosting with no compromises. 
                   Thanks to our Swiss location, you benefit from extremely low latency and high data privacy standards."
                 </p>
                 <p className="mt-4 font-display text-primary">

@@ -23,7 +23,7 @@ export function Header() {
             <span className="font-display text-sm font-bold text-primary-foreground">S</span>
           </div>
           <span className="font-display text-xl font-bold tracking-wider text-primary glow-text-primary">
-            SkyServer1508
+            SkyServer
           </span>
         </Link>
 
