@@ -43,7 +43,6 @@ const navItems = [
   { name: 'Roadmap', href: '#roadmap', icon: Map },
   { name: 'FAQ', href: '#faq', icon: HelpCircle },
   { name: 'Tech Stack', href: '#tech-stack', icon: Cpu },
-  { name: 'Game Panel', href: 'https://panel.skyserver.io', icon: Terminal, external: true },
 ];
 
 export function Header() {
@@ -95,8 +94,21 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Auth Buttons + Hamburger Menu - Right */}
+        {/* Auth Buttons + Game Panel + Hamburger Menu - Right */}
         <div className="flex items-center gap-2">
+          {/* Game Panel - Always Visible */}
+          <a
+            href="https://panel.skyserver1508.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex"
+          >
+            <Button variant="outline" size="sm" className="gap-2">
+              <Terminal className="h-4 w-4" />
+              <span className="hidden md:inline">Game Panel</span>
+            </Button>
+          </a>
+
           {user ? (
             <Link to="/dashboard">
               <Button variant="outline" size="sm" className="hidden sm:flex">
@@ -191,27 +203,39 @@ export function Header() {
                 </Collapsible>
               )}
 
-              {/* Other nav items - only on home page (except external links) */}
-              {navItems.slice(1).map((item) => {
-                const isExternal = 'external' in item && item.external;
-                // Show hash links only on home page, but always show external links
-                if (!isExternal && !isHomePage) return null;
-                
-                return (
+              {/* Other nav items - only on home page */}
+              {isHomePage &&
+                navItems.slice(1).map((item) => (
                   <Button
                     key={item.name}
                     variant="ghost"
-                    className="w-full justify-between gap-3 h-12 text-base"
-                    onClick={() => handleNavClick(item.href, isExternal)}
+                    className="w-full justify-start gap-3 h-12 text-base"
+                    onClick={() => handleNavClick(item.href)}
                   >
-                    <span className="flex items-center gap-3">
-                      <item.icon className="h-5 w-5" />
-                      {item.name}
-                    </span>
-                    {isExternal && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
+                    <item.icon className="h-5 w-5" />
+                    {item.name}
                   </Button>
-                );
-              })}
+                ))}
+
+              {/* Game Panel - Mobile only (shown in menu) */}
+              <a
+                href="https://panel.skyserver1508.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sm:hidden"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between gap-3 h-12 text-base"
+                >
+                  <span className="flex items-center gap-3">
+                    <Terminal className="h-5 w-5" />
+                    Game Panel
+                  </span>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </a>
 
               {/* Spacer */}
               <div className="flex-1" />
