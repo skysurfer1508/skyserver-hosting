@@ -46,7 +46,7 @@ export function Footer() {
               to="/terms"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              Terms of Service
+              Nutzungsbedingungen
             </Link>
           </nav>
 
