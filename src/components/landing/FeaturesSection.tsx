@@ -4,6 +4,8 @@ import { Gamepad2, Globe, Shield, Zap, Server, Clock, Loader2, FolderOpen, Puzzl
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { GameCard } from './GameCard';
 import { ServerRequestModal } from './ServerRequestModal';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
 
 const gameData: {
   gameName: GameName;
@@ -92,6 +94,11 @@ export function FeaturesSection() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameName | undefined>();
 
+  const [headerRef, isHeaderVisible] = useScrollReveal<HTMLDivElement>();
+  const [gamesRef, isGamesVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
+  const [benefitsHeaderRef, isBenefitsHeaderVisible] = useScrollReveal<HTMLDivElement>();
+  const [benefitsRef, isBenefitsVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
+
   const handleSelectGame = (gameName: GameName) => {
     setSelectedGame(gameName);
     setModalOpen(true);
@@ -106,31 +113,50 @@ export function FeaturesSection() {
       <div className="container">
         {/* Games Section */}
         <div className="mb-20">
-          <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
-            Supported Games
-          </h2>
-          <p className="mb-10 text-center text-muted-foreground">
-            Host your favorite multiplayer games with ease
-          </p>
+          <div 
+            ref={headerRef}
+            className={cn(
+              "opacity-0",
+              isHeaderVisible && "animate-reveal-up"
+            )}
+          >
+            <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
+              Supported Games
+            </h2>
+            <p className="mb-10 text-center text-muted-foreground">
+              Host your favorite multiplayer games with ease
+            </p>
+          </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-3">
-              {gameData.map((game) => (
-                <GameCard
+            <div 
+              ref={gamesRef}
+              className="grid gap-6 md:grid-cols-3"
+            >
+              {gameData.map((game, index) => (
+                <div
                   key={game.gameName}
-                  gameName={game.gameName}
-                  title={game.title}
-                  icon={game.icon}
-                  description={game.description}
-                  tags={game.tags}
-                  accentColor={game.accentColor}
-                  limit={getGameLimit(game.gameName)}
-                  onSelect={handleSelectGame}
-                />
+                  className={cn(
+                    "opacity-0",
+                    isGamesVisible && "animate-reveal-up"
+                  )}
+                  style={{ animationDelay: isGamesVisible ? `${index * 150}ms` : '0ms' }}
+                >
+                  <GameCard
+                    gameName={game.gameName}
+                    title={game.title}
+                    icon={game.icon}
+                    description={game.description}
+                    tags={game.tags}
+                    accentColor={game.accentColor}
+                    limit={getGameLimit(game.gameName)}
+                    onSelect={handleSelectGame}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -145,26 +171,46 @@ export function FeaturesSection() {
 
         {/* Benefits Section */}
         <div>
-          <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
-            Why Choose Us?
-          </h2>
-          <p className="mb-10 text-center text-muted-foreground">
-            Built by gamers, for gamers
-          </p>
+          <div 
+            ref={benefitsHeaderRef}
+            className={cn(
+              "opacity-0",
+              isBenefitsHeaderVisible && "animate-reveal-up"
+            )}
+          >
+            <h2 className="mb-4 text-center font-display text-3xl font-bold text-foreground">
+              Why Choose Us?
+            </h2>
+            <p className="mb-10 text-center text-muted-foreground">
+              Built by gamers, for gamers
+            </p>
+          </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {benefits.map((benefit) => (
-              <Card key={benefit.title} className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary">
-                <CardHeader>
-                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <benefit.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle className="text-xl">{benefit.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{benefit.description}</p>
-                </CardContent>
-              </Card>
+          <div 
+            ref={benefitsRef}
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
+          >
+            {benefits.map((benefit, index) => (
+              <div
+                key={benefit.title}
+                className={cn(
+                  "opacity-0",
+                  isBenefitsVisible && "animate-reveal-up"
+                )}
+                style={{ animationDelay: isBenefitsVisible ? `${index * 100}ms` : '0ms' }}
+              >
+                <Card className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary h-full">
+                  <CardHeader>
+                    <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                      <benefit.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">{benefit.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{benefit.description}</p>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         </div>
