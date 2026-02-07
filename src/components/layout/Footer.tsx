@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, Server, MessageCircle } from 'lucide-react';
+import { ExternalLink, Server, MessageCircle, HelpCircle } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export function Footer() {
@@ -29,6 +29,13 @@ export function Footer() {
               Join our Discord
               <ExternalLink className="h-3 w-3" />
             </a>
+            <Link
+              to="/help"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <HelpCircle className="h-4 w-4" />
+              Help Center
+            </Link>
             <Link
               to="/imprint"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"

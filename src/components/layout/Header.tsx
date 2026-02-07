@@ -45,6 +45,7 @@ const navItems = [
   { name: 'Roadmap', href: '#roadmap', icon: Map },
   { name: 'FAQ', href: '#faq', icon: HelpCircle },
   { name: 'Tech Stack', href: '#tech-stack', icon: Cpu },
+  { name: 'Help Center', href: '/help', icon: HelpCircle, isRoute: true },
 ];
 
 export function Header() {
@@ -60,10 +61,14 @@ export function Header() {
     navigate('/');
   };
 
-  const handleNavClick = (href: string, external?: boolean) => {
+  const handleNavClick = (href: string, external?: boolean, isRoute?: boolean) => {
     setMenuOpen(false);
     if (external) {
       window.open(href, '_blank');
+      return;
+    }
+    if (isRoute) {
+      navigate(href);
       return;
     }
     if (href.startsWith('#')) {
@@ -222,19 +227,22 @@ export function Header() {
                 </Collapsible>
               )}
 
-              {/* Other nav items - only on home page */}
-              {isHomePage &&
-                navItems.slice(1).map((item) => (
+              {/* Other nav items - only on home page (except Help Center) */}
+              {navItems.slice(1).map((item) => {
+                // Always show Help Center, others only on home page
+                if (!item.isRoute && !isHomePage) return null;
+                return (
                   <Button
                     key={item.name}
                     variant="ghost"
                     className="w-full justify-start gap-3 h-12 text-base"
-                    onClick={() => handleNavClick(item.href)}
+                    onClick={() => handleNavClick(item.href, false, item.isRoute)}
                   >
                     <item.icon className="h-5 w-5" />
                     {item.name}
                   </Button>
-                ))}
+                );
+              })}
 
               {/* Discord - Mobile only (shown in menu) */}
               <a
