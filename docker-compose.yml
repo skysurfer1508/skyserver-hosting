@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # Maps port 7012 on host to port 80 in container
+    # Maps port 7012 on host to port 7012 in container
     ports:
-      - "7012:80"
+      - "7012:7012"
     restart: always
