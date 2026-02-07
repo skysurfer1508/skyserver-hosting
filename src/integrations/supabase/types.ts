@@ -41,6 +41,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          discord_username: string | null
           email: string
           id: string
           is_banned: boolean
@@ -49,6 +50,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          discord_username?: string | null
           email: string
           id: string
           is_banned?: boolean
@@ -57,6 +59,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          discord_username?: string | null
           email?: string
           id?: string
           is_banned?: boolean
