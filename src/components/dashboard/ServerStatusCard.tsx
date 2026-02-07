@@ -31,7 +31,7 @@ import { useServerRequest } from '@/hooks/useServerRequest';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2, AlertTriangle } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
@@ -58,6 +58,7 @@ export function ServerStatusCard() {
   const [description, setDescription] = useState('');
   const [serverConfig, setServerConfig] = useState<Partial<ServerConfig>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const resetForm = () => {
     setSelectedGame('');
@@ -457,23 +458,88 @@ export function ServerStatusCard() {
           </div>
         )}
 
-        {request.status === 'active' && request.ip_address && request.port && (
-          <>
-            <div className="rounded-lg bg-muted/50 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Server Address</span>
-                <button
-                  onClick={() => copyToClipboard(`${request.ip_address}:${request.port}`)}
-                  className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
-                >
-                  <span className="font-mono text-sm">
-                    {request.ip_address}:{request.port}
-                  </span>
-                  <Copy className="h-4 w-4" />
-                </button>
+        {request.status === 'active' && request.assigned_ip && (
+          <div className="space-y-4">
+            {/* Server Connection Card */}
+            <div className="rounded-lg bg-success/10 border border-success/30 p-4 space-y-4">
+              <div className="flex items-center gap-2 text-success font-medium">
+                <CheckCircle2 className="h-5 w-5" />
+                Your Server is Active
               </div>
+
+              {/* Server IP */}
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Server Address</span>
+                <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
+                  <span className="font-mono text-sm">{request.assigned_ip}</span>
+                  <button
+                    onClick={() => copyToClipboard(request.assigned_ip!)}
+                    className="text-primary hover:text-primary/80 transition-colors p-1"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Control Panel */}
+              {request.panel_url && (
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Control Panel</span>
+                  <a
+                    href={request.panel_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-background/50 rounded-md p-2 text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <span className="font-mono text-sm truncate">{request.panel_url}</span>
+                    <ExternalLink className="h-4 w-4 shrink-0" />
+                  </a>
+                </div>
+              )}
+
+              {/* Panel Credentials */}
+              {request.panel_username && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Username</span>
+                    <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
+                      <span className="font-mono text-sm">{request.panel_username}</span>
+                      <button
+                        onClick={() => copyToClipboard(request.panel_username!)}
+                        className="text-primary hover:text-primary/80 transition-colors p-1"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Password</span>
+                    <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
+                      <span className="font-mono text-sm">
+                        {showPassword ? request.panel_password : '••••••••'}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => copyToClipboard(request.panel_password!)}
+                          className="text-primary hover:text-primary/80 transition-colors p-1"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Action Buttons */}
             <div className="flex gap-2">
               <Button className="flex-1 gap-2 bg-success hover:bg-success/90">
                 <Power className="h-4 w-4" />
@@ -484,7 +550,7 @@ export function ServerStatusCard() {
                 Stop Server
               </Button>
             </div>
-          </>
+          </div>
         )}
 
         {request.status === 'rejected' && (

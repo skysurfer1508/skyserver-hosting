@@ -19,6 +19,11 @@ interface ServerRequest {
   server_config: Json | null;
   created_at: string;
   updated_at: string;
+  // Credential fields
+  assigned_ip: string | null;
+  panel_url: string | null;
+  panel_username: string | null;
+  panel_password: string | null;
 }
 
 export function useServerRequest() {
