@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+bun.lockb
+
+# Build output (we copy this separately)
+dist
+
+# Development files
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+*.md
+!README.md
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+coverage
+
+# Docker files (not needed inside container)
+Dockerfile
+docker-compose.yml
+.dockerignore
