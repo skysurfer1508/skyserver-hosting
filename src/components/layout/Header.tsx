@@ -26,7 +26,8 @@ import {
   HelpCircle,
   Cpu,
   ChevronDown,
-  X,
+  Terminal,
+  ExternalLink,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -42,6 +43,7 @@ const navItems = [
   { name: 'Roadmap', href: '#roadmap', icon: Map },
   { name: 'FAQ', href: '#faq', icon: HelpCircle },
   { name: 'Tech Stack', href: '#tech-stack', icon: Cpu },
+  { name: 'Game Panel', href: 'https://panel.skyserver.io', icon: Terminal, external: true },
 ];
 
 export function Header() {
@@ -57,8 +59,12 @@ export function Header() {
     navigate('/');
   };
 
-  const handleNavClick = (href: string) => {
+  const handleNavClick = (href: string, external?: boolean) => {
     setMenuOpen(false);
+    if (external) {
+      window.open(href, '_blank');
+      return;
+    }
     if (href.startsWith('#')) {
       // If we're on the home page, scroll to section
       if (location.pathname === '/') {
@@ -89,14 +95,37 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Hamburger Menu - Right */}
-        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </SheetTrigger>
+        {/* Auth Buttons + Hamburger Menu - Right */}
+        <div className="flex items-center gap-2">
+          {user ? (
+            <Link to="/dashboard">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
+                <User className="h-4 w-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" size="sm" className="hidden sm:flex">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button size="sm" className="glow-primary hidden sm:flex">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
+          
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
           <SheetContent 
             side="right" 
             className="w-80 bg-card border-l border-border p-0 flex flex-col"
@@ -162,19 +191,27 @@ export function Header() {
                 </Collapsible>
               )}
 
-              {/* Other nav items - only on home page */}
-              {isHomePage &&
-                navItems.slice(1).map((item) => (
+              {/* Other nav items - only on home page (except external links) */}
+              {navItems.slice(1).map((item) => {
+                const isExternal = 'external' in item && item.external;
+                // Show hash links only on home page, but always show external links
+                if (!isExternal && !isHomePage) return null;
+                
+                return (
                   <Button
                     key={item.name}
                     variant="ghost"
-                    className="w-full justify-start gap-3 h-12 text-base"
-                    onClick={() => handleNavClick(item.href)}
+                    className="w-full justify-between gap-3 h-12 text-base"
+                    onClick={() => handleNavClick(item.href, isExternal)}
                   >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
+                    <span className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5" />
+                      {item.name}
+                    </span>
+                    {isExternal && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
                   </Button>
-                ))}
+                );
+              })}
 
               {/* Spacer */}
               <div className="flex-1" />
@@ -225,8 +262,9 @@ export function Header() {
                 </div>
               )}
             </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );
