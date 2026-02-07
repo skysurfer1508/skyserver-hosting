@@ -1,18 +1,30 @@
 import { Layout } from '@/components/layout/Layout';
 import { MaintenanceBanner } from '@/components/dashboard/MaintenanceBanner';
 import { ServerStatusCard } from '@/components/dashboard/ServerStatusCard';
+import { PlatformStatusCard } from '@/components/dashboard/PlatformStatusCard';
+import { PlatformStatusBanner } from '@/components/dashboard/PlatformStatusBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Zap } from 'lucide-react';
+import { usePlatformStatus } from '@/hooks/usePlatformStatus';
+import { Card, CardContent } from '@/components/ui/card';
+import { Users } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { settings } = useSystemSettings();
+  const { status, panelOnline, nodeOnline, lastChecked, refresh } = usePlatformStatus();
 
   return (
     <Layout showFooter={false}>
+      {/* Platform Status Banner (only shows if NOT online) */}
+      <PlatformStatusBanner 
+        status={status} 
+        panelOnline={panelOnline} 
+        nodeOnline={nodeOnline}
+        onRefresh={refresh}
+      />
+      
       <MaintenanceBanner />
       
       <div className="container py-8">
@@ -35,33 +47,14 @@ export default function Dashboard() {
           {/* Stats Sidebar */}
           <div className="space-y-6">
             {/* Platform Status */}
-            <Card className="gaming-card border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Zap className="h-4 w-4" />
-                  Platform Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <span className="flex items-center gap-2 text-sm text-success">
-                    <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                    Online
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Maintenance</span>
-                  <span className="text-sm">
-                    {settings?.maintenance_mode ? (
-                      <span className="text-warning">Active</span>
-                    ) : (
-                      <span className="text-success">None</span>
-                    )}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <PlatformStatusCard
+              status={status}
+              panelOnline={panelOnline}
+              nodeOnline={nodeOnline}
+              lastChecked={lastChecked}
+              maintenanceMode={settings?.maintenance_mode}
+              onRefresh={refresh}
+            />
 
             {/* Help Card */}
             <Card className="gaming-card border-border/50 bg-gradient-to-br from-primary/5 to-secondary/5">
