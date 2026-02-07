@@ -1,6 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Building, Mail, Globe } from 'lucide-react';
+import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export default function Imprint() {
   return (
@@ -46,12 +47,12 @@ export default function Imprint() {
                 <p>
                   <span className="text-foreground font-medium">Discord:</span>{' '}
                   <a 
-                    href="https://discord.gg/skyserver" 
+                    href={DISCORD_INVITE_URL}
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
                   >
-                    discord.gg/skyserver
+                    Join our Discord
                   </a>
                 </p>
               </CardContent>
