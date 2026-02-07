@@ -138,16 +138,15 @@ export default function Register() {
                   className="mt-0.5"
                 />
                 <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                  Ich habe die{' '}
+                  I have read and accept the{' '}
                   <a
                     href="/terms"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
                   >
-                    Nutzungsbedingungen
-                  </a>{' '}
-                  gelesen und akzeptiere sie.
+                    Terms of Service
+                  </a>.
                 </Label>
               </div>
 
