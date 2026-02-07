@@ -179,6 +179,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feedback: {
+        Row: {
+          created_at: string
+          feedback_type: Database["public"]["Enums"]["feedback_type"]
+          id: string
+          message: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_type: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          message: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_type?: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          message?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -221,6 +248,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      feedback_type: "bug" | "feature" | "general"
       game_type: "minecraft" | "terraria" | "satisfactory"
       request_status: "pending" | "active" | "rejected"
     }
@@ -351,6 +379,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      feedback_type: ["bug", "feature", "general"],
       game_type: ["minecraft", "terraria", "satisfactory"],
       request_status: ["pending", "active", "rejected"],
     },
