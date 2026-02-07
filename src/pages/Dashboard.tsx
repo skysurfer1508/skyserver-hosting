@@ -4,11 +4,11 @@ import { ServerStatusCard } from '@/components/dashboard/ServerStatusCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Server, Users, Zap } from 'lucide-react';
+import { Users, Zap } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { settings, activeSlots, isLoading } = useSystemSettings();
+  const { settings } = useSystemSettings();
 
   return (
     <Layout showFooter={false}>
@@ -33,35 +33,7 @@ export default function Dashboard() {
 
           {/* Stats Sidebar */}
           <div className="space-y-6">
-            {/* Capacity Card */}
-            <Card className="gaming-card border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Server className="h-4 w-4" />
-                  Server Capacity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <span className="font-display text-3xl font-bold text-primary">
-                    {isLoading ? '...' : activeSlots}
-                  </span>
-                  <span className="text-muted-foreground">
-                    / {settings?.total_slots || 50} slots used
-                  </span>
-                </div>
-                <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all duration-500"
-                    style={{
-                      width: `${((activeSlots || 0) / (settings?.total_slots || 50)) * 100}%`,
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats */}
+            {/* Platform Status */}
             <Card className="gaming-card border-border/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

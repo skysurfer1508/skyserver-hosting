@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { Database, Json } from '@/integrations/supabase/types';
 
 type GameType = Database['public']['Enums']['game_type'];
 type RequestStatus = Database['public']['Enums']['request_status'];
@@ -13,6 +13,9 @@ interface ServerRequest {
   status: RequestStatus;
   ip_address: string | null;
   port: number | null;
+  discord_username: string;
+  description: string | null;
+  server_config: Json | null;
   created_at: string;
   updated_at: string;
   user_email?: string;

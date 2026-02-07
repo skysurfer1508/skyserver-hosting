@@ -41,10 +41,13 @@ export type Database = {
       server_requests: {
         Row: {
           created_at: string
+          description: string | null
+          discord_username: string
           game_type: Database["public"]["Enums"]["game_type"]
           id: string
           ip_address: string | null
           port: number | null
+          server_config: Json | null
           server_name: string
           status: Database["public"]["Enums"]["request_status"]
           updated_at: string
@@ -52,10 +55,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string | null
+          discord_username: string
           game_type: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
           port?: number | null
+          server_config?: Json | null
           server_name: string
           status?: Database["public"]["Enums"]["request_status"]
           updated_at?: string
@@ -63,10 +69,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string | null
+          discord_username?: string
           game_type?: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
           port?: number | null
+          server_config?: Json | null
           server_name?: string
           status?: Database["public"]["Enums"]["request_status"]
           updated_at?: string
@@ -139,7 +148,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      game_type: "minecraft" | "terraria" | "satisfactory" | "valheim" | "ark"
+      game_type: "minecraft" | "terraria" | "satisfactory"
       request_status: "pending" | "active" | "rejected"
     }
     CompositeTypes: {
@@ -269,7 +278,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      game_type: ["minecraft", "terraria", "satisfactory", "valheim", "ark"],
+      game_type: ["minecraft", "terraria", "satisfactory"],
       request_status: ["pending", "active", "rejected"],
     },
   },
