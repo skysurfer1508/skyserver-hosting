@@ -31,7 +31,7 @@ import { useServerRequest } from '@/hooks/useServerRequest';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Power, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
@@ -556,17 +556,21 @@ export function ServerStatusCard() {
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button className="flex-1 gap-2 bg-success hover:bg-success/90">
-                <Power className="h-4 w-4" />
-                Start Server
-              </Button>
-              <Button variant="outline" className="flex-1 gap-2">
-                <Power className="h-4 w-4" />
-                Stop Server
-              </Button>
-            </div>
+            {/* Primary Action Button */}
+            {request.panel_url && (
+              <a
+                href={request.panel_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full"
+              >
+                <Button className="w-full gap-2 glow-primary" size="lg">
+                  <Terminal className="h-5 w-5" />
+                  Open Game Panel
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
           </div>
         )}
 
