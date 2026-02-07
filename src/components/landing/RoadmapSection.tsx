@@ -1,6 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Clock, Rocket } from 'lucide-react';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
 
 const phases = [
   {
@@ -59,10 +61,19 @@ const statusLabels = {
 };
 
 export function RoadmapSection() {
+  const [headerRef, isHeaderVisible] = useScrollReveal<HTMLDivElement>();
+  const [timelineRef, isTimelineVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
+
   return (
     <section id="roadmap" className="py-20 bg-background">
       <div className="container">
-        <div className="text-center mb-12">
+        <div 
+          ref={headerRef}
+          className={cn(
+            "text-center mb-12 opacity-0",
+            isHeaderVisible && "animate-reveal-up"
+          )}
+        >
           <h2 className="font-display text-3xl font-bold text-foreground mb-4">
             Project Roadmap
           </h2>
@@ -72,7 +83,7 @@ export function RoadmapSection() {
         </div>
 
         {/* Timeline */}
-        <div className="relative">
+        <div ref={timelineRef} className="relative">
           {/* Vertical line */}
           <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-border hidden lg:block" />
 
@@ -80,9 +91,13 @@ export function RoadmapSection() {
             {phases.map((phase, index) => (
               <div
                 key={phase.phase}
-                className={`relative lg:flex ${
-                  index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'
-                } items-center gap-8`}
+                className={cn(
+                  `relative lg:flex ${
+                    index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'
+                  } items-center gap-8 opacity-0`,
+                  isTimelineVisible && "animate-reveal-up"
+                )}
+                style={{ animationDelay: isTimelineVisible ? `${index * 200}ms` : '0ms' }}
               >
                 {/* Timeline dot */}
                 <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 h-12 w-12 items-center justify-center rounded-full bg-background border-4 border-primary">

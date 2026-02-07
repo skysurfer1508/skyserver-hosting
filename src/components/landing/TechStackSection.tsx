@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Code2, Database, Container, Globe } from 'lucide-react';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
 
 const technologies = [
   {
@@ -37,10 +39,20 @@ const technologies = [
 ];
 
 export function TechStackSection() {
+  const [headerRef, isHeaderVisible] = useScrollReveal<HTMLDivElement>();
+  const [cardsRef, isCardsVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
+  const [badgeRef, isBadgeVisible] = useScrollReveal<HTMLDivElement>();
+
   return (
     <section id="tech-stack" className="py-20 bg-background">
       <div className="container">
-        <div className="text-center mb-12">
+        <div 
+          ref={headerRef}
+          className={cn(
+            "text-center mb-12 opacity-0",
+            isHeaderVisible && "animate-reveal-up"
+          )}
+        >
           <h2 className="font-display text-3xl font-bold text-foreground mb-4">
             Our Tech Stack
           </h2>
@@ -49,31 +61,46 @@ export function TechStackSection() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {technologies.map((tech) => (
-            <Card
+        <div ref={cardsRef} className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {technologies.map((tech, index) => (
+            <div
               key={tech.title}
-              className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary group"
+              className={cn(
+                "opacity-0",
+                isCardsVisible && "animate-reveal-up"
+              )}
+              style={{ animationDelay: isCardsVisible ? `${index * 100}ms` : '0ms' }}
             >
-              <CardHeader>
-                <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-xl ${tech.bgColor} group-hover:scale-110 transition-transform`}>
-                  <tech.icon className={`h-7 w-7 ${tech.color}`} />
-                </div>
-                <CardTitle className="text-lg">
-                  <span className="text-muted-foreground">{tech.title}</span>
-                  <br />
-                  <span className={tech.color}>{tech.tech}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{tech.description}</p>
-              </CardContent>
-            </Card>
+              <Card
+                className="gaming-card border-border/50 transition-all hover:border-primary/50 hover:glow-primary group h-full"
+              >
+                <CardHeader>
+                  <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-xl ${tech.bgColor} group-hover:scale-110 transition-transform`}>
+                    <tech.icon className={`h-7 w-7 ${tech.color}`} />
+                  </div>
+                  <CardTitle className="text-lg">
+                    <span className="text-muted-foreground">{tech.title}</span>
+                    <br />
+                    <span className={tech.color}>{tech.tech}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{tech.description}</p>
+                </CardContent>
+              </Card>
+            </div>
           ))}
         </div>
 
         {/* Student Project Badge */}
-        <div className="mt-12 text-center">
+        <div 
+          ref={badgeRef}
+          className={cn(
+            "mt-12 text-center opacity-0",
+            isBadgeVisible && "animate-reveal-up"
+          )}
+          style={{ animationDelay: isBadgeVisible ? '200ms' : '0ms' }}
+        >
           <div className="inline-flex items-center gap-3 rounded-full border border-border/50 bg-card/50 px-6 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
               <span className="text-lg">🎓</span>

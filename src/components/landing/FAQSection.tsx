@@ -4,6 +4,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
 
 const faqs = [
   {
@@ -49,10 +51,19 @@ const faqs = [
 ];
 
 export function FAQSection() {
+  const [headerRef, isHeaderVisible] = useScrollReveal<HTMLDivElement>();
+  const [accordionRef, isAccordionVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
+
   return (
     <section id="faq" className="py-20 bg-card/30">
       <div className="container">
-        <div className="text-center mb-12">
+        <div 
+          ref={headerRef}
+          className={cn(
+            "text-center mb-12 opacity-0",
+            isHeaderVisible && "animate-reveal-up"
+          )}
+        >
           <h2 className="font-display text-3xl font-bold text-foreground mb-4">
             Frequently Asked Questions
           </h2>
@@ -61,21 +72,32 @@ export function FAQSection() {
           </p>
         </div>
 
-        <div className="max-w-3xl mx-auto">
+        <div 
+          ref={accordionRef}
+          className="max-w-3xl mx-auto"
+        >
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq, index) => (
-              <AccordionItem
+              <div
                 key={index}
-                value={`item-${index}`}
-                className="gaming-card border-border/50 rounded-lg px-6 data-[state=open]:border-primary/50"
+                className={cn(
+                  "opacity-0",
+                  isAccordionVisible && "animate-reveal-up"
+                )}
+                style={{ animationDelay: isAccordionVisible ? `${index * 80}ms` : '0ms' }}
               >
-                <AccordionTrigger className="text-left hover:no-underline py-4">
-                  <span className="font-semibold text-foreground">{faq.question}</span>
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-4">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
+                <AccordionItem
+                  value={`item-${index}`}
+                  className="gaming-card border-border/50 rounded-lg px-6 data-[state=open]:border-primary/50"
+                >
+                  <AccordionTrigger className="text-left hover:no-underline py-4">
+                    <span className="font-semibold text-foreground">{faq.question}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-4">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              </div>
             ))}
           </Accordion>
         </div>

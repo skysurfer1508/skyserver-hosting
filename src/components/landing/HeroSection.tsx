@@ -1,8 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, Server } from 'lucide-react';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
 
 export function HeroSection() {
+  const [heroRef, isHeroVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.1 });
+  const [statsRef, isStatsVisible] = useScrollReveal<HTMLDivElement>({ threshold: 0.2 });
+
   return (
     <section className="relative overflow-hidden py-20 lg:py-32">
       {/* Background Effects */}
@@ -11,7 +16,13 @@ export function HeroSection() {
       <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-secondary/10 blur-3xl" />
 
       <div className="container relative z-10">
-        <div className="mx-auto max-w-4xl text-center">
+        <div 
+          ref={heroRef}
+          className={cn(
+            "mx-auto max-w-4xl text-center opacity-0",
+            isHeroVisible && "animate-reveal-up"
+          )}
+        >
           {/* Badge */}
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2">
             <Zap className="h-4 w-4 text-primary" />
@@ -46,21 +57,28 @@ export function HeroSection() {
               </Button>
             </a>
           </div>
+        </div>
 
-          {/* Stats */}
-          <div className="mt-16 grid grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="font-display text-3xl font-bold text-primary">50+</div>
-              <div className="text-sm text-muted-foreground">Server Slots</div>
-            </div>
-            <div className="text-center">
-              <div className="font-display text-3xl font-bold text-primary">3</div>
-              <div className="text-sm text-muted-foreground">Games Supported</div>
-            </div>
-            <div className="text-center">
-              <div className="font-display text-3xl font-bold text-primary">99.9%</div>
-              <div className="text-sm text-muted-foreground">Uptime</div>
-            </div>
+        {/* Stats */}
+        <div 
+          ref={statsRef}
+          className={cn(
+            "mt-16 grid grid-cols-3 gap-8 opacity-0",
+            isStatsVisible && "animate-reveal-up"
+          )}
+          style={{ animationDelay: isStatsVisible ? '200ms' : '0ms' }}
+        >
+          <div className="text-center">
+            <div className="font-display text-3xl font-bold text-primary">50+</div>
+            <div className="text-sm text-muted-foreground">Server Slots</div>
+          </div>
+          <div className="text-center">
+            <div className="font-display text-3xl font-bold text-primary">3</div>
+            <div className="text-sm text-muted-foreground">Games Supported</div>
+          </div>
+          <div className="text-center">
+            <div className="font-display text-3xl font-bold text-primary">99.9%</div>
+            <div className="text-sm text-muted-foreground">Uptime</div>
           </div>
         </div>
       </div>
