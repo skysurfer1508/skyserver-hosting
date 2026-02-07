@@ -26,7 +26,7 @@ export function HeroSection() {
 
           {/* Subtext */}
           <p className="mb-8 text-lg text-muted-foreground sm:text-xl lg:text-2xl">
-            SkyServer1508 is an independent non-profit student project from Switzerland.
+            SkyServer is an independent non-profit student project from Switzerland.
             <br className="hidden sm:block" />
             No credit card. No hidden fees. Pure performance.
           </p>

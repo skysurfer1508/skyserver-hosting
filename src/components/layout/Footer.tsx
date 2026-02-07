@@ -12,7 +12,7 @@ export function Footer() {
               <span className="font-display text-xs font-bold text-primary-foreground">S</span>
             </div>
             <span className="font-display text-sm font-bold tracking-wider text-primary">
-              SkyServer1508
+              SkyServer
             </span>
           </div>
 
@@ -43,7 +43,7 @@ export function Footer() {
 
           {/* Copyright */}
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} SkyServer1508. Made with ❤️ in Switzerland.
+            © {new Date().getFullYear()} SkyServer. Made with ❤️ in Switzerland.
           </p>
         </div>
       </div>
