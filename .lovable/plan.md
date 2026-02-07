@@ -1,38 +1,37 @@
 
-# Plan: Fix Dockerfile npm Install Error
+# Plan: Fix Docker Compose Port Mapping
 
 ## Problem
-The Docker build is failing because `npm ci` requires an exact match between `package.json` and `package-lock.json`. If the lockfile is out of sync or missing, the build fails.
+The Docker Compose configuration has a port mismatch:
+- **Current**: Host port 7012 → Container port 80
+- **App runs on**: Container port 7012
+
+This causes "Connection refused" because Docker is forwarding traffic to the wrong internal port.
 
 ## Solution
-Update the Dockerfile to be more resilient:
 
-1. **Remove redundant lockfile copy** - The `COPY package*.json ./` already copies both `package.json` and `package-lock.json` (if present), so the separate `COPY package-lock.json ./` line is redundant and will fail if the lockfile doesn't exist.
+### File: `docker-compose.yml`
 
-2. **Switch from `npm ci` to `npm install`** - This is more forgiving and will work even if the lockfile is missing or slightly out of sync.
+Update the ports mapping from `"7012:80"` to `"7012:7012"` and update the comment:
 
----
+```yaml
+version: '3.8'
 
-## Changes
-
-### File: `Dockerfile`
-
-**Lines 6-11** - Update the package copy and install section:
-
-```dockerfile
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
+services:
+  skyserver-web:
+    container_name: skyserver_website
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Maps port 7012 on host to port 7012 in container
+    ports:
+      - "7012:7012" 
+    restart: always
 ```
 
-This removes the explicit `COPY package-lock.json ./` line (since `package*.json` already handles it) and changes `npm ci` to `npm install`.
+## After This Change
 
----
+The port flow will be:
+- External request → Host:7012 → Container:7012 → Vite preview server
 
-## Technical Notes
-
-- `npm install` will regenerate or update the lockfile if needed, making it more flexible for CI/CD environments
-- The `package*.json` glob pattern already matches both `package.json` and `package-lock.json`
-- No changes needed for `NODE_ENV` since the build happens before the production stage and devDependencies are needed for `npm run build`
+This aligns with the Dockerfile which exposes port 7012 and runs the preview server on that port.
