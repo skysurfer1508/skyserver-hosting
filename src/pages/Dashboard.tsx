@@ -5,6 +5,7 @@ import { ServerStatusCard } from '@/components/dashboard/ServerStatusCard';
 import { PlatformStatusCard } from '@/components/dashboard/PlatformStatusCard';
 import { PlatformStatusBanner } from '@/components/dashboard/PlatformStatusBanner';
 import { DashboardSettings } from '@/components/dashboard/DashboardSettings';
+import { NewsFeed } from '@/components/NewsFeed';
 import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { usePlatformStatus } from '@/hooks/usePlatformStatus';
@@ -74,6 +75,9 @@ export default function Dashboard() {
                   maintenanceMode={settings?.maintenance_mode}
                   onRefresh={refresh}
                 />
+
+                {/* News Feed */}
+                <NewsFeed limit={5} maxHeight="250px" />
 
                 {/* Help Card */}
                 <Card className="gaming-card border-border/50 bg-gradient-to-br from-primary/5 to-secondary/5">

@@ -4,7 +4,8 @@ import { AdminOverview } from '@/components/admin/AdminOverview';
 import { AdminRequests } from '@/components/admin/AdminRequests';
 import { AdminUsers } from '@/components/admin/AdminUsers';
 import { AdminSettings } from '@/components/admin/AdminSettings';
-import { LayoutDashboard, ListTodo, Users, Settings } from 'lucide-react';
+import { AdminAnnouncements } from '@/components/admin/AdminAnnouncements';
+import { LayoutDashboard, ListTodo, Users, Settings, Megaphone } from 'lucide-react';
 
 export default function Admin() {
   return (
@@ -23,7 +24,7 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[500px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -35,6 +36,10 @@ export default function Admin() {
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="news" className="gap-2">
+              <Megaphone className="h-4 w-4" />
+              <span className="hidden sm:inline">News</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="h-4 w-4" />
@@ -52,6 +57,10 @@ export default function Admin() {
 
           <TabsContent value="users">
             <AdminUsers />
+          </TabsContent>
+
+          <TabsContent value="news">
+            <AdminAnnouncements />
           </TabsContent>
 
           <TabsContent value="settings">
