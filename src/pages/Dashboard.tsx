@@ -5,6 +5,7 @@ import { ServerStatusCard } from '@/components/dashboard/ServerStatusCard';
 import { PlatformStatusCard } from '@/components/dashboard/PlatformStatusCard';
 import { PlatformStatusBanner } from '@/components/dashboard/PlatformStatusBanner';
 import { DashboardSettings } from '@/components/dashboard/DashboardSettings';
+import { FeedbackWidget } from '@/components/dashboard/FeedbackWidget';
 import { NewsFeed } from '@/components/NewsFeed';
 import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
@@ -109,6 +110,9 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating Feedback Widget */}
+      <FeedbackWidget />
     </Layout>
   );
 }
