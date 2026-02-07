@@ -31,11 +31,14 @@ import { useServerRequest } from '@/hooks/useServerRequest';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Copy, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
+import { CopyButton } from '@/components/ui/copy-button';
+import { triggerSuccessConfetti } from '@/lib/confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 type GameType = 'minecraft' | 'terraria' | 'satisfactory';
@@ -153,8 +156,11 @@ export function ServerStatusCard() {
       return;
     }
 
+    // Trigger confetti celebration!
+    triggerSuccessConfetti();
+    
     toast({
-      title: '✅ Request sent successfully!',
+      title: '🎉 Request sent successfully!',
       description: 'Your server request has been submitted for approval.',
     });
     setIsDialogOpen(false);
@@ -167,13 +173,7 @@ export function ServerStatusCard() {
     setServerConfig({}); // Reset config when game changes
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: 'Copied!',
-      description: 'Server address copied to clipboard.',
-    });
-  };
+  // Removed copyToClipboard - now using CopyButton component
 
   const getStatusBadge = () => {
     if (!request) return null;
@@ -489,12 +489,7 @@ export function ServerStatusCard() {
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Server Address</span>
                 <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
                   <span className="font-mono text-sm">{request.assigned_ip}</span>
-                  <button
-                    onClick={() => copyToClipboard(request.assigned_ip!)}
-                    className="text-primary hover:text-primary/80 transition-colors p-1"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </button>
+                  <CopyButton text={request.assigned_ip!} label="Server IP" />
                 </div>
               </div>
 
@@ -521,34 +516,56 @@ export function ServerStatusCard() {
                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Username</span>
                     <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
                       <span className="font-mono text-sm">{request.panel_username}</span>
-                      <button
-                        onClick={() => copyToClipboard(request.panel_username!)}
-                        className="text-primary hover:text-primary/80 transition-colors p-1"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
+                      <CopyButton text={request.panel_username!} label="Username" />
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Password</span>
                     <div className="flex items-center justify-between bg-background/50 rounded-md p-2">
-                      <span className="font-mono text-sm">
-                        {showPassword ? request.panel_password : '••••••••'}
-                      </span>
+                      <AnimatePresence mode="wait">
+                        <motion.span 
+                          key={showPassword ? 'visible' : 'hidden'}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          transition={{ duration: 0.15 }}
+                          className="font-mono text-sm"
+                        >
+                          {showPassword ? request.panel_password : '••••••••'}
+                        </motion.span>
+                      </AnimatePresence>
                       <div className="flex items-center gap-1">
-                        <button
+                        <motion.button
                           onClick={() => setShowPassword(!showPassword)}
                           className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                          whileTap={{ scale: 0.9 }}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                        <button
-                          onClick={() => copyToClipboard(request.panel_password!)}
-                          className="text-primary hover:text-primary/80 transition-colors p-1"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </button>
+                          <AnimatePresence mode="wait" initial={false}>
+                            {showPassword ? (
+                              <motion.div
+                                key="hide"
+                                initial={{ rotate: -90, opacity: 0 }}
+                                animate={{ rotate: 0, opacity: 1 }}
+                                exit={{ rotate: 90, opacity: 0 }}
+                                transition={{ duration: 0.15 }}
+                              >
+                                <EyeOff className="h-4 w-4" />
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="show"
+                                initial={{ rotate: 90, opacity: 0 }}
+                                animate={{ rotate: 0, opacity: 1 }}
+                                exit={{ rotate: -90, opacity: 0 }}
+                                transition={{ duration: 0.15 }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.button>
+                        <CopyButton text={request.panel_password!} label="Password" />
                       </div>
                     </div>
                   </div>
