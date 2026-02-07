@@ -119,7 +119,7 @@ export default function Admin() {
   const handleApproveClick = (request: typeof requests[0]) => {
     setSelectedRequest(request);
     setAssignedIp('');
-    setPanelUrl('https://panel.skyserver.io');
+    setPanelUrl('https://panel.skyserver1508.org');
     setPanelUsername('');
     setPanelPassword('');
     setApproveDialogOpen(true);
