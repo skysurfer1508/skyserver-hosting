@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Settings, Menu, X } from 'lucide-react';
+import { LogOut, User, Settings, Menu, X, Server } from 'lucide-react';
 import { useState } from 'react';
 
 export function Header() {
@@ -20,7 +20,7 @@ export function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary glow-primary">
-            <span className="font-display text-sm font-bold text-primary-foreground">S</span>
+            <Server className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="font-display text-xl font-bold tracking-wider text-primary glow-text-primary">
             SkyServer

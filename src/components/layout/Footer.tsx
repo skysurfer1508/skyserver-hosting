@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Server } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -9,7 +9,7 @@ export function Footer() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
-              <span className="font-display text-xs font-bold text-primary-foreground">S</span>
+              <Server className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-display text-sm font-bold tracking-wider text-primary">
               SkyServer
