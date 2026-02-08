@@ -1,96 +1,108 @@
 
+# Analysis: API Errors in Container Logs
 
-# Plan: Fix Nginx Configuration for Proper Health Checks
+## Investigation Summary
 
-## Problem Analysis
-You're experiencing:
-- **Black screen**: Likely due to failed asset loading or routing issues
-- **Unhealthy status**: The healthcheck may be probing the wrong port
-- **405 Method Not Allowed**: API requests hitting nginx instead of your backend
+After reviewing the codebase, here's what I found:
 
-## Current Configuration Status
-Your current setup (`7012:80` mapping) is actually valid, but there's a mismatch in your docker-compose healthcheck which references port 7012 instead of letting Docker use the internal check.
+### The `/api/apps/null/analytics/track/batch` Request
 
-## Proposed Fixes
+This request is **NOT coming from your application**. Your SkyServer application:
+- Only communicates with Supabase directly (via `supabase.co` URLs)
+- Uses Google Analytics via gtag.js script (which goes to `googletagmanager.com`)
+- Does not make any `/api/` calls in the codebase
 
-### 1. Simplify nginx.conf
-Replace the complex nginx.conf with a minimal configuration that listens on port 80 (standard for containers):
+This analytics endpoint pattern (`/api/apps/{app_id}/analytics/track/batch`) is from **Lovable's internal preview system**. In production on your own Docker container, you should not see these requests at all.
+
+### Why You See 405 Errors
+
+When any request hits `/api/`, Nginx has no handler for it, so it falls back to serving `index.html` (the SPA catch-all). For POST requests to a static file, Nginx returns 405 "Method Not Allowed". This is expected behavior - it's Nginx correctly rejecting an unsupported request method.
+
+### What Actually Needs Fixing
+
+**Nothing needs to be added for API proxying** - your application doesn't have a backend API service. The architecture is:
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ Your Docker Container (Port 7012)                       │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Nginx (Static Files + SPA)                          │ │
+│ │ • Serves React app from /usr/share/nginx/html       │ │
+│ │ • Handles SPA routing via try_files                 │ │
+│ └─────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+          ┌────────────────────────────────┐
+          │ Supabase (External Service)    │
+          │ ccomlhxhigqqmoexpmyy.supabase.co│
+          │ • Database                     │
+          │ • Authentication               │
+          │ • Edge Functions               │
+          └────────────────────────────────┘
+```
+
+---
+
+## Recommended Actions
+
+### Option A: Ignore These Logs (Recommended)
+
+The 405 errors for `/api/` requests are harmless - they're either:
+1. Bots/scanners probing for API endpoints
+2. Stale requests from browser caching during development
+
+Your app works correctly without any API proxy configuration.
+
+### Option B: Add a Clean 404 Response for `/api/`
+
+If you want cleaner logs, you can add a block that returns a proper 404 for any `/api/` requests, making it clear the endpoint doesn't exist:
+
+**Changes to `nginx.conf`:**
+
+Add before the SPA location block:
 
 ```nginx
-server {
-    listen 80;
-    server_name localhost;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    # Health check endpoint
-    location /health {
-        access_log off;
-        return 200 "healthy\n";
-        add_header Content-Type text/plain;
-    }
-
-    # Fix for React Router (SPA) - redirects 404s to index.html
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Error pages
-    error_page 500 502 503 504 /50x.html;
-    location = /50x.html {
-        root /usr/share/nginx/html;
-    }
+# Return 404 for any /api/ requests (no backend exists)
+location /api/ {
+    return 404;
 }
 ```
 
-### 2. Update Dockerfile
-Keep the Dockerfile as-is since it correctly:
-- Exposes port 80
-- Health checks `localhost:80/health`
+This simply tells any `/api/` request that the endpoint doesn't exist, which is accurate.
 
-### 3. Fix docker-compose.yml
-Remove any external healthcheck that references port 7012, since Docker's internal health check handles this:
+---
+
+## Summary
+
+| Issue | Cause | Action Required |
+|-------|-------|-----------------|
+| `/api/apps/null/...` in URL | Lovable preview system (not your app) | None - doesn't affect production |
+| 405 Not Allowed | Nginx rejecting POST to static file route | Optional: Add clean 404 for `/api/` |
+| Missing environment variable | None found - your app only uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` | Verify these are passed correctly during Docker build |
+
+### Docker Build Verification
+
+When building, ensure you pass the environment variables:
+
+```bash
+docker-compose build \
+  --build-arg VITE_SUPABASE_URL="https://ccomlhxhigqqmoexpmyy.supabase.co" \
+  --build-arg VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb21saHhoaWdxcW1vZXhwbXl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MjMzMzcsImV4cCI6MjA4NTk5OTMzN30.pmX6v2EJZARQHY7tDx13GidW50YnXQ-KeiGNE5NcwtM"
+```
+
+Or add the build args to `docker-compose.yml` for convenience:
 
 ```yaml
-version: '3.8'
-
 services:
   skyserver-web:
-    container_name: skyserver_website
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: "https://ccomlhxhigqqmoexpmyy.supabase.co"
+        VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     ports:
-      - "7012:80"
+      - "7012:7012"
     restart: always
 ```
-
-## Technical Details
-
-| Component | Port Inside Container | Port on Host |
-|-----------|----------------------|--------------|
-| Nginx | 80 | 7012 |
-| Health Check | 80 (internal) | N/A |
-
-## Request Flow
-```text
-External Request → Host:7012 → Container:80 → Nginx → Static Files/SPA
-```
-
-## Why the 405 Error Occurs
-The "405 Method Not Allowed" happens when:
-1. Your frontend makes API calls to relative paths (e.g., `/api/something`)
-2. These hit nginx instead of your actual backend
-3. Nginx returns 405 because it's a static file server
-
-**Solution**: Ensure your frontend uses absolute URLs for API calls (e.g., `https://ccomlhxhigqqmoexpmyy.supabase.co/...`) - which your Supabase client already does.
-
-## After Deployment
-Run these commands:
-```bash
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
-docker-compose ps  # Verify health status
-```
-
