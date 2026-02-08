@@ -5,7 +5,7 @@ import { Database, Json } from '@/integrations/supabase/types';
 type GameType = Database['public']['Enums']['game_type'];
 type RequestStatus = Database['public']['Enums']['request_status'];
 
-interface ServerRequest {
+export interface ServerRequest {
   id: string;
   user_id: string;
   game_type: GameType;
@@ -16,6 +16,7 @@ interface ServerRequest {
   discord_username: string;
   description: string | null;
   server_config: Json | null;
+  rejection_reason: string | null;
   created_at: string;
   updated_at: string;
   user_email?: string;
