@@ -125,7 +125,7 @@ export function ServerExpiryCard({ requestId, expiresAt, onRenewed }: ServerExpi
             <div
               className={cn(
                 'h-full transition-all duration-500',
-                daysRemaining >= 5 ? 'bg-green-500' : daysRemaining >= 2 ? 'bg-warning' : 'bg-destructive'
+                daysRemaining >= 5 ? 'bg-success' : daysRemaining >= 2 ? 'bg-warning' : 'bg-destructive'
               )}
               style={{ width: `${Math.min((daysRemaining / 15) * 100, 100)}%` }}
             />
