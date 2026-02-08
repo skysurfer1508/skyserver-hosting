@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   User,
   MessageSquare,
@@ -18,11 +20,13 @@ import {
   XCircle,
   Globe,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import type { MinecraftConfig } from '@/components/dashboard/MinecraftConfigForm';
 import type { TerrariaConfig } from '@/components/dashboard/TerrariaConfigForm';
 import type { SatisfactoryConfig } from '@/components/dashboard/SatisfactoryConfigForm';
 import type { ServerRequest } from '@/hooks/useAdminRequests';
+import { useDecryptedCredentials } from '@/hooks/useDecryptedCredentials';
 import { Database } from '@/integrations/supabase/types';
 
 type RequestStatus = Database['public']['Enums']['request_status'];
@@ -208,9 +212,31 @@ function getStatusBadge(status: RequestStatus) {
 }
 
 export function RequestDetailsModal({ open, onOpenChange, request }: RequestDetailsModalProps) {
+  const { decryptCredentials, decryptedCredentials, isDecrypting, clearCredentials } = useDecryptedCredentials();
+
+  // Decrypt credentials when modal opens for an active request
+  useEffect(() => {
+    if (open && request?.status === 'active' && request.id) {
+      decryptCredentials(request.id);
+    }
+    
+    // Clear credentials when modal closes
+    if (!open) {
+      clearCredentials();
+    }
+  }, [open, request?.id, request?.status, decryptCredentials, clearCredentials]);
+
   if (!request) return null;
 
   const game = gameLabels[request.game_type];
+
+  // Use decrypted credentials if available, otherwise show loading or encrypted
+  const displayCredentials = decryptedCredentials || {
+    assigned_ip: request.assigned_ip,
+    panel_url: request.panel_url,
+    panel_username: request.panel_username,
+    panel_password: request.panel_password,
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -309,26 +335,56 @@ export function RequestDetailsModal({ open, onOpenChange, request }: RequestDeta
                 <h4 className="text-sm font-medium text-success mb-2 flex items-center gap-2">
                   <Globe className="h-4 w-4" />
                   Server Credentials
+                  {isDecrypting && <Loader2 className="h-3 w-3 animate-spin" />}
                 </h4>
                 <div className="space-y-2 pl-6">
-                  {request.assigned_ip && (
-                    <InfoRow label="Server IP" value={request.assigned_ip} />
-                  )}
-                  {request.panel_url && (
-                    <InfoRow 
-                      label="Panel URL" 
-                      value={
-                        <a 
-                          href={request.panel_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center gap-1"
-                        >
-                          {request.panel_url}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      } 
-                    />
+                  {isDecrypting ? (
+                    <>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Server IP</p>
+                        <Skeleton className="h-5 w-40" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Panel URL</p>
+                        <Skeleton className="h-5 w-56" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Username</p>
+                        <Skeleton className="h-5 w-32" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Password</p>
+                        <Skeleton className="h-5 w-36" />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {displayCredentials.assigned_ip && (
+                        <InfoRow label="Server IP" value={displayCredentials.assigned_ip} />
+                      )}
+                      {displayCredentials.panel_url && (
+                        <InfoRow 
+                          label="Panel URL" 
+                          value={
+                            <a 
+                              href={displayCredentials.panel_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline flex items-center gap-1"
+                            >
+                              {displayCredentials.panel_url}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          } 
+                        />
+                      )}
+                      {displayCredentials.panel_username && (
+                        <InfoRow label="Username" value={displayCredentials.panel_username} />
+                      )}
+                      {displayCredentials.panel_password && (
+                        <InfoRow label="Password" value={displayCredentials.panel_password} />
+                      )}
+                    </>
                   )}
                 </div>
               </div>
