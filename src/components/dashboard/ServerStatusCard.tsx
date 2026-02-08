@@ -37,6 +37,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
+import { ServerExpiryCard } from './ServerExpiryCard';
 import { CopyButton } from '@/components/ui/copy-button';
 import { triggerSuccessConfetti } from '@/lib/confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -627,6 +628,15 @@ export function ServerStatusCard() {
                   <ExternalLink className="h-4 w-4" />
                 </Button>
               </a>
+            )}
+
+            {/* Server Expiry/Renewal Card */}
+            {request.expires_at && (
+              <ServerExpiryCard
+                requestId={request.id}
+                expiresAt={request.expires_at}
+                onRenewed={refetch}
+              />
             )}
           </div>
         )}

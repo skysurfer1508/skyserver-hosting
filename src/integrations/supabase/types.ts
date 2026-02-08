@@ -99,6 +99,7 @@ export type Database = {
           credentials_encrypted: boolean | null
           description: string | null
           discord_username: string
+          expires_at: string
           game_type: Database["public"]["Enums"]["game_type"]
           id: string
           ip_address: string | null
@@ -119,6 +120,7 @@ export type Database = {
           credentials_encrypted?: boolean | null
           description?: string | null
           discord_username: string
+          expires_at?: string
           game_type: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           credentials_encrypted?: boolean | null
           description?: string | null
           discord_username?: string
+          expires_at?: string
           game_type?: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
@@ -280,6 +283,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      renew_server_lease: { Args: { request_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
