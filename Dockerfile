@@ -12,15 +12,13 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build arguments for Vite environment variables
+# Accept build arguments
 ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_PUBLISHABLE_KEY
-ARG VITE_SUPABASE_PROJECT_ID
+ARG VITE_SUPABASE_ANON_KEY
 
-# Make them available as ENV vars during the build
+# Set them as environment variables so Vite can see them
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
-ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 # Build the application
 RUN npm run build
