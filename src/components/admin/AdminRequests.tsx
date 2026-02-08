@@ -32,6 +32,7 @@ import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
 import { RejectModal } from './RejectModal';
+import { RequestDetailsModal } from './RequestDetailsModal';
 import {
   Users,
   Check,
@@ -41,6 +42,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Eye,
 } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
@@ -61,6 +63,7 @@ export function AdminRequests() {
   const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all');
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<typeof requests[0] | null>(null);
   const [assignedIp, setAssignedIp] = useState('');
   const [panelUrl, setPanelUrl] = useState('https://panel.skyserver1508.org');
@@ -84,6 +87,11 @@ export function AdminRequests() {
   const handleRejectClick = (request: typeof requests[0]) => {
     setSelectedRequest(request);
     setRejectDialogOpen(true);
+  };
+
+  const handleRowClick = (request: typeof requests[0]) => {
+    setSelectedRequest(request);
+    setDetailsDialogOpen(true);
   };
 
   const handleApproveSubmit = async () => {
@@ -260,9 +268,16 @@ export function AdminRequests() {
                   {filteredRequests.map((request) => {
                     const game = gameLabels[request.game_type];
                     return (
-                      <TableRow key={request.id}>
+                      <TableRow 
+                        key={request.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleRowClick(request)}
+                      >
                         <TableCell className="font-medium">
-                          {request.user_email || 'Unknown'}
+                          <div className="flex items-center gap-2">
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                            {request.user_email || 'Unknown'}
+                          </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {request.discord_username || '-'}
@@ -279,7 +294,7 @@ export function AdminRequests() {
                           {new Date(request.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             {request.status === 'pending' && (
                               <>
                                 <Button
@@ -398,6 +413,13 @@ export function AdminRequests() {
         onOpenChange={setRejectDialogOpen}
         onConfirm={handleRejectConfirm}
         serverName={selectedRequest?.server_name || ''}
+      />
+
+      {/* Details Modal */}
+      <RequestDetailsModal
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        request={selectedRequest}
       />
     </>
   );
