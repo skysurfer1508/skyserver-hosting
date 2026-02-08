@@ -13,6 +13,7 @@ export function ProfileSettingsCard() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [fullName, setFullName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [discordUsername, setDiscordUsername] = useState('');
 
@@ -23,13 +24,14 @@ export function ProfileSettingsCard() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, discord_username')
+        .select('username, discord_username, full_name')
         .eq('id', user.id)
         .single();
 
       if (error) {
         console.error('Error fetching profile:', error);
       } else if (data) {
+        setFullName(data.full_name || '');
         setDisplayName(data.username || '');
         setDiscordUsername(data.discord_username || '');
       }
@@ -46,6 +48,7 @@ export function ProfileSettingsCard() {
     const { error } = await supabase
       .from('profiles')
       .update({
+        full_name: fullName.trim() || null,
         username: displayName.trim() || null,
         discord_username: discordUsername.trim() || null,
       })
@@ -89,6 +92,21 @@ export function ProfileSettingsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Full Name */}
+        <div className="space-y-2">
+          <Label htmlFor="fullName" className="flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            Full Name
+          </Label>
+          <Input
+            id="fullName"
+            placeholder="Your full name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            maxLength={100}
+          />
+        </div>
+
         {/* Display Name */}
         <div className="space-y-2">
           <Label htmlFor="displayName" className="flex items-center gap-2">

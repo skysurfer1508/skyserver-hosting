@@ -43,6 +43,7 @@ export type Database = {
           created_at: string
           discord_username: string | null
           email: string
+          full_name: string | null
           id: string
           is_banned: boolean
           updated_at: string
@@ -52,6 +53,7 @@ export type Database = {
           created_at?: string
           discord_username?: string | null
           email: string
+          full_name?: string | null
           id: string
           is_banned?: boolean
           updated_at?: string
@@ -61,6 +63,7 @@ export type Database = {
           created_at?: string
           discord_username?: string | null
           email?: string
+          full_name?: string | null
           id?: string
           is_banned?: boolean
           updated_at?: string
