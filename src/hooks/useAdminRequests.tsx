@@ -97,12 +97,22 @@ export function useAdminRequests() {
         },
       });
 
+      // Handle edge function errors with specific messages
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to encrypt credentials');
+        console.error('Edge function error:', response.error);
+        // Try to extract a more specific message
+        const errorMessage = response.error.message || 'Edge function failed';
+        throw new Error(errorMessage);
+      }
+
+      // Check for application-level errors in the response data
+      if (response.data?.error) {
+        console.error('Application error:', response.data.error);
+        throw new Error(response.data.error);
       }
 
       if (!response.data?.success) {
-        throw new Error(response.data?.error || 'Failed to approve request');
+        throw new Error('Approval failed: No success confirmation received');
       }
 
       await fetchRequests();
