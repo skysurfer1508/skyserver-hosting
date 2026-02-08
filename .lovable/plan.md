@@ -1,108 +1,69 @@
 
-# Analysis: API Errors in Container Logs
+# Plan: Add Request Details Modal for Admins
 
-## Investigation Summary
+## Overview
+Add a clickable row feature to the AdminRequests table that opens a detailed view modal, showing all information about a server request including game-specific configuration (version, edition, world size, etc.), description, timestamps, and status information.
 
-After reviewing the codebase, here's what I found:
+## User Experience
+- Admin clicks anywhere on a request row (except action buttons) to open a details modal
+- The modal displays all request information in a clean, organized layout
+- Game-specific configuration is rendered based on the game type (Minecraft shows edition/version/software, Terraria shows world size/difficulty, etc.)
+- For rejected requests, the rejection reason is displayed
+- For active requests, assigned credentials info is shown (IP address, panel URL - not the encrypted password)
 
-### The `/api/apps/null/analytics/track/batch` Request
+## Implementation Details
 
-This request is **NOT coming from your application**. Your SkyServer application:
-- Only communicates with Supabase directly (via `supabase.co` URLs)
-- Uses Google Analytics via gtag.js script (which goes to `googletagmanager.com`)
-- Does not make any `/api/` calls in the codebase
+### 1. Create New Component: `RequestDetailsModal.tsx`
+**Location:** `src/components/admin/RequestDetailsModal.tsx`
 
-This analytics endpoint pattern (`/api/apps/{app_id}/analytics/track/batch`) is from **Lovable's internal preview system**. In production on your own Docker container, you should not see these requests at all.
+This modal component will:
+- Accept the selected request as a prop
+- Display request information in organized sections:
+  - **User Info**: Email, Discord username
+  - **Server Info**: Server name, game type with icon
+  - **Game Configuration**: Dynamic content based on game type
+    - Minecraft: Edition, Software, Version, EULA status
+    - Terraria: Software, World Size, Difficulty
+    - Satisfactory: Branch
+  - **Description**: User's project description (if provided)
+  - **Status Details**: Current status badge, timestamps
+  - **Rejection Reason**: Shown only for rejected requests
+  - **Active Server Info**: Assigned IP, Panel URL (for approved requests)
 
-### Why You See 405 Errors
+### 2. Update `AdminRequests.tsx`
+- Add state for the details modal: `detailsDialogOpen` and use existing `selectedRequest`
+- Make table rows clickable with cursor pointer styling
+- Add click handler that opens the details modal (avoiding action button clicks)
+- Import and render the new `RequestDetailsModal` component
+- Add visual indicator (e.g., `Eye` icon or hover effect) to hint clickability
 
-When any request hits `/api/`, Nginx has no handler for it, so it falls back to serving `index.html` (the SPA catch-all). For POST requests to a static file, Nginx returns 405 "Method Not Allowed". This is expected behavior - it's Nginx correctly rejecting an unsupported request method.
-
-### What Actually Needs Fixing
-
-**Nothing needs to be added for API proxying** - your application doesn't have a backend API service. The architecture is:
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ Your Docker Container (Port 7012)                       │
-│ ┌─────────────────────────────────────────────────────┐ │
-│ │ Nginx (Static Files + SPA)                          │ │
-│ │ • Serves React app from /usr/share/nginx/html       │ │
-│ │ • Handles SPA routing via try_files                 │ │
-│ └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-          ┌────────────────────────────────┐
-          │ Supabase (External Service)    │
-          │ ccomlhxhigqqmoexpmyy.supabase.co│
-          │ • Database                     │
-          │ • Authentication               │
-          │ • Edge Functions               │
-          └────────────────────────────────┘
-```
-
----
-
-## Recommended Actions
-
-### Option A: Ignore These Logs (Recommended)
-
-The 405 errors for `/api/` requests are harmless - they're either:
-1. Bots/scanners probing for API endpoints
-2. Stale requests from browser caching during development
-
-Your app works correctly without any API proxy configuration.
-
-### Option B: Add a Clean 404 Response for `/api/`
-
-If you want cleaner logs, you can add a block that returns a proper 404 for any `/api/` requests, making it clear the endpoint doesn't exist:
-
-**Changes to `nginx.conf`:**
-
-Add before the SPA location block:
-
-```nginx
-# Return 404 for any /api/ requests (no backend exists)
-location /api/ {
-    return 404;
-}
-```
-
-This simply tells any `/api/` request that the endpoint doesn't exist, which is accurate.
+### 3. Helper Functions for Config Display
+Create type-safe helper functions to parse and display the `server_config` JSON:
+- `formatMinecraftConfig()` - Edition (Java/Bedrock), Software (Vanilla/Paper/Fabric/Forge), Version
+- `formatTerrariaConfig()` - Software, World Size, Difficulty
+- `formatSatisfactoryConfig()` - Branch
 
 ---
 
-## Summary
+## Technical Notes
 
-| Issue | Cause | Action Required |
-|-------|-------|-----------------|
-| `/api/apps/null/...` in URL | Lovable preview system (not your app) | None - doesn't affect production |
-| 405 Not Allowed | Nginx rejecting POST to static file route | Optional: Add clean 404 for `/api/` |
-| Missing environment variable | None found - your app only uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` | Verify these are passed correctly during Docker build |
+### Data Available
+The `server_requests` table contains:
+- `description` - User's project description
+- `server_config` - JSON with game-specific settings:
+  - Minecraft: `{ edition, software, version, eula_accepted }`
+  - Terraria: `{ software, world_size, difficulty }`
+  - Satisfactory: `{ branch }`
+- `rejection_reason` - Text explaining why request was rejected
+- `assigned_ip` - Server IP (after approval)
+- `panel_url` - Control panel URL (after approval)
+- `created_at`, `updated_at` - Timestamps
 
-### Docker Build Verification
+### UI Styling
+- Use existing `gaming-card` and `border-border/50` classes for consistency
+- Use the existing game labels and icons from `gameLabels` object
+- Match existing modal patterns (like RejectModal and ApproveDialog)
 
-When building, ensure you pass the environment variables:
-
-```bash
-docker-compose build \
-  --build-arg VITE_SUPABASE_URL="https://ccomlhxhigqqmoexpmyy.supabase.co" \
-  --build-arg VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb21saHhoaWdxcW1vZXhwbXl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MjMzMzcsImV4cCI6MjA4NTk5OTMzN30.pmX6v2EJZARQHY7tDx13GidW50YnXQ-KeiGNE5NcwtM"
-```
-
-Or add the build args to `docker-compose.yml` for convenience:
-
-```yaml
-services:
-  skyserver-web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        VITE_SUPABASE_URL: "https://ccomlhxhigqqmoexpmyy.supabase.co"
-        VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    ports:
-      - "7012:7012"
-    restart: always
-```
+### Type Safety
+- Parse `server_config` with proper TypeScript type guards
+- Use existing `MinecraftConfig`, `TerrariaConfig`, `SatisfactoryConfig` interfaces
