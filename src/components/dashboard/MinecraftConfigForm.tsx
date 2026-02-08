@@ -61,7 +61,7 @@ export function MinecraftConfigForm({ config, onChange }: MinecraftConfigFormPro
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="mcVersion">Version</Label>
+        <Label htmlFor="mcVersion">Version *</Label>
         <Input
           id="mcVersion"
           placeholder="e.g., 1.20.4"
