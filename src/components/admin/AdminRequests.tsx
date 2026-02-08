@@ -43,7 +43,9 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
+  AlertTriangle,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Database } from '@/integrations/supabase/types';
 
 type RequestStatus = Database['public']['Enums']['request_status'];
@@ -52,6 +54,33 @@ const gameLabels: Record<string, { label: string; icon: string }> = {
   minecraft: { label: 'Minecraft', icon: '⛏️' },
   terraria: { label: 'Terraria', icon: '🌳' },
   satisfactory: { label: 'Satisfactory', icon: '🏭' },
+};
+
+// Helper function to calculate and format time remaining
+const getExpiryInfo = (expiresAt: string | null) => {
+  if (!expiresAt) return null;
+  
+  const now = new Date();
+  const expiry = new Date(expiresAt);
+  const diff = expiry.getTime() - now.getTime();
+  
+  if (diff <= 0) {
+    return { text: 'Expired', isUrgent: true, isExpired: true, days: 0 };
+  }
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (days === 0) {
+    return { text: `${hours}h`, isUrgent: true, isExpired: false, days: 0 };
+  }
+  
+  return { 
+    text: `${days}d ${hours}h`, 
+    isUrgent: days < 5, 
+    isExpired: false,
+    days 
+  };
 };
 
 export function AdminRequests() {
@@ -260,13 +289,16 @@ export function AdminRequests() {
                     <TableHead>Game</TableHead>
                     <TableHead>Server</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Expires</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRequests.map((request) => {
+                {filteredRequests.map((request) => {
                     const game = gameLabels[request.game_type];
+                    const expiryInfo = request.status === 'active' ? getExpiryInfo(request.expires_at) : null;
+                    
                     return (
                       <TableRow 
                         key={request.id}
@@ -290,6 +322,25 @@ export function AdminRequests() {
                         </TableCell>
                         <TableCell>{request.server_name}</TableCell>
                         <TableCell>{getStatusBadge(request.status)}</TableCell>
+                        <TableCell>
+                          {request.status === 'active' && expiryInfo ? (
+                            <div className={cn(
+                              'flex items-center gap-1 text-sm font-medium',
+                              expiryInfo.isExpired 
+                                ? 'text-destructive' 
+                                : expiryInfo.isUrgent 
+                                  ? 'text-warning' 
+                                  : 'text-success'
+                            )}>
+                              {expiryInfo.isUrgent && (
+                                <AlertTriangle className="h-3 w-3" />
+                              )}
+                              {expiryInfo.text}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-muted-foreground">
                           {new Date(request.created_at).toLocaleDateString()}
                         </TableCell>

@@ -19,8 +19,9 @@ export interface ServerRequest {
   rejection_reason: string | null;
   created_at: string;
   updated_at: string;
+  expires_at: string | null;
   user_email?: string;
-  // New credential fields
+  // Credential fields
   assigned_ip: string | null;
   panel_url: string | null;
   panel_username: string | null;
