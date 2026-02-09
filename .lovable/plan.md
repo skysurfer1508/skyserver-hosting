@@ -1,89 +1,70 @@
 
 
-# Fix: Email Redirects to Custom Domain (www.skyserver1508.org)
+# Fix: Send Custom Verification Email on Signup
 
 ## Problem
 
-When users click email verification or password reset links, they are redirected to the Lovable preview domain instead of your custom domain `www.skyserver1508.org`.
+When a user creates an account, the verification email link points to the wrong domain. This happens because:
 
-This happens because `window.location.origin` captures the current runtime environment, which varies between preview and production.
+1. Supabase's built-in signup flow sends its own confirmation email
+2. That email uses Supabase's internal email template and site URL settings
+3. Even though `emailRedirectTo` is set to `https://www.skyserver1508.org`, the email template may still use a different domain
 
----
-
-## Solution Overview
-
-Hardcode the production URL in a central constant and use it for all authentication-related email redirects:
-
-1. Add `PRODUCTION_URL` constant
-2. Update signup flow redirect
-3. Update verification resend to use custom edge function with correct URL
-4. Update password reset redirect
+The custom `send-verification-email` edge function is currently only used for **resending** verification emails (from the blocked screen), not during initial signup.
 
 ---
 
-## File Changes
+## Solution
 
-### 1. Add Production URL Constant
+Call the custom `send-verification-email` edge function immediately after a successful signup to send a branded verification email with the correct URL pointing to `www.skyserver1508.org`.
 
-**File:** `src/config/constants.ts`
+---
+
+## Changes Required
+
+### 1. Update Register.tsx - Send Custom Verification Email After Signup
+
+**File:** `src/pages/Register.tsx`
+
+After a successful signup, invoke the custom edge function to send the verification email:
 
 ```typescript
-// Add new constant
-export const PRODUCTION_URL = 'https://www.skyserver1508.org';
-```
-
----
-
-### 2. Update Signup Redirect
-
-**File:** `src/hooks/useAuth.tsx`
-
-Change the `emailRedirectTo` in the signup function:
-
-```typescript
+import { supabase } from '@/integrations/supabase/client';
 import { PRODUCTION_URL } from '@/config/constants';
 
-// In signUp function, change:
-emailRedirectTo: window.location.origin,
-// To:
-emailRedirectTo: PRODUCTION_URL,
+// After successful signUp:
+const { error } = await signUp(email, password, { full_name: fullName.trim() });
+
+if (!error) {
+  // Send custom verification email with correct URL
+  await supabase.functions.invoke('send-verification-email', {
+    body: {
+      email: email,
+      verificationUrl: `${PRODUCTION_URL}/verify-email`,
+      userName: fullName.trim(),
+    },
+  });
+  
+  // Show success message and redirect
+  toast({
+    title: 'Account created!',
+    description: 'Please check your email to verify your account.',
+  });
+  navigate('/verify-email'); // Redirect to verification pending page
+}
 ```
 
 ---
 
-### 3. Update Resend Verification Flow
+### 2. Update Success Message
 
-**File:** `src/components/auth/RequireVerification.tsx`
-
-Replace the Supabase built-in `resend()` with the custom edge function that already supports your domain branding:
-
-```typescript
-import { PRODUCTION_URL } from '@/config/constants';
-
-// Replace supabase.auth.resend() with:
-const { error } = await supabase.functions.invoke('send-verification-email', {
-  body: {
-    email: user.email,
-    verificationUrl: `${PRODUCTION_URL}/verify-email`,
-    userName: user.user_metadata?.full_name,
-  },
-});
-```
+Change the toast message to inform users they need to verify their email before accessing the dashboard.
 
 ---
 
-### 4. Update Password Reset Redirect
+### 3. Redirect to Verify Email Page
 
-**File:** `src/pages/ForgotPassword.tsx`
-
-```typescript
-import { PRODUCTION_URL } from '@/config/constants';
-
-// Change:
-const resetUrl = `${window.location.origin}/reset-password`;
-// To:
-const resetUrl = `${PRODUCTION_URL}/reset-password`;
-```
+Instead of redirecting to `/dashboard` (where they'll be blocked anyway), redirect to `/verify-email` which shows the "Check Your Email" message.
 
 ---
 
@@ -91,17 +72,37 @@ const resetUrl = `${PRODUCTION_URL}/reset-password`;
 
 | File | Change |
 |------|--------|
-| `src/config/constants.ts` | Add `PRODUCTION_URL` constant |
-| `src/hooks/useAuth.tsx` | Use `PRODUCTION_URL` for signup redirect |
-| `src/components/auth/RequireVerification.tsx` | Use custom edge function with correct URL |
-| `src/pages/ForgotPassword.tsx` | Use `PRODUCTION_URL` for password reset |
+| `src/pages/Register.tsx` | Add custom verification email call after signup |
+| `src/pages/Register.tsx` | Update success message to mention email verification |
+| `src/pages/Register.tsx` | Redirect to `/verify-email` instead of `/dashboard` |
+
+---
+
+## How It Works
+
+```text
+User Signs Up
+    │
+    ▼
+supabase.auth.signUp() called
+    │
+    ▼
+Custom send-verification-email edge function called
+    │
+    ▼
+User receives branded email with link to:
+https://www.skyserver1508.org/verify-email
+    │
+    ▼
+User clicks link → lands on custom domain → verifies email
+```
 
 ---
 
 ## Result
 
-After these changes:
-- Verification emails link to `https://www.skyserver1508.org/verify-email`
-- Password reset emails link to `https://www.skyserver1508.org/reset-password`
-- All auth flows work correctly on your custom domain
+After this fix:
+- New users receive a verification email with the correct link to `www.skyserver1508.org`
+- The email uses the branded SkyServer template
+- Users are redirected to the verification pending page instead of being blocked at the dashboard
 
