@@ -1,96 +1,69 @@
 
+# Plan: Add Request Details Modal for Admins
 
-# Plan: Fix Nginx Configuration for Proper Health Checks
+## Overview
+Add a clickable row feature to the AdminRequests table that opens a detailed view modal, showing all information about a server request including game-specific configuration (version, edition, world size, etc.), description, timestamps, and status information.
 
-## Problem Analysis
-You're experiencing:
-- **Black screen**: Likely due to failed asset loading or routing issues
-- **Unhealthy status**: The healthcheck may be probing the wrong port
-- **405 Method Not Allowed**: API requests hitting nginx instead of your backend
+## User Experience
+- Admin clicks anywhere on a request row (except action buttons) to open a details modal
+- The modal displays all request information in a clean, organized layout
+- Game-specific configuration is rendered based on the game type (Minecraft shows edition/version/software, Terraria shows world size/difficulty, etc.)
+- For rejected requests, the rejection reason is displayed
+- For active requests, assigned credentials info is shown (IP address, panel URL - not the encrypted password)
 
-## Current Configuration Status
-Your current setup (`7012:80` mapping) is actually valid, but there's a mismatch in your docker-compose healthcheck which references port 7012 instead of letting Docker use the internal check.
+## Implementation Details
 
-## Proposed Fixes
+### 1. Create New Component: `RequestDetailsModal.tsx`
+**Location:** `src/components/admin/RequestDetailsModal.tsx`
 
-### 1. Simplify nginx.conf
-Replace the complex nginx.conf with a minimal configuration that listens on port 80 (standard for containers):
+This modal component will:
+- Accept the selected request as a prop
+- Display request information in organized sections:
+  - **User Info**: Email, Discord username
+  - **Server Info**: Server name, game type with icon
+  - **Game Configuration**: Dynamic content based on game type
+    - Minecraft: Edition, Software, Version, EULA status
+    - Terraria: Software, World Size, Difficulty
+    - Satisfactory: Branch
+  - **Description**: User's project description (if provided)
+  - **Status Details**: Current status badge, timestamps
+  - **Rejection Reason**: Shown only for rejected requests
+  - **Active Server Info**: Assigned IP, Panel URL (for approved requests)
 
-```nginx
-server {
-    listen 80;
-    server_name localhost;
-    root /usr/share/nginx/html;
-    index index.html;
+### 2. Update `AdminRequests.tsx`
+- Add state for the details modal: `detailsDialogOpen` and use existing `selectedRequest`
+- Make table rows clickable with cursor pointer styling
+- Add click handler that opens the details modal (avoiding action button clicks)
+- Import and render the new `RequestDetailsModal` component
+- Add visual indicator (e.g., `Eye` icon or hover effect) to hint clickability
 
-    # Health check endpoint
-    location /health {
-        access_log off;
-        return 200 "healthy\n";
-        add_header Content-Type text/plain;
-    }
+### 3. Helper Functions for Config Display
+Create type-safe helper functions to parse and display the `server_config` JSON:
+- `formatMinecraftConfig()` - Edition (Java/Bedrock), Software (Vanilla/Paper/Fabric/Forge), Version
+- `formatTerrariaConfig()` - Software, World Size, Difficulty
+- `formatSatisfactoryConfig()` - Branch
 
-    # Fix for React Router (SPA) - redirects 404s to index.html
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+---
 
-    # Error pages
-    error_page 500 502 503 504 /50x.html;
-    location = /50x.html {
-        root /usr/share/nginx/html;
-    }
-}
-```
+## Technical Notes
 
-### 2. Update Dockerfile
-Keep the Dockerfile as-is since it correctly:
-- Exposes port 80
-- Health checks `localhost:80/health`
+### Data Available
+The `server_requests` table contains:
+- `description` - User's project description
+- `server_config` - JSON with game-specific settings:
+  - Minecraft: `{ edition, software, version, eula_accepted }`
+  - Terraria: `{ software, world_size, difficulty }`
+  - Satisfactory: `{ branch }`
+- `rejection_reason` - Text explaining why request was rejected
+- `assigned_ip` - Server IP (after approval)
+- `panel_url` - Control panel URL (after approval)
+- `created_at`, `updated_at` - Timestamps
 
-### 3. Fix docker-compose.yml
-Remove any external healthcheck that references port 7012, since Docker's internal health check handles this:
+### UI Styling
+- Use existing `gaming-card` and `border-border/50` classes for consistency
+- Use the existing game labels and icons from `gameLabels` object
+- Match existing modal patterns (like RejectModal and ApproveDialog)
 
-```yaml
-version: '3.8'
-
-services:
-  skyserver-web:
-    container_name: skyserver_website
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "7012:80"
-    restart: always
-```
-
-## Technical Details
-
-| Component | Port Inside Container | Port on Host |
-|-----------|----------------------|--------------|
-| Nginx | 80 | 7012 |
-| Health Check | 80 (internal) | N/A |
-
-## Request Flow
-```text
-External Request → Host:7012 → Container:80 → Nginx → Static Files/SPA
-```
-
-## Why the 405 Error Occurs
-The "405 Method Not Allowed" happens when:
-1. Your frontend makes API calls to relative paths (e.g., `/api/something`)
-2. These hit nginx instead of your actual backend
-3. Nginx returns 405 because it's a static file server
-
-**Solution**: Ensure your frontend uses absolute URLs for API calls (e.g., `https://ccomlhxhigqqmoexpmyy.supabase.co/...`) - which your Supabase client already does.
-
-## After Deployment
-Run these commands:
-```bash
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
-docker-compose ps  # Verify health status
-```
-
+### Type Safety
+- Parse `server_config` with proper TypeScript type guards
+- Use existing `MinecraftConfig`, `TerrariaConfig`, `SatisfactoryConfig` interfaces

@@ -38,11 +38,33 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_admin_online: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_admin_online?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_admin_online?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           discord_username: string | null
           email: string
+          full_name: string | null
           id: string
           is_banned: boolean
           updated_at: string
@@ -52,6 +74,7 @@ export type Database = {
           created_at?: string
           discord_username?: string | null
           email: string
+          full_name?: string | null
           id: string
           is_banned?: boolean
           updated_at?: string
@@ -61,6 +84,7 @@ export type Database = {
           created_at?: string
           discord_username?: string | null
           email?: string
+          full_name?: string | null
           id?: string
           is_banned?: boolean
           updated_at?: string
@@ -75,6 +99,7 @@ export type Database = {
           credentials_encrypted: boolean | null
           description: string | null
           discord_username: string
+          expires_at: string
           game_type: Database["public"]["Enums"]["game_type"]
           id: string
           ip_address: string | null
@@ -95,6 +120,7 @@ export type Database = {
           credentials_encrypted?: boolean | null
           description?: string | null
           discord_username: string
+          expires_at?: string
           game_type: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
@@ -115,6 +141,7 @@ export type Database = {
           credentials_encrypted?: boolean | null
           description?: string | null
           discord_username?: string
+          expires_at?: string
           game_type?: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
@@ -256,6 +283,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      renew_server_lease: { Args: { request_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

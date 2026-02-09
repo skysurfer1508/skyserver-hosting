@@ -6,23 +6,43 @@ import { PlatformStatusCard } from '@/components/dashboard/PlatformStatusCard';
 import { PlatformStatusBanner } from '@/components/dashboard/PlatformStatusBanner';
 import { DashboardSettings } from '@/components/dashboard/DashboardSettings';
 import { FeedbackWidget } from '@/components/dashboard/FeedbackWidget';
+import { ProfileCompletionModal } from '@/components/dashboard/ProfileCompletionModal';
+import { AdminOfflineBanner } from '@/components/dashboard/AdminOfflineBanner';
 import { NewsFeed } from '@/components/NewsFeed';
 import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { usePlatformStatus } from '@/hooks/usePlatformStatus';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
+import { useAdminStatus } from '@/hooks/useAdminStatus';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Server, Settings } from 'lucide-react';
+import { Users, Server, Settings, Loader2 } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { settings } = useSystemSettings();
   const { status, panelOnline, nodeOnline, lastChecked, refresh } = usePlatformStatus();
+  const { isProfileIncomplete, isChecking, markComplete } = useProfileCompletion();
+  const { isAdminOnline } = useAdminStatus();
   const [activeTab, setActiveTab] = useState('server');
+
+  // Show loading state while checking profile
+  if (isChecking) {
+    return (
+      <Layout showFooter={false}>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout showFooter={false}>
+      {/* Profile Completion Modal - blocks access until name is provided */}
+      <ProfileCompletionModal open={isProfileIncomplete} onComplete={markComplete} />
+
       {/* Platform Status Banner (only shows if NOT online) */}
       <PlatformStatusBanner 
         status={status} 
@@ -34,6 +54,8 @@ export default function Dashboard() {
       <MaintenanceBanner />
       
       <div className="container py-8">
+        {/* Admin Offline Banner */}
+        {!isAdminOnline && <AdminOfflineBanner />}
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground">

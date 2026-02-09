@@ -5,6 +5,7 @@ interface AdminUser {
   id: string;
   email: string;
   username: string | null;
+  full_name: string | null;
   is_banned: boolean;
   is_admin: boolean;
   discord_username: string | null;
@@ -20,7 +21,7 @@ export function useAdminUsers() {
       // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, username, is_banned, created_at')
+        .select('id, email, username, full_name, is_banned, created_at')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -56,6 +57,7 @@ export function useAdminUsers() {
         id: p.id,
         email: p.email,
         username: p.username,
+        full_name: p.full_name,
         is_banned: p.is_banned || false,
         is_admin: adminUserIds.has(p.id),
         discord_username: discordMap.get(p.id) || null,
