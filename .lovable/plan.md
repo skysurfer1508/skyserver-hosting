@@ -1,86 +1,72 @@
 
+# Email Verification Enforcement Implementation
 
-# Email Service Implementation with Resend
-
-This plan implements a complete authentication email system using Resend, including password reset, email verification, and welcome emails.
+This plan enforces email verification for all users (including existing ones) and adds verification status visibility in the Admin Panel.
 
 ## Overview
 
-You'll be able to send professional authentication emails to your users, including:
-- **Password Reset**: Users can request a password reset link via email
-- **Email Verification**: New users receive a verification email after signing up
-- **Welcome Email**: A friendly welcome message sent after successful verification
-
-## Prerequisites
-
-Before I can implement this, you'll need:
-
-1. **Resend Account**: Sign up at https://resend.com if you don't have one
-2. **Verified Domain**: Verify your email domain at https://resend.com/domains (required to send emails)
-3. **API Key**: Create an API key at https://resend.com/api-keys
+**What this does:**
+- Blocks unverified users from accessing the dashboard with a "Verification Required" screen
+- Provides options to resend verification email or update email address (for typos)
+- Shows email verification status for all users in the Admin Panel
 
 ---
 
-## Implementation Steps
+## Implementation Components
 
-### Step 1: Add Resend API Key Secret
+### 1. Email Verification Check Hook
 
-I'll request your Resend API key and store it securely as a backend secret.
+**New File:** `src/hooks/useEmailVerification.tsx`
 
-### Step 2: Create Edge Functions
-
-**Three new backend functions will be created:**
+A custom hook that checks if the current user's email is verified by reading the `email_confirmed_at` field from the Supabase auth user object.
 
 ```text
-supabase/functions/
-├── send-password-reset/index.ts     (Password reset emails)
-├── send-verification-email/index.ts (Email verification)
-└── send-welcome-email/index.ts      (Welcome message)
+useEmailVerification()
+  - isEmailVerified: boolean
+  - isChecking: boolean
+  - userEmail: string | null
+  - resendVerificationEmail(): Promise
+  - updateEmail(newEmail): Promise
 ```
 
-Each function will:
-- Accept email and relevant data
-- Use Resend to send beautifully formatted emails
-- Return success/error responses
+### 2. Verification Required Modal Component
 
-### Step 3: Create Password Reset Flow
+**New File:** `src/components/dashboard/EmailVerificationModal.tsx`
 
-**New UI Components:**
-- "Forgot Password?" link on the Login page
-- Password Reset Request page (`/forgot-password`)
-- Reset Password page (`/reset-password`) for setting new password
+A blocking modal (similar to ProfileCompletionModal) that displays when the user's email is not verified.
+
+**Features:**
+- Clear message explaining verification is required
+- "Resend Verification Email" button
+- Input field + "Update Email" button for correcting typos
+- Cannot be dismissed until email is verified
+
+### 3. Dashboard Integration
+
+**Modified File:** `src/pages/Dashboard.tsx`
+
+Add the email verification check to the Dashboard. The verification modal will block access until the user verifies their email.
 
 **Flow:**
-1. User clicks "Forgot Password?" on login page
-2. User enters email and clicks "Send Reset Link"
-3. Backend function sends email with secure reset link
-4. User clicks link, gets redirected to reset password page
-5. User sets new password and can log in
+1. Check if user's `email_confirmed_at` is null
+2. If null, show EmailVerificationModal (blocks dashboard content)
+3. After verification, user can access dashboard normally
 
-### Step 4: Enable Email Verification
+### 4. Admin Panel: User Verification Status
 
-**Changes to Registration:**
-- After signup, user is shown a "Check your email" message
-- User receives verification email with confirmation link
-- User must verify before they can fully access the dashboard
-- Welcome email is sent after successful verification
+**Modified Files:**
+- `src/hooks/useAdminUsers.tsx` - Add `is_verified` field
+- `src/components/admin/AdminUsers.tsx` - Add verification status column
 
-### Step 5: Database Updates
+**Approach (Edge Function method):**
+Since `auth.users` cannot be accessed directly from the client, we'll create an Edge Function that uses the service role to fetch `email_confirmed_at` status for all users.
 
-**New table for password reset tokens:**
+**New Edge Function:** `supabase/functions/get-users-verification-status/index.ts`
 
-```text
-password_reset_tokens
-├── id (uuid, primary key)
-├── user_id (uuid, references profiles)
-├── token (text, unique)
-├── expires_at (timestamptz)
-└── created_at (timestamptz)
-```
-
-### Step 6: Update Config
-
-Add new edge functions to the backend configuration with proper security settings.
+This function will:
+- Accept a list of user IDs
+- Query `auth.users` using service role
+- Return verification status for each user
 
 ---
 
@@ -88,91 +74,91 @@ Add new edge functions to the backend configuration with proper security setting
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `supabase/functions/send-password-reset/index.ts` | Create | Send password reset emails |
-| `supabase/functions/send-verification-email/index.ts` | Create | Send email verification links |
-| `supabase/functions/send-welcome-email/index.ts` | Create | Send welcome emails |
-| `supabase/config.toml` | Update | Register new edge functions |
-| `src/pages/ForgotPassword.tsx` | Create | Password reset request page |
-| `src/pages/ResetPassword.tsx` | Create | Set new password page |
-| `src/pages/VerifyEmail.tsx` | Create | Email verification landing page |
-| `src/pages/Login.tsx` | Update | Add "Forgot Password?" link |
-| `src/pages/Register.tsx` | Update | Show verification message after signup |
-| `src/App.tsx` | Update | Add new routes |
-| `src/hooks/useAuth.tsx` | Update | Add password reset methods |
+| `src/hooks/useEmailVerification.tsx` | Create | Hook to check verification status and handle resend/update email |
+| `src/components/dashboard/EmailVerificationModal.tsx` | Create | Blocking modal for unverified users |
+| `src/pages/Dashboard.tsx` | Update | Add verification check and modal |
+| `supabase/functions/get-users-verification-status/index.ts` | Create | Fetch verification status from auth.users |
+| `supabase/config.toml` | Update | Register new edge function |
+| `src/hooks/useAdminUsers.tsx` | Update | Fetch and include verification status |
+| `src/components/admin/AdminUsers.tsx` | Update | Display verification status column |
+
+---
+
+## User Experience
+
+### For Regular Users (Unverified)
+
+```text
+User logs in
+     |
+     v
+Dashboard attempts to load
+     |
+     v
+[Verification check runs]
+     |
+     +-- email_confirmed_at is NULL?
+     |        |
+     |        v
+     |   Show "Verification Required" Modal
+     |        |
+     |        +-- [Resend Verification Email] button
+     |        |        calls supabase.auth.resend()
+     |        |
+     |        +-- [Update Email] input + button
+     |                 calls supabase.auth.updateUser()
+     |
+     +-- email_confirmed_at exists?
+              |
+              v
+         Show Dashboard normally
+```
+
+### For Admins
+
+The Users table will show a new "Verified" column with:
+- Green checkmark icon for verified users
+- Yellow/orange warning icon for unverified users
 
 ---
 
 ## Technical Details
 
-### Edge Function: Password Reset
+### Email Verification Modal Features
 
+**Resend Verification Email:**
 ```typescript
-// Generates secure token, stores in database, sends email
-POST /send-password-reset
-Body: { email: string }
-
-// Email contains link like:
-// https://yourapp.com/reset-password?token=abc123
+// Uses Supabase's built-in resend method
+await supabase.auth.resend({ 
+  type: 'signup', 
+  email: user.email 
+});
 ```
 
-### Edge Function: Email Verification
-
+**Update Email (for typos):**
 ```typescript
-// Sends verification link using Supabase's built-in magic link
-POST /send-verification-email  
-Body: { email: string }
+// Sends confirmation to new email
+await supabase.auth.updateUser({ 
+  email: newEmail 
+});
 ```
 
-### Edge Function: Welcome Email
+### Admin Verification Status Edge Function
 
 ```typescript
-// Sends welcome message after verification
-POST /send-welcome-email
-Body: { email: string, name: string }
-```
-
-### Security Measures
-
-- Password reset tokens expire after 1 hour
-- Tokens are single-use and deleted after use
-- Rate limiting on email sending
-- Secure token generation using crypto
-
----
-
-## User Experience Flow
-
-```text
-REGISTRATION:
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│   Sign Up    │───▶│ Check Email  │───▶│   Verified   │
-│   (Form)     │    │  (Message)   │    │  (Dashboard) │
-└──────────────┘    └──────────────┘    └──────────────┘
-                           │
-                           ▼
-                    [Verification Email]
-                           │
-                           ▼
-                    [Welcome Email]
-
-
-PASSWORD RESET:
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│    Login     │───▶│   Forgot     │───▶│    Reset     │
-│ (Forgot Pwd) │    │  Password    │    │   Password   │
-└──────────────┘    └──────────────┘    └──────────────┘
-                           │
-                           ▼
-                    [Reset Email Sent]
+// Uses service role to access auth.users
+const { data: authUsers } = await supabase.auth.admin.listUsers();
+// Returns map of user_id -> is_verified boolean
 ```
 
 ---
 
-## Next Steps After Approval
+## Why This Approach?
 
-1. I'll first ask you to provide the Resend API key
-2. Then implement all the edge functions
-3. Create the new pages and update existing ones
-4. Add the database table for reset tokens
-5. Test the complete flow
+1. **No Database Migration Needed:** We read `email_confirmed_at` directly from the auth user object instead of syncing to profiles table (simpler, less maintenance)
 
+2. **Edge Function for Admin:** Since `auth.users` is protected, we use an Edge Function with service role access to fetch verification status for the admin panel
+
+3. **Consistent Pattern:** The EmailVerificationModal follows the same pattern as the existing ProfileCompletionModal for familiarity
+
+4. **Self-Service:** Users can resend verification or fix email typos without contacting support
