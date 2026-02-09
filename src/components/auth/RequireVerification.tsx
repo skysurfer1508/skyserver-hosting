@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Send, RefreshCw, Loader2, CheckCircle, AlertCircle, LogOut } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
+import { PRODUCTION_URL } from '@/config/constants';
 
 interface RequireVerificationProps {
   children: ReactNode;
@@ -112,9 +113,12 @@ function VerificationBlockedScreen({ user, onRefresh }: VerificationBlockedScree
 
     setIsResending(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: user.email,
+      const { error } = await supabase.functions.invoke('send-verification-email', {
+        body: {
+          email: user.email,
+          verificationUrl: `${PRODUCTION_URL}/verify-email`,
+          userName: user.user_metadata?.full_name,
+        },
       });
 
       if (error) {
