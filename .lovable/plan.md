@@ -1,69 +1,178 @@
 
-# Plan: Add Request Details Modal for Admins
+
+# Email Service Implementation with Resend
+
+This plan implements a complete authentication email system using Resend, including password reset, email verification, and welcome emails.
 
 ## Overview
-Add a clickable row feature to the AdminRequests table that opens a detailed view modal, showing all information about a server request including game-specific configuration (version, edition, world size, etc.), description, timestamps, and status information.
 
-## User Experience
-- Admin clicks anywhere on a request row (except action buttons) to open a details modal
-- The modal displays all request information in a clean, organized layout
-- Game-specific configuration is rendered based on the game type (Minecraft shows edition/version/software, Terraria shows world size/difficulty, etc.)
-- For rejected requests, the rejection reason is displayed
-- For active requests, assigned credentials info is shown (IP address, panel URL - not the encrypted password)
+You'll be able to send professional authentication emails to your users, including:
+- **Password Reset**: Users can request a password reset link via email
+- **Email Verification**: New users receive a verification email after signing up
+- **Welcome Email**: A friendly welcome message sent after successful verification
 
-## Implementation Details
+## Prerequisites
 
-### 1. Create New Component: `RequestDetailsModal.tsx`
-**Location:** `src/components/admin/RequestDetailsModal.tsx`
+Before I can implement this, you'll need:
 
-This modal component will:
-- Accept the selected request as a prop
-- Display request information in organized sections:
-  - **User Info**: Email, Discord username
-  - **Server Info**: Server name, game type with icon
-  - **Game Configuration**: Dynamic content based on game type
-    - Minecraft: Edition, Software, Version, EULA status
-    - Terraria: Software, World Size, Difficulty
-    - Satisfactory: Branch
-  - **Description**: User's project description (if provided)
-  - **Status Details**: Current status badge, timestamps
-  - **Rejection Reason**: Shown only for rejected requests
-  - **Active Server Info**: Assigned IP, Panel URL (for approved requests)
-
-### 2. Update `AdminRequests.tsx`
-- Add state for the details modal: `detailsDialogOpen` and use existing `selectedRequest`
-- Make table rows clickable with cursor pointer styling
-- Add click handler that opens the details modal (avoiding action button clicks)
-- Import and render the new `RequestDetailsModal` component
-- Add visual indicator (e.g., `Eye` icon or hover effect) to hint clickability
-
-### 3. Helper Functions for Config Display
-Create type-safe helper functions to parse and display the `server_config` JSON:
-- `formatMinecraftConfig()` - Edition (Java/Bedrock), Software (Vanilla/Paper/Fabric/Forge), Version
-- `formatTerrariaConfig()` - Software, World Size, Difficulty
-- `formatSatisfactoryConfig()` - Branch
+1. **Resend Account**: Sign up at https://resend.com if you don't have one
+2. **Verified Domain**: Verify your email domain at https://resend.com/domains (required to send emails)
+3. **API Key**: Create an API key at https://resend.com/api-keys
 
 ---
 
-## Technical Notes
+## Implementation Steps
 
-### Data Available
-The `server_requests` table contains:
-- `description` - User's project description
-- `server_config` - JSON with game-specific settings:
-  - Minecraft: `{ edition, software, version, eula_accepted }`
-  - Terraria: `{ software, world_size, difficulty }`
-  - Satisfactory: `{ branch }`
-- `rejection_reason` - Text explaining why request was rejected
-- `assigned_ip` - Server IP (after approval)
-- `panel_url` - Control panel URL (after approval)
-- `created_at`, `updated_at` - Timestamps
+### Step 1: Add Resend API Key Secret
 
-### UI Styling
-- Use existing `gaming-card` and `border-border/50` classes for consistency
-- Use the existing game labels and icons from `gameLabels` object
-- Match existing modal patterns (like RejectModal and ApproveDialog)
+I'll request your Resend API key and store it securely as a backend secret.
 
-### Type Safety
-- Parse `server_config` with proper TypeScript type guards
-- Use existing `MinecraftConfig`, `TerrariaConfig`, `SatisfactoryConfig` interfaces
+### Step 2: Create Edge Functions
+
+**Three new backend functions will be created:**
+
+```text
+supabase/functions/
+├── send-password-reset/index.ts     (Password reset emails)
+├── send-verification-email/index.ts (Email verification)
+└── send-welcome-email/index.ts      (Welcome message)
+```
+
+Each function will:
+- Accept email and relevant data
+- Use Resend to send beautifully formatted emails
+- Return success/error responses
+
+### Step 3: Create Password Reset Flow
+
+**New UI Components:**
+- "Forgot Password?" link on the Login page
+- Password Reset Request page (`/forgot-password`)
+- Reset Password page (`/reset-password`) for setting new password
+
+**Flow:**
+1. User clicks "Forgot Password?" on login page
+2. User enters email and clicks "Send Reset Link"
+3. Backend function sends email with secure reset link
+4. User clicks link, gets redirected to reset password page
+5. User sets new password and can log in
+
+### Step 4: Enable Email Verification
+
+**Changes to Registration:**
+- After signup, user is shown a "Check your email" message
+- User receives verification email with confirmation link
+- User must verify before they can fully access the dashboard
+- Welcome email is sent after successful verification
+
+### Step 5: Database Updates
+
+**New table for password reset tokens:**
+
+```text
+password_reset_tokens
+├── id (uuid, primary key)
+├── user_id (uuid, references profiles)
+├── token (text, unique)
+├── expires_at (timestamptz)
+└── created_at (timestamptz)
+```
+
+### Step 6: Update Config
+
+Add new edge functions to the backend configuration with proper security settings.
+
+---
+
+## File Changes Summary
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `supabase/functions/send-password-reset/index.ts` | Create | Send password reset emails |
+| `supabase/functions/send-verification-email/index.ts` | Create | Send email verification links |
+| `supabase/functions/send-welcome-email/index.ts` | Create | Send welcome emails |
+| `supabase/config.toml` | Update | Register new edge functions |
+| `src/pages/ForgotPassword.tsx` | Create | Password reset request page |
+| `src/pages/ResetPassword.tsx` | Create | Set new password page |
+| `src/pages/VerifyEmail.tsx` | Create | Email verification landing page |
+| `src/pages/Login.tsx` | Update | Add "Forgot Password?" link |
+| `src/pages/Register.tsx` | Update | Show verification message after signup |
+| `src/App.tsx` | Update | Add new routes |
+| `src/hooks/useAuth.tsx` | Update | Add password reset methods |
+
+---
+
+## Technical Details
+
+### Edge Function: Password Reset
+
+```typescript
+// Generates secure token, stores in database, sends email
+POST /send-password-reset
+Body: { email: string }
+
+// Email contains link like:
+// https://yourapp.com/reset-password?token=abc123
+```
+
+### Edge Function: Email Verification
+
+```typescript
+// Sends verification link using Supabase's built-in magic link
+POST /send-verification-email  
+Body: { email: string }
+```
+
+### Edge Function: Welcome Email
+
+```typescript
+// Sends welcome message after verification
+POST /send-welcome-email
+Body: { email: string, name: string }
+```
+
+### Security Measures
+
+- Password reset tokens expire after 1 hour
+- Tokens are single-use and deleted after use
+- Rate limiting on email sending
+- Secure token generation using crypto
+
+---
+
+## User Experience Flow
+
+```text
+REGISTRATION:
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│   Sign Up    │───▶│ Check Email  │───▶│   Verified   │
+│   (Form)     │    │  (Message)   │    │  (Dashboard) │
+└──────────────┘    └──────────────┘    └──────────────┘
+                           │
+                           ▼
+                    [Verification Email]
+                           │
+                           ▼
+                    [Welcome Email]
+
+
+PASSWORD RESET:
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│    Login     │───▶│   Forgot     │───▶│    Reset     │
+│ (Forgot Pwd) │    │  Password    │    │   Password   │
+└──────────────┘    └──────────────┘    └──────────────┘
+                           │
+                           ▼
+                    [Reset Email Sent]
+```
+
+---
+
+## Next Steps After Approval
+
+1. I'll first ask you to provide the Resend API key
+2. Then implement all the edge functions
+3. Create the new pages and update existing ones
+4. Add the database table for reset tokens
+5. Test the complete flow
+
