@@ -38,41 +38,6 @@ export type Database = {
         }
         Relationships: []
       }
-      password_reset_tokens: {
-        Row: {
-          created_at: string
-          expires_at: string
-          id: string
-          token: string
-          used: boolean
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          token: string
-          used?: boolean
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          token?: string
-          used?: boolean
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "password_reset_tokens_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       platform_settings: {
         Row: {
           created_at: string
@@ -102,7 +67,6 @@ export type Database = {
           full_name: string | null
           id: string
           is_banned: boolean
-          is_verified: boolean
           updated_at: string
           username: string | null
         }
@@ -113,7 +77,6 @@ export type Database = {
           full_name?: string | null
           id: string
           is_banned?: boolean
-          is_verified?: boolean
           updated_at?: string
           username?: string | null
         }
@@ -124,7 +87,6 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean
-          is_verified?: boolean
           updated_at?: string
           username?: string | null
         }

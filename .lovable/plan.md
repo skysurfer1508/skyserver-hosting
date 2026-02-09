@@ -1,112 +1,69 @@
 
-# Email Verification & Password Reset System
+# Plan: Add Request Details Modal for Admins
 
 ## Overview
-Implement a complete email verification guard, password reset flow, and sign-up updates -- all routing through your custom domain `https://www.skyserver1508.org`.
+Add a clickable row feature to the AdminRequests table that opens a detailed view modal, showing all information about a server request including game-specific configuration (version, edition, world size, etc.), description, timestamps, and status information.
+
+## User Experience
+- Admin clicks anywhere on a request row (except action buttons) to open a details modal
+- The modal displays all request information in a clean, organized layout
+- Game-specific configuration is rendered based on the game type (Minecraft shows edition/version/software, Terraria shows world size/difficulty, etc.)
+- For rejected requests, the rejection reason is displayed
+- For active requests, assigned credentials info is shown (IP address, panel URL - not the encrypted password)
+
+## Implementation Details
+
+### 1. Create New Component: `RequestDetailsModal.tsx`
+**Location:** `src/components/admin/RequestDetailsModal.tsx`
+
+This modal component will:
+- Accept the selected request as a prop
+- Display request information in organized sections:
+  - **User Info**: Email, Discord username
+  - **Server Info**: Server name, game type with icon
+  - **Game Configuration**: Dynamic content based on game type
+    - Minecraft: Edition, Software, Version, EULA status
+    - Terraria: Software, World Size, Difficulty
+    - Satisfactory: Branch
+  - **Description**: User's project description (if provided)
+  - **Status Details**: Current status badge, timestamps
+  - **Rejection Reason**: Shown only for rejected requests
+  - **Active Server Info**: Assigned IP, Panel URL (for approved requests)
+
+### 2. Update `AdminRequests.tsx`
+- Add state for the details modal: `detailsDialogOpen` and use existing `selectedRequest`
+- Make table rows clickable with cursor pointer styling
+- Add click handler that opens the details modal (avoiding action button clicks)
+- Import and render the new `RequestDetailsModal` component
+- Add visual indicator (e.g., `Eye` icon or hover effect) to hint clickability
+
+### 3. Helper Functions for Config Display
+Create type-safe helper functions to parse and display the `server_config` JSON:
+- `formatMinecraftConfig()` - Edition (Java/Bedrock), Software (Vanilla/Paper/Fabric/Forge), Version
+- `formatTerrariaConfig()` - Software, World Size, Difficulty
+- `formatSatisfactoryConfig()` - Branch
 
 ---
 
-## What Already Exists
-- `RESEND_API_KEY` secret is already configured
-- Auth system with `useAuth` hook, sign-up/sign-in flows
-- Profile completion modal (blocks dashboard until name is set)
-- `profiles.is_verified` column synced via `handle_verification_update` trigger
+## Technical Notes
 
-## What Will Be Built
+### Data Available
+The `server_requests` table contains:
+- `description` - User's project description
+- `server_config` - JSON with game-specific settings:
+  - Minecraft: `{ edition, software, version, eula_accepted }`
+  - Terraria: `{ software, world_size, difficulty }`
+  - Satisfactory: `{ branch }`
+- `rejection_reason` - Text explaining why request was rejected
+- `assigned_ip` - Server IP (after approval)
+- `panel_url` - Control panel URL (after approval)
+- `created_at`, `updated_at` - Timestamps
 
-### 1. Sign-Up Flow Update (`Register.tsx`)
-- Change `emailRedirectTo` from `window.location.origin` to `https://www.skyserver1508.org/dashboard`
-- Update the `signUp` function in `useAuth.tsx` to accept and forward the redirect URL
-- After successful sign-up, show toast: "Please check your email to verify your account." and redirect to `/login` instead of `/dashboard`
+### UI Styling
+- Use existing `gaming-card` and `border-border/50` classes for consistency
+- Use the existing game labels and icons from `gameLabels` object
+- Match existing modal patterns (like RejectModal and ApproveDialog)
 
-### 2. Email Verification Guard Component
-**New file: `src/components/EmailVerificationGuard.tsx`**
-
-- Wraps dashboard content inside `ProtectedRoute`
-- Checks `session.user.email_confirmed_at`
-- If `null`, renders a blocking "Verification Required" screen instead of the dashboard:
-  - Displays the user's current email
-  - "Resend Verification Email" button that calls `supabase.auth.resend()` with `emailRedirectTo: 'https://www.skyserver1508.org/dashboard'`
-  - Email correction input field so users can fix typos (calls `supabase.auth.updateUser({ email: newEmail })` then re-sends verification)
-  - Cooldown timer on resend button to prevent spam
-
-**Integration:** Wrap `<Dashboard />` inside `<EmailVerificationGuard>` in `App.tsx`
-
-### 3. Password Reset Flow
-
-**New file: `src/pages/ForgotPassword.tsx`** (route: `/auth/forgot-password`)
-- Email input form
-- On submit: `supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://www.skyserver1508.org/auth/update-password' })`
-- Success message: "Check your email for a password reset link."
-
-**New file: `src/pages/UpdatePassword.tsx`** (route: `/auth/update-password`)
-- New password + confirm password form
-- On submit: `supabase.auth.updateUser({ password })` then redirect to `/dashboard`
-- Handles the auth token from the URL automatically (Supabase injects session from the email link)
-
-**Route additions in `App.tsx`:**
-```
-/auth/forgot-password -> ForgotPassword
-/auth/update-password -> UpdatePassword
-```
-
-**Login page update:** Add a "Forgot password?" link below the sign-in form
-
-### 4. Resend Email Configuration (Edge Function)
-The project already has the `RESEND_API_KEY` secret. Supabase's built-in auth emails (verification, password reset) use the configured SMTP/email provider. Since you're using Supabase Auth's native `resend()` and `resetPasswordForEmail()` methods, the emails go through Supabase's auth system -- no custom edge function is needed for sending these emails.
-
-However, if you want branded emails from your `skyserver1508.org` domain, you'll need to configure the email templates in the auth settings. This can be done via the `config.toml` or through the backend settings.
-
----
-
-## Technical Details
-
-### Files to Create
-| File | Purpose |
-|------|---------|
-| `src/components/EmailVerificationGuard.tsx` | Blocks unverified users from dashboard |
-| `src/pages/ForgotPassword.tsx` | Password reset request page |
-| `src/pages/UpdatePassword.tsx` | New password entry page |
-
-### Files to Modify
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add routes, wrap Dashboard with guard |
-| `src/hooks/useAuth.tsx` | Update `signUp` redirect URL |
-| `src/pages/Register.tsx` | Update post-signup behavior and toast |
-| `src/pages/Login.tsx` | Add "Forgot password?" link |
-
-### Auth Flow Diagram
-
-```text
-Sign Up -> Toast "Check email" -> Redirect to /login
-                |
-                v
-        Email verification link -> skyserver1508.org/dashboard
-                |
-                v
-        Login -> EmailVerificationGuard checks email_confirmed_at
-                |
-        +-------+--------+
-        |                 |
-    Verified          Not Verified
-        |                 |
-        v                 v
-    Dashboard       Blocking Screen
-                    - Show email
-                    - Resend button
-                    - Fix email input
-
-Forgot Password -> /auth/forgot-password -> email link
-                                              |
-                                              v
-                            skyserver1508.org/auth/update-password
-                                              |
-                                              v
-                                        Set new password -> /dashboard
-```
-
-### No Database Changes Needed
-- The `profiles.is_verified` column and `handle_verification_update` trigger already exist
-- Email verification is handled by Supabase Auth's built-in `email_confirmed_at` field
-- Password reset uses Supabase Auth's native flow (no custom tokens table needed for this)
+### Type Safety
+- Parse `server_config` with proper TypeScript type guards
+- Use existing `MinecraftConfig`, `TerrariaConfig`, `SatisfactoryConfig` interfaces
