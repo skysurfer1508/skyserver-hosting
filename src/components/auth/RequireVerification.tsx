@@ -67,9 +67,16 @@ export function RequireVerification({ children }: RequireVerificationProps) {
     );
   }
 
-  // No user - let ProtectedRoute handle this
+  // No user - show loading while ProtectedRoute handles redirect
+  // CRITICAL: Never return children here to prevent content flash
   if (!user) {
-    return <>{children}</>;
+    return (
+      <Layout showFooter={false}>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
   }
 
   // User is verified - show children
