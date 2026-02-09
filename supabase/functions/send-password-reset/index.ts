@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send the email
     const emailResponse = await resend.emails.send({
-      from: "SkyServer <noreply@skyserver1508.de>",
+      from: "SkyServer <noreply@skyserver1508.org>",
       to: [email],
       subject: "Reset Your Password - SkyServer",
       html: `

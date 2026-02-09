@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send the welcome email
     const emailResponse = await resend.emails.send({
-      from: "SkyServer <noreply@skyserver1508.de>",
+      from: "SkyServer <noreply@skyserver1508.org>",
       to: [email],
       subject: "Welcome to SkyServer! 🎮",
       html: `
