@@ -7,14 +7,12 @@ import { PlatformStatusBanner } from '@/components/dashboard/PlatformStatusBanne
 import { DashboardSettings } from '@/components/dashboard/DashboardSettings';
 import { FeedbackWidget } from '@/components/dashboard/FeedbackWidget';
 import { ProfileCompletionModal } from '@/components/dashboard/ProfileCompletionModal';
-import { EmailVerificationModal } from '@/components/dashboard/EmailVerificationModal';
 import { AdminOfflineBanner } from '@/components/dashboard/AdminOfflineBanner';
 import { NewsFeed } from '@/components/NewsFeed';
 import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { usePlatformStatus } from '@/hooks/usePlatformStatus';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
-import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { useAdminStatus } from '@/hooks/useAdminStatus';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,21 +24,11 @@ export default function Dashboard() {
   const { settings } = useSystemSettings();
   const { status, panelOnline, nodeOnline, lastChecked, refresh } = usePlatformStatus();
   const { isProfileIncomplete, isChecking, markComplete } = useProfileCompletion();
-  const { 
-    isEmailVerified, 
-    isChecking: isCheckingEmail, 
-    userEmail,
-    isResending,
-    isUpdatingEmail,
-    resendVerificationEmail,
-    updateEmail,
-    refreshStatus: refreshEmailStatus,
-  } = useEmailVerification();
   const { isAdminOnline } = useAdminStatus();
   const [activeTab, setActiveTab] = useState('server');
 
-  // Show loading state while checking profile or email verification
-  if (isChecking || isCheckingEmail) {
+  // Show loading state while checking profile
+  if (isChecking) {
     return (
       <Layout showFooter={false}>
         <div className="flex min-h-[60vh] items-center justify-center">
@@ -52,17 +40,6 @@ export default function Dashboard() {
 
   return (
     <Layout showFooter={false}>
-      {/* Email Verification Modal - blocks access until email is verified */}
-      <EmailVerificationModal
-        open={!isEmailVerified}
-        userEmail={userEmail}
-        isResending={isResending}
-        isUpdatingEmail={isUpdatingEmail}
-        onResendEmail={resendVerificationEmail}
-        onUpdateEmail={updateEmail}
-        onRefreshStatus={refreshEmailStatus}
-      />
-
       {/* Profile Completion Modal - blocks access until name is provided */}
       <ProfileCompletionModal open={isProfileIncomplete} onComplete={markComplete} />
 
