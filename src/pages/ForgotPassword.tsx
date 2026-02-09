@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { PRODUCTION_URL } from '@/config/constants';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const resetUrl = `${window.location.origin}/reset-password`;
+      const resetUrl = `${PRODUCTION_URL}/reset-password`;
       
       const { data, error } = await supabase.functions.invoke('send-password-reset', {
         body: { email, resetUrl },
