@@ -6,7 +6,6 @@ import { AdminUsers } from '@/components/admin/AdminUsers';
 import { AdminSettings } from '@/components/admin/AdminSettings';
 import { AdminAnnouncements } from '@/components/admin/AdminAnnouncements';
 import { AdminFeedback } from '@/components/admin/AdminFeedback';
-import { AdminStatusToggle } from '@/components/admin/AdminStatusToggle';
 import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox } from 'lucide-react';
 
 export default function Admin() {
@@ -14,17 +13,14 @@ export default function Admin() {
     <Layout showFooter={false}>
       <div className="container py-8">
         {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-3">
-              <LayoutDashboard className="h-8 w-8 text-primary" />
-              Command Center
-            </h1>
-            <p className="text-muted-foreground">
-              Manage servers, users, and system settings
-            </p>
-          </div>
-          <AdminStatusToggle />
+        <div className="mb-8">
+          <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-3">
+            <LayoutDashboard className="h-8 w-8 text-primary" />
+            Command Center
+          </h1>
+          <p className="text-muted-foreground">
+            Manage servers, users, and system settings
+          </p>
         </div>
 
         {/* Tabs */}

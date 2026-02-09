@@ -21,36 +21,16 @@ serve(async (req) => {
   }
 
   try {
-    // Check for required environment variables upfront
     const ENCRYPTION_KEY = Deno.env.get("CREDENTIALS_ENCRYPTION_KEY");
+    if (!ENCRYPTION_KEY) {
+      throw new Error("CREDENTIALS_ENCRYPTION_KEY is not configured");
+    }
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!ENCRYPTION_KEY) {
-      const errorMsg = "Configuration Error: Missing CREDENTIALS_ENCRYPTION_KEY";
-      console.error(errorMsg);
-      return new Response(
-        JSON.stringify({ error: errorMsg }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!SUPABASE_URL) {
-      const errorMsg = "Configuration Error: Missing SUPABASE_URL";
-      console.error(errorMsg);
-      return new Response(
-        JSON.stringify({ error: errorMsg }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!SUPABASE_SERVICE_ROLE_KEY) {
-      const errorMsg = "Configuration Error: Missing SUPABASE_SERVICE_ROLE_KEY";
-      console.error(errorMsg);
-      return new Response(
-        JSON.stringify({ error: errorMsg }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing Supabase configuration");
     }
 
     // Get authorization header to verify admin
@@ -71,7 +51,6 @@ serve(async (req) => {
     // Verify user is authenticated and is admin
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
-      console.error("Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -83,15 +62,7 @@ serve(async (req) => {
       _user_id: user.id,
     });
 
-    if (roleError) {
-      console.error("Role check error:", roleError);
-      return new Response(
-        JSON.stringify({ error: "Failed to verify admin role" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!isAdmin) {
+    if (roleError || !isAdmin) {
       return new Response(
         JSON.stringify({ error: "Admin access required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -104,7 +75,7 @@ serve(async (req) => {
 
     if (!requestId || !assignedIp || !panelUsername || !panelPassword) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: requestId, assignedIp, panelUsername, panelPassword" }),
+        JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -131,17 +102,8 @@ serve(async (req) => {
     );
 
     if (encErr1 || encErr2 || encErr3 || encErr4) {
-      const errors = { encErr1, encErr2, encErr3, encErr4 };
-      console.error("Encryption errors:", JSON.stringify(errors, null, 2));
-      
-      // Extract the actual error message for the user
-      const firstError = encErr1 || encErr2 || encErr3 || encErr4;
-      const errorDetail = firstError?.message || "Unknown encryption error";
-      
-      return new Response(
-        JSON.stringify({ error: `Failed to encrypt credentials: ${errorDetail}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error("Encryption errors:", { encErr1, encErr2, encErr3, encErr4 });
+      throw new Error("Failed to encrypt credentials");
     }
 
     // Update server request with encrypted credentials
@@ -159,21 +121,17 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("Update error:", updateError);
-      return new Response(
-        JSON.stringify({ error: `Failed to update server request: ${updateError.message}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw new Error("Failed to update server request");
     }
 
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Unhandled error in encrypt-credentials:", message, error);
+  } catch (error) {
+    console.error("Error in encrypt-credentials:", error);
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: error.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

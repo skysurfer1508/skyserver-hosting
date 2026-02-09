@@ -1,108 +1,96 @@
 
 
-# Fix: Send Custom Verification Email on Signup
+# Plan: Fix Nginx Configuration for Proper Health Checks
 
-## Problem
+## Problem Analysis
+You're experiencing:
+- **Black screen**: Likely due to failed asset loading or routing issues
+- **Unhealthy status**: The healthcheck may be probing the wrong port
+- **405 Method Not Allowed**: API requests hitting nginx instead of your backend
 
-When a user creates an account, the verification email link points to the wrong domain. This happens because:
+## Current Configuration Status
+Your current setup (`7012:80` mapping) is actually valid, but there's a mismatch in your docker-compose healthcheck which references port 7012 instead of letting Docker use the internal check.
 
-1. Supabase's built-in signup flow sends its own confirmation email
-2. That email uses Supabase's internal email template and site URL settings
-3. Even though `emailRedirectTo` is set to `https://www.skyserver1508.org`, the email template may still use a different domain
+## Proposed Fixes
 
-The custom `send-verification-email` edge function is currently only used for **resending** verification emails (from the blocked screen), not during initial signup.
+### 1. Simplify nginx.conf
+Replace the complex nginx.conf with a minimal configuration that listens on port 80 (standard for containers):
 
----
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
 
-## Solution
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
 
-Call the custom `send-verification-email` edge function immediately after a successful signup to send a branded verification email with the correct URL pointing to `www.skyserver1508.org`.
+    # Fix for React Router (SPA) - redirects 404s to index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
 
----
-
-## Changes Required
-
-### 1. Update Register.tsx - Send Custom Verification Email After Signup
-
-**File:** `src/pages/Register.tsx`
-
-After a successful signup, invoke the custom edge function to send the verification email:
-
-```typescript
-import { supabase } from '@/integrations/supabase/client';
-import { PRODUCTION_URL } from '@/config/constants';
-
-// After successful signUp:
-const { error } = await signUp(email, password, { full_name: fullName.trim() });
-
-if (!error) {
-  // Send custom verification email with correct URL
-  await supabase.functions.invoke('send-verification-email', {
-    body: {
-      email: email,
-      verificationUrl: `${PRODUCTION_URL}/verify-email`,
-      userName: fullName.trim(),
-    },
-  });
-  
-  // Show success message and redirect
-  toast({
-    title: 'Account created!',
-    description: 'Please check your email to verify your account.',
-  });
-  navigate('/verify-email'); // Redirect to verification pending page
+    # Error pages
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
 }
 ```
 
----
+### 2. Update Dockerfile
+Keep the Dockerfile as-is since it correctly:
+- Exposes port 80
+- Health checks `localhost:80/health`
 
-### 2. Update Success Message
+### 3. Fix docker-compose.yml
+Remove any external healthcheck that references port 7012, since Docker's internal health check handles this:
 
-Change the toast message to inform users they need to verify their email before accessing the dashboard.
+```yaml
+version: '3.8'
 
----
-
-### 3. Redirect to Verify Email Page
-
-Instead of redirecting to `/dashboard` (where they'll be blocked anyway), redirect to `/verify-email` which shows the "Check Your Email" message.
-
----
-
-## Summary
-
-| File | Change |
-|------|--------|
-| `src/pages/Register.tsx` | Add custom verification email call after signup |
-| `src/pages/Register.tsx` | Update success message to mention email verification |
-| `src/pages/Register.tsx` | Redirect to `/verify-email` instead of `/dashboard` |
-
----
-
-## How It Works
-
-```text
-User Signs Up
-    │
-    ▼
-supabase.auth.signUp() called
-    │
-    ▼
-Custom send-verification-email edge function called
-    │
-    ▼
-User receives branded email with link to:
-https://www.skyserver1508.org/verify-email
-    │
-    ▼
-User clicks link → lands on custom domain → verifies email
+services:
+  skyserver-web:
+    container_name: skyserver_website
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7012:80"
+    restart: always
 ```
 
----
+## Technical Details
 
-## Result
+| Component | Port Inside Container | Port on Host |
+|-----------|----------------------|--------------|
+| Nginx | 80 | 7012 |
+| Health Check | 80 (internal) | N/A |
 
-After this fix:
-- New users receive a verification email with the correct link to `www.skyserver1508.org`
-- The email uses the branded SkyServer template
-- Users are redirected to the verification pending page instead of being blocked at the dashboard
+## Request Flow
+```text
+External Request → Host:7012 → Container:80 → Nginx → Static Files/SPA
+```
+
+## Why the 405 Error Occurs
+The "405 Method Not Allowed" happens when:
+1. Your frontend makes API calls to relative paths (e.g., `/api/something`)
+2. These hit nginx instead of your actual backend
+3. Nginx returns 405 because it's a static file server
+
+**Solution**: Ensure your frontend uses absolute URLs for API calls (e.g., `https://ccomlhxhigqqmoexpmyy.supabase.co/...`) - which your Supabase client already does.
+
+## After Deployment
+Run these commands:
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+docker-compose ps  # Verify health status
+```
 

@@ -5,7 +5,7 @@ import { Database, Json } from '@/integrations/supabase/types';
 type GameType = Database['public']['Enums']['game_type'];
 type RequestStatus = Database['public']['Enums']['request_status'];
 
-export interface ServerRequest {
+interface ServerRequest {
   id: string;
   user_id: string;
   game_type: GameType;
@@ -16,12 +16,10 @@ export interface ServerRequest {
   discord_username: string;
   description: string | null;
   server_config: Json | null;
-  rejection_reason: string | null;
   created_at: string;
   updated_at: string;
-  expires_at: string | null;
   user_email?: string;
-  // Credential fields
+  // New credential fields
   assigned_ip: string | null;
   panel_url: string | null;
   panel_username: string | null;
@@ -98,22 +96,12 @@ export function useAdminRequests() {
         },
       });
 
-      // Handle edge function errors with specific messages
       if (response.error) {
-        console.error('Edge function error:', response.error);
-        // Try to extract a more specific message
-        const errorMessage = response.error.message || 'Edge function failed';
-        throw new Error(errorMessage);
-      }
-
-      // Check for application-level errors in the response data
-      if (response.data?.error) {
-        console.error('Application error:', response.data.error);
-        throw new Error(response.data.error);
+        throw new Error(response.error.message || 'Failed to encrypt credentials');
       }
 
       if (!response.data?.success) {
-        throw new Error('Approval failed: No success confirmation received');
+        throw new Error(response.data?.error || 'Failed to approve request');
       }
 
       await fetchRequests();

@@ -5,13 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { RequireVerification } from "@/components/auth/RequireVerification";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import VerifyEmail from "./pages/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import Help from "./pages/Help";
@@ -32,16 +28,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <RequireVerification>
-                    <Dashboard />
-                  </RequireVerification>
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
@@ -49,9 +40,7 @@ const App = () => (
               path="/admin"
               element={
                 <ProtectedRoute requireAdmin>
-                  <RequireVerification>
-                    <Admin />
-                  </RequireVerification>
+                  <Admin />
                 </ProtectedRoute>
               }
             />

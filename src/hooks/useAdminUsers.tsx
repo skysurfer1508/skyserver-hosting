@@ -5,10 +5,8 @@ interface AdminUser {
   id: string;
   email: string;
   username: string | null;
-  full_name: string | null;
   is_banned: boolean;
   is_admin: boolean;
-  is_verified: boolean;
   discord_username: string | null;
   created_at: string;
 }
@@ -19,10 +17,10 @@ export function useAdminUsers() {
 
   const fetchUsers = async () => {
     try {
-      // Fetch all profiles including is_verified
+      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, username, full_name, is_banned, is_verified, created_at')
+        .select('id, email, username, is_banned, created_at')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -53,15 +51,13 @@ export function useAdminUsers() {
         }
       });
 
-      // Merge data - is_verified now comes directly from profiles table
+      // Merge data
       const usersWithRoles: AdminUser[] = profiles?.map(p => ({
         id: p.id,
         email: p.email,
         username: p.username,
-        full_name: p.full_name,
         is_banned: p.is_banned || false,
         is_admin: adminUserIds.has(p.id),
-        is_verified: p.is_verified || false,
         discord_username: discordMap.get(p.id) || null,
         created_at: p.created_at,
       })) || [];

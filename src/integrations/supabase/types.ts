@@ -38,71 +38,13 @@ export type Database = {
         }
         Relationships: []
       }
-      password_reset_tokens: {
-        Row: {
-          created_at: string
-          expires_at: string
-          id: string
-          token: string
-          used: boolean
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          token: string
-          used?: boolean
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          token?: string
-          used?: boolean
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "password_reset_tokens_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      platform_settings: {
-        Row: {
-          created_at: string
-          id: string
-          is_admin_online: boolean
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_admin_online?: boolean
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_admin_online?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
           discord_username: string | null
           email: string
-          full_name: string | null
           id: string
           is_banned: boolean
-          is_verified: boolean
           updated_at: string
           username: string | null
         }
@@ -110,10 +52,8 @@ export type Database = {
           created_at?: string
           discord_username?: string | null
           email: string
-          full_name?: string | null
           id: string
           is_banned?: boolean
-          is_verified?: boolean
           updated_at?: string
           username?: string | null
         }
@@ -121,10 +61,8 @@ export type Database = {
           created_at?: string
           discord_username?: string | null
           email?: string
-          full_name?: string | null
           id?: string
           is_banned?: boolean
-          is_verified?: boolean
           updated_at?: string
           username?: string | null
         }
@@ -137,7 +75,6 @@ export type Database = {
           credentials_encrypted: boolean | null
           description: string | null
           discord_username: string
-          expires_at: string
           game_type: Database["public"]["Enums"]["game_type"]
           id: string
           ip_address: string | null
@@ -158,7 +95,6 @@ export type Database = {
           credentials_encrypted?: boolean | null
           description?: string | null
           discord_username: string
-          expires_at?: string
           game_type: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
@@ -179,7 +115,6 @@ export type Database = {
           credentials_encrypted?: boolean | null
           description?: string | null
           discord_username?: string
-          expires_at?: string
           game_type?: Database["public"]["Enums"]["game_type"]
           id?: string
           ip_address?: string | null
@@ -321,7 +256,6 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
-      renew_server_lease: { Args: { request_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

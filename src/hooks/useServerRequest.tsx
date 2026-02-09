@@ -19,7 +19,6 @@ interface ServerRequest {
   server_config: Json | null;
   created_at: string;
   updated_at: string;
-  expires_at: string;
   // Credential fields
   assigned_ip: string | null;
   panel_url: string | null;
