@@ -44,7 +44,7 @@ export default function Register() {
 
     setIsLoading(true);
 
-    const { error } = await signUp(email, password, { full_name: fullName.trim() });
+    const { error } = await signUp(email, password, { full_name: fullName.trim() }, 'https://www.skyserver1508.org/dashboard');
 
     if (error) {
       toast({
@@ -58,9 +58,9 @@ export default function Register() {
 
     toast({
       title: 'Account created!',
-      description: 'You can now log in with your credentials.',
+      description: 'Please check your email to verify your account.',
     });
-    navigate('/dashboard');
+    navigate('/login');
   };
 
   return (
