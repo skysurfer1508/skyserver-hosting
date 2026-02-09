@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { PRODUCTION_URL } from '@/config/constants';
 
 export default function Register() {
   const [fullName, setFullName] = useState('');
@@ -56,11 +58,24 @@ export default function Register() {
       return;
     }
 
+    // Send custom verification email with correct URL
+    try {
+      await supabase.functions.invoke('send-verification-email', {
+        body: {
+          email: email,
+          verificationUrl: `${PRODUCTION_URL}/verify-email`,
+          userName: fullName.trim(),
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+    }
+
     toast({
       title: 'Account created!',
-      description: 'You can now log in with your credentials.',
+      description: 'Please check your email to verify your account.',
     });
-    navigate('/dashboard');
+    navigate('/verify-email');
   };
 
   return (
