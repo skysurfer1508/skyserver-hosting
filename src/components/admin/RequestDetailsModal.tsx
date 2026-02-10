@@ -7,10 +7,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   User,
   MessageSquare,
@@ -24,7 +32,10 @@ import {
   ExternalLink,
   Loader2,
   Shield,
+  CalendarIcon,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 import type { MinecraftConfig } from '@/components/dashboard/MinecraftConfigForm';
 import type { TerrariaConfig } from '@/components/dashboard/TerrariaConfigForm';
 import type { SatisfactoryConfig } from '@/components/dashboard/SatisfactoryConfigForm';
@@ -221,11 +232,22 @@ export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpda
   const { decryptCredentials, decryptedCredentials, isDecrypting, clearCredentials } = useDecryptedCredentials();
   const [isPermanent, setIsPermanent] = useState(false);
   const [isTogglingPermanent, setIsTogglingPermanent] = useState(false);
+  const [customExpiryDate, setCustomExpiryDate] = useState<Date | undefined>(undefined);
+  const [customExpiryTime, setCustomExpiryTime] = useState('12:00');
+  const [isUpdatingExpiry, setIsUpdatingExpiry] = useState(false);
 
   // Sync permanent state when request changes
   useEffect(() => {
     if (request) {
       setIsPermanent(request.expires_at === null);
+      if (request.expires_at) {
+        const d = new Date(request.expires_at);
+        setCustomExpiryDate(d);
+        setCustomExpiryTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+      } else {
+        setCustomExpiryDate(undefined);
+        setCustomExpiryTime('12:00');
+      }
     }
   }, [request?.id, request?.expires_at]);
 
@@ -269,6 +291,43 @@ export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpda
       });
     } finally {
       setIsTogglingPermanent(false);
+    }
+  };
+
+  const handleUpdateExpiry = async () => {
+    if (!request || !customExpiryDate) return;
+    setIsUpdatingExpiry(true);
+    try {
+      const [hours, minutes] = customExpiryTime.split(':').map(Number);
+      const newExpiry = new Date(customExpiryDate);
+      newExpiry.setHours(hours, minutes, 0, 0);
+
+      const { error } = await supabase
+        .from('server_requests')
+        .update({ expires_at: newExpiry.toISOString() })
+        .eq('id', request.id);
+
+      if (error) throw error;
+
+      // Turn off permanent if it was on
+      if (isPermanent) {
+        setIsPermanent(false);
+      }
+
+      toast({
+        title: 'Expiration date updated',
+        description: `Expiration date updated to ${format(newExpiry, 'PPP p')}.`,
+      });
+      onRequestUpdated?.();
+    } catch (err) {
+      console.error('Error updating expiry:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to update expiration date.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingExpiry(false);
     }
   };
 
@@ -459,6 +518,65 @@ export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpda
                     disabled={isTogglingPermanent}
                   />
                 </div>
+              </div>
+            </>
+          )}
+
+          {/* Admin: Custom Expiration Date */}
+          {request.status === 'active' && !isPermanent && (
+            <>
+              <Separator />
+              <div className="bg-muted/30 border border-border/50 rounded-md p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-medium">Set Custom Expiration Date</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start text-left font-normal",
+                          !customExpiryDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customExpiryDate ? format(customExpiryDate, "PPP") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={customExpiryDate}
+                        onSelect={setCustomExpiryDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    type="time"
+                    value={customExpiryTime}
+                    onChange={(e) => setCustomExpiryTime(e.target.value)}
+                    className="w-[120px]"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleUpdateExpiry}
+                  disabled={!customExpiryDate || isUpdatingExpiry}
+                  className="w-full"
+                >
+                  {isUpdatingExpiry ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Date'
+                  )}
+                </Button>
               </div>
             </>
           )}
