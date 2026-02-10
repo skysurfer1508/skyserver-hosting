@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,6 +7,8 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isVerified: boolean;
+  refreshVerification: () => Promise<void>;
   signUp: (email: string, password: string, metadata?: { full_name?: string }) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -19,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   const checkAdminRole = async (userId: string) => {
     try {
@@ -41,35 +44,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const checkVerificationStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_verified')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error checking verification status:', error);
+        return false;
+      }
+
+      return data?.is_verified ?? false;
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+      return false;
+    }
+  };
+
+  const refreshVerification = useCallback(async () => {
+    if (user) {
+      const verified = await checkVerificationStatus(user.id);
+      setIsVerified(verified);
+    }
+  }, [user]);
+
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to avoid blocking
           setTimeout(async () => {
-            const adminStatus = await checkAdminRole(session.user.id);
+            const [adminStatus, verifiedStatus] = await Promise.all([
+              checkAdminRole(session.user.id),
+              checkVerificationStatus(session.user.id),
+            ]);
             setIsAdmin(adminStatus);
+            setIsVerified(verifiedStatus);
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsVerified(false);
         }
         
         setIsLoading(false);
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const adminStatus = await checkAdminRole(session.user.id);
+        const [adminStatus, verifiedStatus] = await Promise.all([
+          checkAdminRole(session.user.id),
+          checkVerificationStatus(session.user.id),
+        ]);
         setIsAdmin(adminStatus);
+        setIsVerified(verifiedStatus);
       }
       
       setIsLoading(false);
@@ -103,10 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setIsAdmin(false);
+    setIsVerified(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, isAdmin, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, isAdmin, isVerified, refreshVerification, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

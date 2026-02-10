@@ -107,6 +107,15 @@ const handler = async (req: Request): Promise<Response> => {
       if (updateError) {
         console.error("Failed to reset email_confirmed_at:", updateError);
       }
+
+      // Also explicitly set profiles.is_verified = false as safety net
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .update({ is_verified: false })
+        .eq('id', linkData.user.id);
+      if (profileError) {
+        console.error("Failed to reset profiles.is_verified:", profileError);
+      }
     }
 
     // Build email content
