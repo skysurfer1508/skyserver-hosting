@@ -1,107 +1,78 @@
 
-# Billing & Purchases Tab
 
-## Overview
+# Fix Stripe Webhook 502: Handle `invoice.payment_succeeded`
 
-Add a "My Purchases" tab to the user dashboard where users can view and cancel their active resource subscriptions. Create a cancel-subscription edge function that sets `cancel_at_period_end: true` (users keep resources until the end of the paid cycle). Enhance the webhook to send a "subscription ended" email when the subscription is fully deleted.
+## Problem
 
----
+The `stripe-webhook` edge function returns a 502 when Stripe sends an `invoice.payment_succeeded` event (recurring payment). The function doesn't handle this event type, so it falls through without issues on the happy path -- but any unexpected error in parsing causes the outer `catch` to return a 400, which Stripe interprets as a failure and retries.
 
-## Part 1: New Dashboard Tab
+## Solution
 
-### Modify: `src/pages/Dashboard.tsx`
-
-- Import `CreditCard` from lucide-react
-- Add a third tab trigger "My Purchases" with the CreditCard icon
-- Add corresponding `TabsContent` rendering the new `BillingPurchases` component
-
-### New: `src/components/dashboard/BillingPurchases.tsx`
-
-- Query `server_requests` for the current user where `stripe_subscription_id IS NOT NULL`
-- Display a card per subscription showing:
-  - Server name and game type
-  - RAM boost (in GB) and CPU boost (in %)
-  - Status badge: "Active" (green) or "Canceling on [date]" (orange)
-  - "Cancel Subscription" button (red/destructive)
-- Confirmation dialog (AlertDialog) before canceling, showing the period end date
-- Calls the `cancel-subscription` edge function on confirm
-- Local state tracks `cancel_at` date per server after cancellation
-- Empty state when no subscriptions exist
-
-### Modify: `src/components/dashboard/DashboardSettings.tsx`
-
-- Remove the `SubscriptionManagementCard` import and usage (billing is now in its own tab)
+Add an `invoice.payment_succeeded` handler and make the function resilient so it always returns 200 to Stripe.
 
 ---
 
-## Part 2: Cancel Subscription Edge Function
+## Changes to `supabase/functions/stripe-webhook/index.ts`
 
-### New: `supabase/functions/cancel-subscription/index.ts`
+### 1. Add `invoice.payment_succeeded` handler
 
-- Authenticates the user via the Authorization header (using Supabase service role to verify the JWT and extract user ID)
-- Accepts `{ serverId }` in the request body
-- Looks up `server_requests` to get `stripe_subscription_id`, verifying `user_id` matches the authenticated user
-- Calls `stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true })`
-- Returns `{ success: true, cancel_at: subscription.current_period_end }` as a Unix timestamp
-- Does NOT cancel immediately -- the user keeps their resources until the billing period ends
+After the `checkout.session.completed` block, add a new block:
 
-### Modify: `supabase/config.toml`
+- Extract `serverId` safely from two possible locations:
+  - `invoice.subscription_details?.metadata?.serverId`
+  - `invoice.lines?.data?.[0]?.metadata?.serverId`
+- If no `serverId` found, log and skip (return 200)
+- Look up the subscription via Stripe to read current line items
+- Calculate `ram_boost` and `cpu_boost` from the subscription items (same logic as checkout handler)
+- Update `server_requests` in the database to ensure boost values are current
+- Log the result (no Pterodactyl call -- admins handle resource application manually)
 
-- Add `[functions.cancel-subscription]` with `verify_jwt = false`
+### 2. Make the function always return 200
+
+The current outer `catch` returns a 400 on errors. This causes Stripe to retry indefinitely. Change the error handling:
+
+- Move signature verification errors to still return 400 (invalid signature should reject)
+- Wrap all event processing logic in its own `try/catch` that logs errors but does NOT throw
+- The final `return new Response(...)` with status 200 is always reached for valid webhook events
+
+### 3. Structure after changes
+
+```text
+1. Validate env vars (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
+2. Parse body + verify signature -> if fails, return 400
+3. Log event type
+4. try {
+     if checkout.session.completed -> existing logic
+     if invoice.payment_succeeded -> new handler (log + update DB)
+     if customer.subscription.deleted -> existing logic
+   } catch (processingError) {
+     log error but do NOT return error
+   }
+5. return 200 { received: true }  <-- ALWAYS
+```
 
 ---
 
-## Part 3: Webhook -- Subscription Ended Email
-
-### Modify: `supabase/functions/stripe-webhook/index.ts`
-
-Enhance the existing `customer.subscription.deleted` handler:
-
-- After resetting `ram_boost` and `cpu_boost` to 0, look up the affected server row to get the `user_id` and `server_name`
-- Query `profiles` for the user's email
-- Send a "subscription ended" email via Resend: "Your subscription for [server name] has ended. Resources have been reverted to the free tier."
-- Email sending is non-blocking (errors are logged but don't fail the webhook)
-
----
-
-## Files Summary
+## File Summary
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/BillingPurchases.tsx` | Create -- Billing tab component |
-| `supabase/functions/cancel-subscription/index.ts` | Create -- Cancel subscription edge function |
-| `src/pages/Dashboard.tsx` | Modify -- Add 3rd tab |
-| `src/components/dashboard/DashboardSettings.tsx` | Modify -- Remove SubscriptionManagementCard |
-| `supabase/functions/stripe-webhook/index.ts` | Modify -- Add email on subscription.deleted |
+| `supabase/functions/stripe-webhook/index.ts` | Modify -- add invoice handler + fix error handling |
 
 ---
 
 ## Technical Details
 
-### BillingPurchases query
+### Invoice metadata extraction
 
 ```typescript
-const { data } = await supabase
-  .from('server_requests')
-  .select('*')
-  .eq('user_id', user.id)
-  .not('stripe_subscription_id', 'is', null);
+const invoice = event.data.object;
+const serverId =
+  invoice.subscription_details?.metadata?.serverId ||
+  invoice.lines?.data?.[0]?.metadata?.serverId;
 ```
 
-### Cancel subscription edge function flow
+### Error handling restructure
 
-```text
-Frontend -> cancel-subscription({ serverId })
-  -> Verify user owns the server
-  -> stripe.subscriptions.update(subId, { cancel_at_period_end: true })
-  -> Return { success: true, cancel_at: current_period_end }
-```
+The key fix: after signature verification succeeds, all event processing is wrapped in a non-throwing try/catch. The function always returns 200 to Stripe for verified events, even if internal processing fails. This prevents Stripe from retrying on transient errors.
 
-### Subscription ended email (webhook addition)
-
-After resetting boosts in the `customer.subscription.deleted` handler:
-
-1. Before clearing `stripe_subscription_id`, first query the server row to get `user_id` and `server_name`
-2. Query `profiles` for the email using `user_id`
-3. Send email via Resend with subject "Your SkyServer1508 subscription has ended"
-4. Non-blocking -- errors logged but webhook still returns 200
