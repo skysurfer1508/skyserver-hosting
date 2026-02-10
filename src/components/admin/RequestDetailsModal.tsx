@@ -463,6 +463,35 @@ export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpda
             </>
           )}
 
+          {/* Resource Boost Info */}
+          {request.status === 'active' && ((request as any).ram_boost > 0 || (request as any).cpu_boost > 0) && (
+            <>
+              <Separator />
+              <div className="bg-primary/10 border border-primary/30 rounded-md p-3">
+                <h4 className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
+                  ⚡ Resource Boosts (Action Required)
+                </h4>
+                <p className="text-xs text-muted-foreground mb-2">
+                  This user has purchased resource upgrades. Please apply these in the Pterodactyl panel.
+                </p>
+                <div className="grid grid-cols-2 gap-3 pl-2">
+                  {(request as any).ram_boost > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Extra RAM</p>
+                      <p className="text-sm font-bold text-primary">+{((request as any).ram_boost / 1024).toFixed(0)} GB</p>
+                    </div>
+                  )}
+                  {(request as any).cpu_boost > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Extra CPU</p>
+                      <p className="text-sm font-bold text-primary">+{(request as any).cpu_boost}%</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
           <Separator />
 
           {/* Timestamps */}

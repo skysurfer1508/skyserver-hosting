@@ -17,6 +17,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
+import ServerUpgrade from "./pages/ServerUpgrade";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/server/:id/upgrade"
+              element={
+                <ProtectedRoute>
+                  <ServerUpgrade />
                 </ProtectedRoute>
               }
             />

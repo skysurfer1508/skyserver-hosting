@@ -1,6 +1,7 @@
 import { ProfileSettingsCard } from './ProfileSettingsCard';
 import { SecuritySettingsCard } from './SecuritySettingsCard';
 import { DeleteAccountCard } from './DeleteAccountCard';
+import { SubscriptionManagementCard } from './SubscriptionManagementCard';
 
 export function DashboardSettings() {
   return (
@@ -9,6 +10,7 @@ export function DashboardSettings() {
         <ProfileSettingsCard />
         <SecuritySettingsCard />
       </div>
+      <SubscriptionManagementCard />
       <DeleteAccountCard />
     </div>
   );
