@@ -26,6 +26,9 @@ export interface ServerRequest {
   panel_url: string | null;
   panel_username: string | null;
   panel_password: string | null;
+  ram_boost: number;
+  cpu_boost: number;
+  stripe_subscription_id: string | null;
 }
 
 interface ApprovalData {

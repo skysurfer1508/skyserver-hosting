@@ -6,8 +6,9 @@ import { AdminUsers } from '@/components/admin/AdminUsers';
 import { AdminSettings } from '@/components/admin/AdminSettings';
 import { AdminAnnouncements } from '@/components/admin/AdminAnnouncements';
 import { AdminFeedback } from '@/components/admin/AdminFeedback';
+import { AdminUpgrades } from '@/components/admin/AdminUpgrades';
 import { AdminStatusToggle } from '@/components/admin/AdminStatusToggle';
-import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox, Zap } from 'lucide-react';
 
 export default function Admin() {
   return (
@@ -29,7 +30,7 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-[600px]">
+          <TabsList className="grid w-full grid-cols-7 lg:w-[700px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -49,6 +50,10 @@ export default function Admin() {
             <TabsTrigger value="feedback" className="gap-2">
               <Inbox className="h-4 w-4" />
               <span className="hidden sm:inline">Feedback</span>
+            </TabsTrigger>
+            <TabsTrigger value="upgrades" className="gap-2">
+              <Zap className="h-4 w-4" />
+              <span className="hidden sm:inline">Upgrades</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="h-4 w-4" />
@@ -74,6 +79,10 @@ export default function Admin() {
 
           <TabsContent value="feedback">
             <AdminFeedback />
+          </TabsContent>
+
+          <TabsContent value="upgrades">
+            <AdminUpgrades />
           </TabsContent>
 
           <TabsContent value="settings">
