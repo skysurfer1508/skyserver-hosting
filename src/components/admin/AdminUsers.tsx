@@ -26,7 +26,7 @@ import {
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Search, Loader2, Shield, Ban, Trash2, AlertTriangle } from 'lucide-react';
+import { Users, Search, Loader2, Shield, Ban, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 export function AdminUsers() {
   const { users, isLoading, toggleBan, toggleAdmin, refetch } = useAdminUsers();
@@ -170,6 +170,7 @@ export function AdminUsers() {
                     <TableHead>Email</TableHead>
                     <TableHead>Discord</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead className="text-center">Verified</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-center">Ban</TableHead>
                     <TableHead className="text-center">Admin</TableHead>
@@ -204,6 +205,13 @@ export function AdminUsers() {
                           </Badge>
                         ) : (
                           <Badge variant="secondary">User</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {user.is_verified ? (
+                          <CheckCircle className="h-4 w-4 text-success mx-auto" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-destructive mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
