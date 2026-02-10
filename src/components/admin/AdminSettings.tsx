@@ -8,8 +8,21 @@ import { Input } from '@/components/ui/input';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useToast } from '@/hooks/use-toast';
-import { Gamepad2, AlertTriangle, Loader2, Save } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Gamepad2, AlertTriangle, Loader2, Save, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const gameLabels: Record<string, { label: string; icon: string }> = {
   minecraft: { label: 'Minecraft', icon: '⛏️' },
@@ -20,7 +33,9 @@ const gameLabels: Record<string, { label: string; icon: string }> = {
 export function AdminSettings() {
   const { settings, isLoading: settingsLoading, updateSettings, refetch: refetchSettings } = useSystemSettings();
   const { gameLimits, isLoading: gameLimitsLoading, updateGameLimit, refetch: refetchGameLimits } = useGameLimits();
+  const { session } = useAuth();
   const { toast } = useToast();
+  const [isResettingVerification, setIsResettingVerification] = useState(false);
 
   // Settings state
   const [maintenanceMode, setMaintenanceMode] = useState(settings?.maintenance_mode || false);
@@ -284,6 +299,77 @@ export function AdminSettings() {
               </>
             )}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Force Re-Verification */}
+      <Card className="gaming-card border-destructive/30 lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" />
+            Force Re-Verification (Danger Zone)
+          </CardTitle>
+          <CardDescription>
+            Reset email verification for all non-admin users. They will need to re-verify their email before accessing the dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isResettingVerification}>
+                {isResettingVerification ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Resetting...
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="mr-2 h-4 w-4" />
+                    Force All Users to Re-Verify
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will reset email verification for ALL non-admin users. They will be blocked from the dashboard until they re-verify their email address. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    setIsResettingVerification(true);
+                    try {
+                      const response = await supabase.functions.invoke('reset-all-verification', {
+                        headers: {
+                          Authorization: `Bearer ${session?.access_token}`,
+                        },
+                      });
+                      if (response.error) throw response.error;
+                      const data = response.data;
+                      toast({
+                        title: 'Verification reset complete',
+                        description: `${data.resetCount} user(s) must now re-verify their email.`,
+                      });
+                    } catch (err: any) {
+                      toast({
+                        title: 'Failed to reset verification',
+                        description: err.message,
+                        variant: 'destructive',
+                      });
+                    }
+                    setIsResettingVerification(false);
+                  }}
+                >
+                  Yes, Reset All
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </div>
