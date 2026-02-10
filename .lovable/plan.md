@@ -1,103 +1,100 @@
 
 
-## Email Verification & Password Reset System
+## Fix: Send All Auth Emails via Resend from Your Custom Domain
 
-This plan implements a strict email verification gatekeeper, a password reset flow, and an admin tool to force re-verification of all existing users.
+### The Root Problem
 
----
+The calls to `supabase.auth.signUp()`, `supabase.auth.resend()`, and `supabase.auth.resetPasswordForEmail()` all trigger Supabase's **built-in** email system, which sends from `no-reply@auth.lovable.cloud` and uses the Lovable project URL. The `emailRedirectTo` parameter cannot override this -- it's a Supabase platform-level setting you don't have access to change.
 
-### Prerequisites
+### The Solution
 
-Your `RESEND_API_KEY` is already saved in the project secrets -- no additional setup needed there.
-
-However, we need to configure the backend authentication system to send emails through Resend (your custom domain `skyserver1508.org`) instead of the default email provider. This requires creating a backend function to handle custom auth emails.
+Bypass Supabase's built-in email sending entirely. Instead, use your `send-auth-email` edge function (which uses Resend) for **all** auth emails. The edge function will use `admin.generateLink()` with the service role key to create proper Supabase verification/recovery links, rewrite them to point to `skyserver1508.org`, and send them via Resend.
 
 ---
 
-### What Will Be Built
+### Step-by-step Changes
 
-**1. Custom Auth Email Edge Function**
-- A new backend function `send-auth-email` that uses Resend to send verification and password reset emails from `noreply@skyserver1508.org`.
-- Handles both `signup` (verification) and `recovery` (password reset) email types.
-- Uses your custom domain redirect URLs.
+**1. Rewrite the `send-auth-email` Edge Function**
 
-**2. Email Verification Guard Component**
-- A new `EmailVerificationGuard` component that wraps the dashboard.
-- Checks `session.user.email_confirmed_at` -- if `null`, blocks dashboard access.
-- Shows a full-screen "Verification Required" page with:
-  - An envelope icon and clear messaging
-  - The user's email address displayed
-  - A "Resend Verification Email" button that calls `supabase.auth.resend()` with `emailRedirectTo: 'https://www.skyserver1508.org/dashboard'`
-  - A "Sign Out" option
-- Integrated into the `ProtectedRoute` component so it gates both `/dashboard` and `/admin`.
+The current edge function just sends static HTML with no real auth tokens. It needs to be completely rewritten to:
 
-**3. Password Reset Flow (Two New Pages)**
-- `/auth/forgot-password` -- A form where users enter their email. Calls `supabase.auth.resetPasswordForEmail()` with `redirectTo: 'https://www.skyserver1508.org/auth/update-password'`. Shows a success confirmation after submission.
-- `/auth/update-password` -- The landing page after clicking the reset link. Detects the recovery session from the URL token, then presents a new password form. Calls `supabase.auth.updateUser({ password })`.
-- A "Forgot Password?" link added to the Login page.
+- Accept `{ type: "signup" | "recovery", email: string }`
+- Use `supabase.auth.admin.generateLink()` with the service role key to create a real Supabase auth link (this generates the proper token)
+- Replace the Lovable project domain in the generated link with `https://www.skyserver1508.org`
+- Send the email via Resend from `noreply@skyserver1508.org`
+- For signup type, also set `email_confirmed_at = null` to ensure the user must verify (needed if auto-confirm is on)
 
-**4. Admin: Force Re-Verification Function**
-- A new backend function `reset-all-verification` that sets `email_confirmed_at = NULL` for all non-admin users in `auth.users`.
-- Uses the service role key to modify the auth schema (cannot be done from the frontend directly).
-- A one-time-use button added to the Admin Settings tab, with a confirmation dialog to prevent accidental clicks.
+**2. Enable Auto-Confirm on Signup**
 
-**5. Registration Flow Update**
-- After successful signup, redirect to a "Check Your Email" confirmation page instead of directly to `/dashboard`.
-- Update the success toast message to say "Please check your email to verify your account."
+Use the configure-auth tool to enable auto-confirm. This **prevents** Supabase from sending its default email on signup. Without this, users would receive two emails -- one from `auth.lovable.cloud` (unwanted) and one from Resend (wanted).
+
+With auto-confirm enabled, the user is immediately "confirmed" by Supabase, but the edge function will immediately nullify `email_confirmed_at`, forcing them to verify via the Resend email.
+
+**3. Update the Signup Flow (`Register.tsx` + `useAuth.tsx`)**
+
+After `signUp()` succeeds:
+- Call the `send-auth-email` edge function with `{ type: "signup", email }` to send the custom verification email
+- Navigate to `/login` with the existing "check your email" toast
+
+**4. Update the Verification Guard (`EmailVerificationGuard.tsx`)**
+
+Replace `supabase.auth.resend()` with a call to the `send-auth-email` edge function:
+```
+supabase.functions.invoke('send-auth-email', {
+  body: { type: 'signup', email: user.email }
+})
+```
+
+**5. Update the Forgot Password Page (`ForgotPassword.tsx`)**
+
+Replace `supabase.auth.resetPasswordForEmail()` with a call to the edge function:
+```
+supabase.functions.invoke('send-auth-email', {
+  body: { type: 'recovery', email }
+})
+```
+
+**6. No Changes Needed to `UpdatePassword.tsx`**
+
+The generated recovery link will redirect to `https://www.skyserver1508.org/auth/update-password` with the proper token in the URL fragment. The existing `onAuthStateChange` listener for `PASSWORD_RECOVERY` will handle it correctly.
 
 ---
 
 ### Technical Details
 
-#### Files to Create
-| File | Purpose |
-|------|---------|
-| `supabase/functions/send-auth-email/index.ts` | Resend-powered auth email sender |
-| `supabase/functions/reset-all-verification/index.ts` | Admin RPC to clear all email_confirmed_at |
-| `src/components/EmailVerificationGuard.tsx` | Gatekeeper blocking unverified users |
-| `src/pages/ForgotPassword.tsx` | Password reset request page |
-| `src/pages/UpdatePassword.tsx` | New password entry page |
-
 #### Files to Modify
+
 | File | Change |
 |------|--------|
-| `src/components/ProtectedRoute.tsx` | Add `EmailVerificationGuard` check after auth check |
-| `src/pages/Login.tsx` | Add "Forgot Password?" link |
-| `src/pages/Register.tsx` | Change post-signup behavior to show verification message |
-| `src/App.tsx` | Add routes for `/auth/forgot-password` and `/auth/update-password` |
-| `src/components/admin/AdminSettings.tsx` | Add "Force Re-Verification" button |
-| `supabase/config.toml` | Register the new edge functions |
+| `supabase/functions/send-auth-email/index.ts` | Complete rewrite: use `admin.generateLink()` + domain rewriting + Resend |
+| `src/pages/Register.tsx` | Call edge function after signup to send custom email |
+| `src/components/EmailVerificationGuard.tsx` | Replace `supabase.auth.resend()` with edge function call |
+| `src/pages/ForgotPassword.tsx` | Replace `supabase.auth.resetPasswordForEmail()` with edge function call |
 
-#### Auth Email Flow
+#### Auth Configuration
+- Enable auto-confirm via configure-auth tool (prevents default Supabase emails)
+
+#### Edge Function Flow
+
 ```text
-User Signs Up
-  --> Supabase sends default confirmation email
-  --> User can also click "Resend" which calls supabase.auth.resend()
-  --> Redirect URL: https://www.skyserver1508.org/dashboard
-
-User Requests Password Reset
-  --> Frontend calls supabase.auth.resetPasswordForEmail()
-  --> Redirect URL: https://www.skyserver1508.org/auth/update-password
-  --> User clicks link, lands on UpdatePassword page
-  --> Submits new password via supabase.auth.updateUser()
+Frontend calls send-auth-email edge function
+  --> Edge function creates Supabase admin client (service role)
+  --> Calls admin.generateLink({ type, email, options: { redirectTo } })
+  --> Gets the generated link (e.g., https://<project>.supabase.co/auth/v1/verify?token=...)
+  --> Replaces domain with https://www.skyserver1508.org (the token params stay the same)
+  --> Sends email via Resend from noreply@skyserver1508.org
+  --> For signup: also calls admin.updateUserById() to set email_confirmed_at = null
+  --> Returns success
 ```
 
-#### Email Verification Guard Logic
-```text
-User logs in
-  --> ProtectedRoute checks: authenticated? 
-    --> No: redirect to /login
-    --> Yes: check email_confirmed_at
-      --> NULL: show EmailVerificationGuard screen (blocked)
-      --> Set: render dashboard normally
+#### Domain Rewriting Logic (in edge function)
+
+The `admin.generateLink()` returns a link like:
+```
+https://ccomlhxhigqqmoexpmyy.supabase.co/auth/v1/verify?token=abc123&type=signup&redirect_to=...
 ```
 
-#### Force Re-Verification (Admin)
-```text
-Admin clicks "Force Re-Verification" in Settings
-  --> Confirmation dialog appears
-  --> On confirm, calls reset-all-verification edge function
-  --> Edge function uses service role to UPDATE auth.users SET email_confirmed_at = NULL WHERE id NOT IN (admin ids)
-  --> All non-admin users must re-verify on next login
-```
+The edge function extracts the token parameters and constructs a link that goes through Supabase's auth verification endpoint but with the correct redirect. The key insight is that the verification link itself must still point to Supabase's `/auth/v1/verify` endpoint (it processes the token), but the `redirect_to` parameter inside it controls where the user ends up after verification.
+
+So the rewriting ensures `redirect_to=https://www.skyserver1508.org/dashboard` (for signup) or `redirect_to=https://www.skyserver1508.org/auth/update-password` (for recovery).
 
