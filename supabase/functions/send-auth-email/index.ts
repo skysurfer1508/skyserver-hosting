@@ -83,17 +83,20 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(linkError?.message || "Failed to generate auth link");
     }
 
-    // The action_link contains the full verification URL through Supabase
-    // We need to keep it pointing to Supabase's /auth/v1/verify endpoint
-    // but ensure the redirect_to param points to our custom domain
-    let actionLink = linkData.properties.action_link;
+    // Instead of using Supabase's /auth/v1/verify endpoint (which redirects to
+    // the Lovable project URL), we link directly to our custom domain with the
+    // token_hash. The frontend will call verifyOtp() to process the token.
+    const hashedToken = linkData.properties.hashed_token;
+    const verificationType = linkData.properties.verification_type;
 
-    // Replace the redirect_to parameter in the link to use our custom domain
-    const url = new URL(actionLink);
-    url.searchParams.set("redirect_to", redirectTo);
-    actionLink = url.toString();
+    let actionLink: string;
+    if (isSignup) {
+      actionLink = `${CUSTOM_DOMAIN}/auth/verify?token_hash=${hashedToken}&type=${verificationType}`;
+    } else {
+      actionLink = `${CUSTOM_DOMAIN}/auth/update-password?token_hash=${hashedToken}&type=${verificationType}`;
+    }
 
-    console.log("Generated action link for", type, "- redirecting to:", redirectTo);
+    console.log("Generated custom domain link for", type);
 
     // For signup: nullify email_confirmed_at so user must verify
     if (isSignup && linkData.user) {

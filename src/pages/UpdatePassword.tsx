@@ -20,23 +20,46 @@ export default function UpdatePassword() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event from the URL token
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setHasSession(true);
+    const verifyToken = async () => {
+      // Check for token_hash in URL params (from custom email links)
+      const params = new URLSearchParams(window.location.search);
+      const tokenHash = params.get('token_hash');
+      const type = params.get('type');
+
+      if (tokenHash && type === 'recovery') {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery',
+        });
+        if (!error) {
+          setHasSession(true);
+        }
         setChecking(false);
+        // Clean URL
+        window.history.replaceState({}, '', '/auth/update-password');
+        return;
       }
-    });
 
-    // Also check if we already have a session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setHasSession(true);
-      }
-      setChecking(false);
-    });
+      // Fallback: listen for PASSWORD_RECOVERY event (legacy URL fragment flow)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setHasSession(true);
+          setChecking(false);
+        }
+      });
 
-    return () => subscription.unsubscribe();
+      // Also check if we already have a session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setHasSession(true);
+        }
+        setChecking(false);
+      });
+
+      return () => subscription.unsubscribe();
+    };
+
+    verifyToken();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
