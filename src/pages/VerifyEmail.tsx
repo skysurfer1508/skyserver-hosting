@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ export default function VerifyEmail() {
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const { refreshVerification } = useAuth();
 
   useEffect(() => {
     const verify = async () => {
@@ -33,7 +35,7 @@ export default function VerifyEmail() {
         setErrorMessage(error.message);
       } else {
         setStatus('success');
-        // Clean URL
+        await refreshVerification();
         window.history.replaceState({}, '', '/auth/verify');
         setTimeout(() => navigate('/dashboard'), 2500);
       }

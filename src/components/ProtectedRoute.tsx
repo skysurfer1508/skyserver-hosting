@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, session, isLoading, isAdmin } = useAuth();
+  const { user, isLoading, isAdmin, isVerified } = useAuth();
 
   if (isLoading) {
     return (
@@ -25,7 +25,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   // Block unverified users
-  if (!session?.user?.email_confirmed_at) {
+  if (!isVerified) {
     return <EmailVerificationGuard />;
   }
 
