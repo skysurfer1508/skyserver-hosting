@@ -11,16 +11,25 @@ const logStep = (step: string, details?: any) => {
 const PRICE_RAM = "price_1Sz653GTSSIIOUojGFw4LyEm";
 const PRICE_CPU = "price_1Sz65FGTSSIIOUoje6QD4l9Q";
 
+/** Calculate ram/cpu boosts from subscription line items */
+function calculateBoosts(items: Stripe.SubscriptionItem[]): { ramBoost: number; cpuBoost: number } {
+  let ramBoost = 0;
+  let cpuBoost = 0;
+  for (const item of items) {
+    const priceId = item.price.id;
+    const quantity = item.quantity || 0;
+    if (priceId === PRICE_RAM) ramBoost = quantity * 1024;
+    else if (priceId === PRICE_CPU) cpuBoost = quantity * 100;
+  }
+  return { ramBoost, cpuBoost };
+}
+
 serve(async (req) => {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-  if (!stripeKey) {
-    return new Response("STRIPE_SECRET_KEY not set", { status: 500 });
-  }
+  if (!stripeKey) return new Response("STRIPE_SECRET_KEY not set", { status: 500 });
 
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-  if (!webhookSecret) {
-    return new Response("STRIPE_WEBHOOK_SECRET not set", { status: 500 });
-  }
+  if (!webhookSecret) return new Response("STRIPE_WEBHOOK_SECRET not set", { status: 500 });
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -30,14 +39,24 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // --- Signature verification (return 400 on failure) ---
+  let event: Stripe.Event;
   try {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
     if (!signature) throw new Error("No stripe-signature header");
+    event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logStep("Signature verification failed", { message: msg });
+    return new Response(JSON.stringify({ error: msg }), { status: 400, headers: { "Content-Type": "application/json" } });
+  }
 
-    const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    logStep("Event received", { type: event.type, id: event.id });
+  logStep("Event received", { type: event.type, id: event.id });
 
+  // --- Event processing (always return 200 after this point) ---
+  try {
+    // ===== checkout.session.completed =====
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const serverId = session.metadata?.serverId;
@@ -45,96 +64,103 @@ serve(async (req) => {
 
       if (!serverId) {
         logStep("No serverId in metadata, skipping");
-        return new Response(JSON.stringify({ received: true }), { status: 200 });
-      }
+      } else {
+        logStep("Processing checkout completion", { serverId, subscriptionId });
 
-      logStep("Processing checkout completion", { serverId, subscriptionId });
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const { ramBoost, cpuBoost } = calculateBoosts(subscription.items.data);
+        logStep("Calculated boosts", { ramBoost, cpuBoost });
 
-      // Get subscription to read line items
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      let ramBoost = 0;
-      let cpuBoost = 0;
+        const { error } = await supabaseClient
+          .from("server_requests")
+          .update({ ram_boost: ramBoost, cpu_boost: cpuBoost, stripe_subscription_id: subscriptionId })
+          .eq("id", serverId);
 
-      for (const item of subscription.items.data) {
-        const priceId = item.price.id;
-        const quantity = item.quantity || 0;
-        if (priceId === PRICE_RAM) {
-          ramBoost = quantity * 1024; // MB
-        } else if (priceId === PRICE_CPU) {
-          cpuBoost = quantity * 100; // percentage
+        if (error) {
+          logStep("DB update error", { error: error.message });
+        } else {
+          logStep("Server request updated successfully");
         }
-      }
 
-      logStep("Calculated boosts", { ramBoost, cpuBoost });
+        // Send confirmation email (non-blocking)
+        try {
+          const userId = session.metadata?.userId;
+          if (userId) {
+            const { data: profile } = await supabaseClient.from("profiles").select("email").eq("id", userId).single();
+            const { data: server } = await supabaseClient.from("server_requests").select("server_name").eq("id", serverId).single();
 
-      const { error } = await supabaseClient
-        .from("server_requests")
-        .update({
-          ram_boost: ramBoost,
-          cpu_boost: cpuBoost,
-          stripe_subscription_id: subscriptionId,
-        })
-        .eq("id", serverId);
+            if (profile?.email) {
+              const resendKey = Deno.env.get("RESEND_API_KEY");
+              if (resendKey) {
+                const resend = new Resend(resendKey);
+                const ramText = ramBoost > 0 ? `+${(ramBoost / 1024).toFixed(0)} GB RAM` : "";
+                const cpuText = cpuBoost > 0 ? `+${cpuBoost}% CPU` : "";
+                const boostDetails = [ramText, cpuText].filter(Boolean).join(" and ");
+                const serverName = server?.server_name || "your server";
 
-      if (error) {
-        logStep("DB update error", { error: error.message });
-        throw error;
-      }
-
-      logStep("Server request updated successfully");
-
-      // Send confirmation email (non-blocking)
-      try {
-        const userId = session.metadata?.userId;
-        if (userId) {
-          const { data: profile } = await supabaseClient
-            .from("profiles")
-            .select("email")
-            .eq("id", userId)
-            .single();
-
-          const { data: server } = await supabaseClient
-            .from("server_requests")
-            .select("server_name")
-            .eq("id", serverId)
-            .single();
-
-          if (profile?.email) {
-            const resendKey = Deno.env.get("RESEND_API_KEY");
-            if (resendKey) {
-              const resend = new Resend(resendKey);
-              const ramText = ramBoost > 0 ? `+${(ramBoost / 1024).toFixed(0)} GB RAM` : "";
-              const cpuText = cpuBoost > 0 ? `+${cpuBoost}% CPU` : "";
-              const boostDetails = [ramText, cpuText].filter(Boolean).join(" and ");
-              const serverName = server?.server_name || "your server";
-
-              await resend.emails.send({
-                from: "SkyServer1508 <noreply@skyserver1508.org>",
-                to: [profile.email],
-                subject: "Your SkyServer1508 upgrade is confirmed!",
-                html: `
-                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h1 style="color: #6366f1;">⚡ Upgrade Confirmed!</h1>
-                    <p>Great news! Your resource upgrade for <strong>${serverName}</strong> has been confirmed.</p>
-                    <div style="background: #f4f4f5; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                      <p style="margin: 0; font-size: 18px; font-weight: 600;">${boostDetails}</p>
+                await resend.emails.send({
+                  from: "SkyServer1508 <noreply@skyserver1508.org>",
+                  to: [profile.email],
+                  subject: "Your SkyServer1508 upgrade is confirmed!",
+                  html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                      <h1 style="color: #6366f1;">⚡ Upgrade Confirmed!</h1>
+                      <p>Great news! Your resource upgrade for <strong>${serverName}</strong> has been confirmed.</p>
+                      <div style="background: #f4f4f5; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                        <p style="margin: 0; font-size: 18px; font-weight: 600;">${boostDetails}</p>
+                      </div>
+                      <p>Our team will apply the upgraded resources to your server. This may take up to <strong>24 hours</strong>.</p>
+                      <p>You can manage your subscription anytime from your <a href="https://skyserver1508.org/dashboard" style="color: #6366f1;">dashboard</a>.</p>
+                      <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;" />
+                      <p style="color: #71717a; font-size: 12px;">SkyServer1508 — Game Server Hosting</p>
                     </div>
-                    <p>Our team will apply the upgraded resources to your server. This may take up to <strong>24 hours</strong>.</p>
-                    <p>You can manage your subscription anytime from your <a href="https://skyserver1508.org/dashboard" style="color: #6366f1;">dashboard</a>.</p>
-                    <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;" />
-                    <p style="color: #71717a; font-size: 12px;">SkyServer1508 — Game Server Hosting</p>
-                  </div>
-                `,
-              });
-              logStep("Confirmation email sent", { email: profile.email });
+                  `,
+                });
+                logStep("Confirmation email sent", { email: profile.email });
+              }
             }
           }
+        } catch (emailError) {
+          logStep("Email sending failed (non-blocking)", { error: String(emailError) });
         }
-      } catch (emailError) {
-        logStep("Email sending failed (non-blocking)", { error: String(emailError) });
       }
     }
 
+    // ===== invoice.payment_succeeded =====
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as any;
+      const serverId =
+        invoice.subscription_details?.metadata?.serverId ||
+        invoice.lines?.data?.[0]?.metadata?.serverId;
+
+      if (!serverId) {
+        logStep("invoice.payment_succeeded: no serverId found in metadata, skipping");
+      } else {
+        logStep("invoice.payment_succeeded: processing", { serverId });
+
+        const subscriptionId = invoice.subscription as string;
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const { ramBoost, cpuBoost } = calculateBoosts(subscription.items.data);
+          logStep("invoice.payment_succeeded: calculated boosts", { ramBoost, cpuBoost });
+
+          const { error } = await supabaseClient
+            .from("server_requests")
+            .update({ ram_boost: ramBoost, cpu_boost: cpuBoost, stripe_subscription_id: subscriptionId })
+            .eq("id", serverId);
+
+          if (error) {
+            logStep("invoice.payment_succeeded: DB update error", { error: error.message });
+          } else {
+            logStep("invoice.payment_succeeded: server boosts confirmed in DB");
+          }
+        } else {
+          logStep("invoice.payment_succeeded: no subscriptionId on invoice, skipping");
+        }
+      }
+    }
+
+    // ===== customer.subscription.deleted =====
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
       const serverId = subscription.metadata?.serverId;
@@ -145,32 +171,18 @@ serve(async (req) => {
       // Query server info BEFORE clearing subscription ID
       let serverRow: any = null;
       if (serverId) {
-        const { data } = await supabaseClient
-          .from("server_requests")
-          .select("user_id, server_name")
-          .eq("id", serverId)
-          .single();
+        const { data } = await supabaseClient.from("server_requests").select("user_id, server_name").eq("id", serverId).single();
         serverRow = data;
       } else {
-        const { data } = await supabaseClient
-          .from("server_requests")
-          .select("user_id, server_name")
-          .eq("stripe_subscription_id", subscriptionId)
-          .single();
+        const { data } = await supabaseClient.from("server_requests").select("user_id, server_name").eq("stripe_subscription_id", subscriptionId).single();
         serverRow = data;
       }
 
       // Reset boosts
       if (serverId) {
-        await supabaseClient
-          .from("server_requests")
-          .update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null })
-          .eq("id", serverId);
+        await supabaseClient.from("server_requests").update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null }).eq("id", serverId);
       } else {
-        await supabaseClient
-          .from("server_requests")
-          .update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null })
-          .eq("stripe_subscription_id", subscriptionId);
+        await supabaseClient.from("server_requests").update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null }).eq("stripe_subscription_id", subscriptionId);
       }
 
       logStep("Boosts reset for cancelled subscription");
@@ -178,11 +190,7 @@ serve(async (req) => {
       // Send subscription ended email (non-blocking)
       try {
         if (serverRow?.user_id) {
-          const { data: profile } = await supabaseClient
-            .from("profiles")
-            .select("email")
-            .eq("id", serverRow.user_id)
-            .single();
+          const { data: profile } = await supabaseClient.from("profiles").select("email").eq("id", serverRow.user_id).single();
 
           if (profile?.email) {
             const resendKey = Deno.env.get("RESEND_API_KEY");
@@ -215,17 +223,14 @@ serve(async (req) => {
         logStep("Subscription ended email failed (non-blocking)", { error: String(emailError) });
       }
     }
-
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+  } catch (processingError) {
+    const msg = processingError instanceof Error ? processingError.message : String(processingError);
+    logStep("Processing error (non-fatal)", { message: msg });
   }
+
+  // ALWAYS return 200 for verified events
+  return new Response(JSON.stringify({ received: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 });
