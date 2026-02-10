@@ -1,78 +1,53 @@
 
 
-# Fix Stripe Webhook 502: Handle `invoice.payment_succeeded`
+# Add Cancellation Confirmation Email to Cancel Subscription Flow
 
 ## Problem
 
-The `stripe-webhook` edge function returns a 502 when Stripe sends an `invoice.payment_succeeded` event (recurring payment). The function doesn't handle this event type, so it falls through without issues on the happy path -- but any unexpected error in parsing causes the outer `catch` to return a 400, which Stripe interprets as a failure and retries.
+When a user cancels their subscription, the `cancel-subscription` edge function sets it to cancel at period end via Stripe, but does **not** send the user a confirmation email. The user only receives an email later when the subscription is fully terminated (`customer.subscription.deleted` webhook). There is no immediate confirmation that the cancellation was scheduled.
 
 ## Solution
 
-Add an `invoice.payment_succeeded` handler and make the function resilient so it always returns 200 to Stripe.
+Add email sending to the `cancel-subscription` edge function, notifying the user that their upgrade will end on a specific date.
 
 ---
 
-## Changes to `supabase/functions/stripe-webhook/index.ts`
+## Changes
 
-### 1. Add `invoice.payment_succeeded` handler
+### File: `supabase/functions/cancel-subscription/index.ts`
 
-After the `checkout.session.completed` block, add a new block:
+After the Stripe `subscriptions.update` call succeeds, add:
 
-- Extract `serverId` safely from two possible locations:
-  - `invoice.subscription_details?.metadata?.serverId`
-  - `invoice.lines?.data?.[0]?.metadata?.serverId`
-- If no `serverId` found, log and skip (return 200)
-- Look up the subscription via Stripe to read current line items
-- Calculate `ram_boost` and `cpu_boost` from the subscription items (same logic as checkout handler)
-- Update `server_requests` in the database to ensure boost values are current
-- Log the result (no Pterodactyl call -- admins handle resource application manually)
+1. Look up the user's email from the `profiles` table using the authenticated `userId`
+2. Calculate the human-readable cancellation date from `subscription.current_period_end`
+3. Send a confirmation email via Resend with:
+   - Subject: "Your SkyServer1508 upgrade cancellation is confirmed"
+   - Body includes: server name, cancellation date, note that boosts remain active until then, link to dashboard
+4. Wrap email sending in a try/catch so it is **non-blocking** (a failed email does not prevent the cancellation response)
 
-### 2. Make the function always return 200
+### Email Content
 
-The current outer `catch` returns a 400 on errors. This causes Stripe to retry indefinitely. Change the error handling:
-
-- Move signature verification errors to still return 400 (invalid signature should reject)
-- Wrap all event processing logic in its own `try/catch` that logs errors but does NOT throw
-- The final `return new Response(...)` with status 200 is always reached for valid webhook events
-
-### 3. Structure after changes
-
-```text
-1. Validate env vars (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
-2. Parse body + verify signature -> if fails, return 400
-3. Log event type
-4. try {
-     if checkout.session.completed -> existing logic
-     if invoice.payment_succeeded -> new handler (log + update DB)
-     if customer.subscription.deleted -> existing logic
-   } catch (processingError) {
-     log error but do NOT return error
-   }
-5. return 200 { received: true }  <-- ALWAYS
-```
-
----
-
-## File Summary
-
-| File | Action |
-|------|--------|
-| `supabase/functions/stripe-webhook/index.ts` | Modify -- add invoice handler + fix error handling |
+The email will follow the same style as existing emails (inline styles, SkyServer1508 branding) and include:
+- Heading confirming the cancellation
+- Server name and end date
+- Reassurance that boosts stay active until that date
+- Link to re-upgrade from the dashboard
 
 ---
 
 ## Technical Details
 
-### Invoice metadata extraction
+```text
+// After stripe.subscriptions.update succeeds:
 
-```typescript
-const invoice = event.data.object;
-const serverId =
-  invoice.subscription_details?.metadata?.serverId ||
-  invoice.lines?.data?.[0]?.metadata?.serverId;
+1. Query profiles table for user email
+2. Check RESEND_API_KEY exists
+3. Send email via Resend (non-blocking try/catch)
+4. Log success or failure
+5. Return normal response regardless of email outcome
 ```
 
-### Error handling restructure
-
-The key fix: after signature verification succeeds, all event processing is wrapped in a non-throwing try/catch. The function always returns 200 to Stripe for verified events, even if internal processing fails. This prevents Stripe from retrying on transient errors.
+| File | Action |
+|------|--------|
+| `supabase/functions/cancel-subscription/index.ts` | Add Resend email after successful Stripe cancellation |
 
