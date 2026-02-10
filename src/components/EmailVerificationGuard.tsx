@@ -16,12 +16,8 @@ export function EmailVerificationGuard() {
     if (!user?.email) return;
     setIsResending(true);
 
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-      options: {
-        emailRedirectTo: 'https://www.skyserver1508.org/dashboard',
-      },
+    const { error } = await supabase.functions.invoke('send-auth-email', {
+      body: { type: 'signup', email: user.email },
     });
 
     setIsResending(false);
