@@ -2,3 +2,9 @@ project_id = "ccomlhxhigqqmoexpmyy"
 
 [functions.delete-user]
 verify_jwt = false
+
+[functions.send-auth-email]
+verify_jwt = false
+
+[functions.reset-all-verification]
+verify_jwt = false

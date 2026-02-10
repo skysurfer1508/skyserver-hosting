@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { EmailVerificationGuard } from '@/components/EmailVerificationGuard';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -9,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, isLoading, isAdmin } = useAuth();
+  const { user, session, isLoading, isAdmin } = useAuth();
 
   if (isLoading) {
     return (
@@ -21,6 +22,11 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Block unverified users
+  if (!session?.user?.email_confirmed_at) {
+    return <EmailVerificationGuard />;
   }
 
   if (requireAdmin && !isAdmin) {

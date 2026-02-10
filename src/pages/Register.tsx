@@ -58,9 +58,9 @@ export default function Register() {
 
     toast({
       title: 'Account created!',
-      description: 'You can now log in with your credentials.',
+      description: 'Please check your email to verify your account before signing in.',
     });
-    navigate('/dashboard');
+    navigate('/login');
   };
 
   return (
