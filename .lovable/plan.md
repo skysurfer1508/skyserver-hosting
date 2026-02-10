@@ -1,118 +1,49 @@
 
 
-# Resource Upgrading Billing System with Stripe Subscriptions
+# Admin Upgrades Tab + Purchase Confirmation Email
 
 ## Overview
 
-Add a monthly subscription system where users can purchase extra RAM and CPU for their game servers. Instead of auto-syncing to Pterodactyl, the admin will see boost purchases directly in their admin panel and apply them manually.
-
-## Stripe Products (Already Created)
-
-- **Extra RAM (1GB):** `price_1Sz653GTSSIIOUojGFw4LyEm` -- 1.50 CHF/month
-- **Extra CPU (100%):** `price_1Sz65FGTSSIIOUoje6QD4l9Q` -- 1.50 CHF/month
+Add a new "Upgrades" tab to the admin Command Center that lists all servers with active resource boosts, and send a confirmation email to the user when a boost purchase is completed via the Stripe webhook.
 
 ---
 
-## Step 1: Database Schema Changes
+## Part 1: Admin "Upgrades" Tab
 
-**`server_requests` table -- add 3 columns:**
-- `cpu_boost` (integer, default 0) -- extra CPU percentage purchased
-- `ram_boost` (integer, default 0) -- extra RAM in MB purchased
-- `stripe_subscription_id` (text, nullable) -- tracks the active Stripe subscription
+### New component: `src/components/admin/AdminUpgrades.tsx`
 
-**`profiles` table -- add 1 column:**
-- `stripe_customer_id` (text, nullable, unique) -- links user to their Stripe customer
+A dedicated tab showing all server requests that have active boosts (`ram_boost > 0` or `cpu_boost > 0`). Displays:
 
----
+- Server name, game type, user email
+- RAM boost (in GB) and CPU boost (in %)
+- Stripe subscription ID (for reference)
+- A visual "Action Required" badge to remind admins to apply the resources in the game panel
+- Date the boost was last updated
 
-## Step 2: Edge Functions (3 new functions)
+The component will reuse `useAdminRequests` to fetch data and filter to only show boosted servers.
 
-### Function 1: `create-checkout-session`
-- Authenticates user via JWT
-- Looks up or creates a Stripe customer (saves `stripe_customer_id` to profiles)
-- Creates a Stripe Checkout Session in `subscription` mode with:
-  - RAM line item: `price_1Sz653GTSSIIOUojGFw4LyEm` x quantity (only if > 0)
-  - CPU line item: `price_1Sz65FGTSSIIOUoje6QD4l9Q` x quantity (only if > 0)
-  - Metadata: `{ serverId, userId }`
-- Returns the checkout URL
+### Modify: `src/pages/Admin.tsx`
 
-### Function 2: `stripe-webhook`
-- Receives Stripe webhook events (`verify_jwt = false`)
-- Handles these events:
-  - `checkout.session.completed`: reads metadata, retrieves subscription line items, calculates `ram_boost` (quantity x 1024 MB) and `cpu_boost` (quantity x 100%), updates `server_requests` table
-  - `customer.subscription.deleted`: resets boosts to 0, clears `stripe_subscription_id`
-- **No Pterodactyl sync** -- the admin sees the updated boost values in their admin panel and applies changes manually
-
-### Function 3: `customer-portal`
-- Authenticates user, finds their Stripe customer ID from profiles
-- Creates a Stripe Billing Portal session
-- Returns the portal URL
+- Import `AdminUpgrades` and the `Zap` icon from lucide-react
+- Add a 7th tab trigger ("Upgrades" with the Zap icon)
+- Add the corresponding `TabsContent`
+- Update grid from `grid-cols-6` to `grid-cols-7` and width from `lg:w-[600px]` to `lg:w-[700px]`
 
 ---
 
-## Step 3: Admin Notification
+## Part 2: Purchase Confirmation Email
 
-Instead of Pterodactyl auto-sync, the admin panel will show boost information:
-- **Request Details Modal**: Display current RAM boost and CPU boost values with visual indicators
-- **Admin Requests Table**: Show a boost badge on rows where `ram_boost > 0` or `cpu_boost > 0`
-- When a webhook fires and updates boosts, the admin will see the changes next time they view the request
+### Modify: `supabase/functions/stripe-webhook/index.ts`
 
----
+After successfully updating the `server_requests` table with boost values in the `checkout.session.completed` handler:
 
-## Step 4: Frontend -- Upgrade Page
+1. Look up the user's email from the `profiles` table using the `userId` from metadata
+2. Look up the server name from `server_requests`
+3. Send a confirmation email via Resend (`RESEND_API_KEY` is already configured) with:
+   - Subject: "Your SkyServer1508 upgrade is confirmed!"
+   - Body: Details of what was purchased (RAM boost in GB, CPU boost in %), a note that it may take up to 24 hours to apply, and a link back to the dashboard
 
-### New route: `/server/:id/upgrade` (protected)
-
-```text
-+------------------------------------------+
-|  Current Server Specs                     |
-|  RAM: 2.5GB (Free) + 1GB (Boost) = 3.5GB |
-|  CPU: 100% (Free) + 0% (Boost) = 100%    |
-+------------------------------------------+
-|                                           |
-|  Add Extra RAM                            |
-|  [----O-----------] 1 GB                  |
-|  1.50 CHF/month                           |
-|                                           |
-|  Add Extra CPU                            |
-|  [----O-----------] 100%                  |
-|  1.50 CHF/month                           |
-|                                           |
-+------------------------------------------+
-|  /!\ DISCLAIMER (yellow/orange alert)     |
-|  "Note: Upgrades are usually instant,     |
-|   but in some cases, it may take up to    |
-|   24 hours for the new resources to be    |
-|   applied to your server."                |
-+------------------------------------------+
-|  Total: 3.00 CHF / month                  |
-|  [ Go to Checkout ]                       |
-+------------------------------------------+
-```
-
-- Sliders: RAM 0-8 GB (step 1), CPU 0-800% (step 100)
-- Live price calculation: `(ramQty + cpuQty) * 1.50 CHF`
-- "Go to Checkout" calls `create-checkout-session` and redirects to Stripe
-
-### "Need more power?" button
-- Added to `ServerStatusCard` below the "Open Game Panel" button when server is active
-- Links to `/server/{requestId}/upgrade`
-
----
-
-## Step 5: Subscription Management
-
-- Add a "Manage Subscription" card to `DashboardSettings`
-- Shows current boost stats if the user has an active subscription
-- "Manage Subscription" button calls `customer-portal` and opens Stripe portal in a new tab
-- Only visible when `stripe_subscription_id` is set on their server request
-
----
-
-## Step 6: Hook & Type Updates
-
-- Update `useServerRequest` interface to include `cpu_boost`, `ram_boost`, `stripe_subscription_id`
-- Add Stripe price constants to `src/config/constants.ts`
+The email will use the same Resend setup and sender address (`noreply@skyserver1508.org`) as the existing auth emails.
 
 ---
 
@@ -120,25 +51,24 @@ Instead of Pterodactyl auto-sync, the admin panel will show boost information:
 
 | File | Action |
 |------|--------|
-| Database migration | Add columns to `server_requests` and `profiles` |
-| `supabase/functions/create-checkout-session/index.ts` | New |
-| `supabase/functions/stripe-webhook/index.ts` | New |
-| `supabase/functions/customer-portal/index.ts` | New |
-| `supabase/config.toml` | Register 3 new functions |
-| `src/pages/ServerUpgrade.tsx` | New upgrade page |
-| `src/App.tsx` | Add route |
-| `src/hooks/useServerRequest.tsx` | Add boost fields |
-| `src/components/dashboard/ServerStatusCard.tsx` | Add "Need more power?" button |
-| `src/components/dashboard/DashboardSettings.tsx` | Add subscription management card |
-| `src/components/dashboard/SubscriptionManagementCard.tsx` | New component |
-| `src/components/admin/RequestDetailsModal.tsx` | Show boost info |
-| `src/config/constants.ts` | Add Stripe price IDs |
+| `src/components/admin/AdminUpgrades.tsx` | New -- Upgrades tab component |
+| `src/pages/Admin.tsx` | Modify -- Add 7th tab |
+| `supabase/functions/stripe-webhook/index.ts` | Modify -- Add confirmation email after checkout |
 
 ---
 
-## Technical Notes
+## Technical Details
 
-- The `stripe-webhook` function will need a `STRIPE_WEBHOOK_SECRET` -- after deployment, you will need to configure a webhook endpoint in your Stripe dashboard pointing to the function URL, then provide the signing secret
-- `ram_boost` is stored in MB (e.g., 1 GB = 1024 MB) for precision
-- Base specs (2.5GB RAM, 100% CPU) are constants in the frontend; the database only tracks the boost amounts
+### AdminUpgrades component structure
+- Fetches all requests via `useAdminRequests` hook
+- Filters to `request.ram_boost > 0 || request.cpu_boost > 0`
+- Table columns: User, Server, Game, RAM Boost, CPU Boost, Subscription ID, Updated
+- Empty state when no active boosts exist
+
+### Webhook email addition
+- Import Resend in the stripe-webhook function
+- After the DB update in `checkout.session.completed`, query `profiles` for the user email
+- Query `server_requests` for the server name
+- Send email with Resend using the existing `noreply@skyserver1508.org` sender
+- Email sending is non-blocking (errors are logged but don't fail the webhook)
 
