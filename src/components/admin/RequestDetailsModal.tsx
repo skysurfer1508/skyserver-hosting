@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   User,
   MessageSquare,
@@ -21,6 +23,7 @@ import {
   Globe,
   ExternalLink,
   Loader2,
+  Shield,
 } from 'lucide-react';
 import type { MinecraftConfig } from '@/components/dashboard/MinecraftConfigForm';
 import type { TerrariaConfig } from '@/components/dashboard/TerrariaConfigForm';
@@ -28,6 +31,8 @@ import type { SatisfactoryConfig } from '@/components/dashboard/SatisfactoryConf
 import type { ServerRequest } from '@/hooks/useAdminRequests';
 import { useDecryptedCredentials } from '@/hooks/useDecryptedCredentials';
 import { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 type RequestStatus = Database['public']['Enums']['request_status'];
 type GameType = Database['public']['Enums']['game_type'];
@@ -36,6 +41,7 @@ interface RequestDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   request: ServerRequest | null;
+  onRequestUpdated?: () => void;
 }
 
 const gameLabels: Record<GameType, { label: string; icon: string }> = {
@@ -211,8 +217,17 @@ function getStatusBadge(status: RequestStatus) {
   }
 }
 
-export function RequestDetailsModal({ open, onOpenChange, request }: RequestDetailsModalProps) {
+export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpdated }: RequestDetailsModalProps) {
   const { decryptCredentials, decryptedCredentials, isDecrypting, clearCredentials } = useDecryptedCredentials();
+  const [isPermanent, setIsPermanent] = useState(false);
+  const [isTogglingPermanent, setIsTogglingPermanent] = useState(false);
+
+  // Sync permanent state when request changes
+  useEffect(() => {
+    if (request) {
+      setIsPermanent(request.expires_at === null);
+    }
+  }, [request?.id, request?.expires_at]);
 
   // Decrypt credentials when modal opens for an active request
   useEffect(() => {
@@ -225,6 +240,37 @@ export function RequestDetailsModal({ open, onOpenChange, request }: RequestDeta
       clearCredentials();
     }
   }, [open, request?.id, request?.status, decryptCredentials, clearCredentials]);
+
+  const handleTogglePermanent = async (checked: boolean) => {
+    if (!request) return;
+    setIsTogglingPermanent(true);
+    try {
+      const { data, error } = await supabase.rpc('toggle_permanent_server', {
+        target_request_id: request.id,
+        make_permanent: checked,
+      });
+      if (error) throw error;
+      if (data) {
+        setIsPermanent(checked);
+        toast({
+          title: checked ? 'Server set to permanent' : 'Expiration re-enabled',
+          description: checked 
+            ? 'This server will no longer expire automatically.' 
+            : 'Server will expire in 7 days from now.',
+        });
+        onRequestUpdated?.();
+      }
+    } catch (error) {
+      console.error('Error toggling permanent server:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update server expiration.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTogglingPermanent(false);
+    }
+  };
 
   if (!request) return null;
 
@@ -386,6 +432,32 @@ export function RequestDetailsModal({ open, onOpenChange, request }: RequestDeta
                       )}
                     </>
                   )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Admin: Permanent Server Toggle */}
+          {request.status === 'active' && (
+            <>
+              <Separator />
+              <div className="bg-muted/30 border border-border/50 rounded-md p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <div>
+                      <Label htmlFor="permanent-toggle" className="text-sm font-medium">Permanent Server</Label>
+                      <p className="text-xs text-muted-foreground">
+                        {isPermanent ? 'This server will never expire' : 'Server has a timed expiration'}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="permanent-toggle"
+                    checked={isPermanent}
+                    onCheckedChange={handleTogglePermanent}
+                    disabled={isTogglingPermanent}
+                  />
                 </div>
               </div>
             </>
