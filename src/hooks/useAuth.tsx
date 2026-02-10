@@ -25,18 +25,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAdminRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .eq('role', 'admin')
         .maybeSingle();
-
-      if (error) {
-        console.error('Error checking admin role:', error);
-        return false;
-      }
-
       return !!data;
     } catch (error) {
       console.error('Error checking admin role:', error);
@@ -51,12 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('is_verified')
         .eq('id', userId)
         .single();
-
       if (error) {
         console.error('Error checking verification status:', error);
         return false;
       }
-
       return data?.is_verified ?? false;
     } catch (error) {
       console.error('Error checking verification status:', error);
@@ -72,46 +64,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+
+        if (initialSession?.user) {
+          const [adminStatus, verifiedStatus] = await Promise.all([
+            checkAdminRole(initialSession.user.id),
+            checkVerificationStatus(initialSession.user.id),
+          ]);
+          if (!isMounted) return;
+          setIsAdmin(adminStatus);
+          setIsVerified(verifiedStatus);
+        }
+      } catch (error) {
+        console.error('Error during initial auth setup:', error);
+        if (isMounted) {
+          setUser(null);
+          setSession(null);
+          setIsAdmin(false);
+          setIsVerified(false);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Listener for ongoing auth changes — does NOT control isLoading
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!isMounted) return;
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          setTimeout(async () => {
-            const [adminStatus, verifiedStatus] = await Promise.all([
-              checkAdminRole(session.user.id),
-              checkVerificationStatus(session.user.id),
-            ]);
-            setIsAdmin(adminStatus);
-            setIsVerified(verifiedStatus);
-          }, 0);
+          // Fire and forget for ongoing changes
+          checkAdminRole(session.user.id).then(v => isMounted && setIsAdmin(v));
+          checkVerificationStatus(session.user.id).then(v => isMounted && setIsVerified(v));
         } else {
           setIsAdmin(false);
           setIsVerified(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const [adminStatus, verifiedStatus] = await Promise.all([
-          checkAdminRole(session.user.id),
-          checkVerificationStatus(session.user.id),
-        ]);
-        setIsAdmin(adminStatus);
-        setIsVerified(verifiedStatus);
-      }
-      
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, metadata?: { full_name?: string }) => {
