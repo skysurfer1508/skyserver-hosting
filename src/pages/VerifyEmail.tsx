@@ -34,6 +34,14 @@ export default function VerifyEmail() {
         setStatus('error');
         setErrorMessage(error.message);
       } else {
+        // Mark profile as verified in the database
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser) {
+          await supabase
+            .from('profiles')
+            .update({ is_verified: true })
+            .eq('id', currentUser.id);
+        }
         setStatus('success');
         await refreshVerification();
         window.history.replaceState({}, '', '/auth/verify');
