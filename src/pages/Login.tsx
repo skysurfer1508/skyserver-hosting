@@ -6,13 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2, Mail, Lock, AlertTriangle } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailNotConfirmed, setShowEmailNotConfirmed] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,6 +28,11 @@ export default function Login() {
     const { error } = await signIn(email, password);
 
     if (error) {
+      if (error.message?.toLowerCase().includes('email not confirmed')) {
+        setShowEmailNotConfirmed(true);
+        setIsLoading(false);
+        return;
+      }
       toast({
         title: 'Login Failed',
         description: error.message,
@@ -38,6 +47,28 @@ export default function Login() {
       description: 'You have been logged in successfully.',
     });
     navigate('/dashboard');
+  };
+
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    const { error } = await supabase.functions.invoke('send-auth-email', {
+      body: { type: 'signup', email },
+    });
+    setIsResending(false);
+
+    if (error) {
+      toast({
+        title: 'Failed to send',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Verification email sent!',
+      description: 'Please check your inbox and spam folder.',
+    });
   };
 
   return (
@@ -66,7 +97,10 @@ export default function Login() {
                     type="email"
                     placeholder="gamer@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setShowEmailNotConfirmed(false);
+                    }}
                     className="pl-10"
                     required
                   />
@@ -100,6 +134,36 @@ export default function Login() {
                 )}
               </Button>
             </form>
+
+            {showEmailNotConfirmed && (
+              <Alert className="mt-4 border-warning/50 bg-warning/10">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <AlertDescription className="ml-2">
+                  <p className="font-medium text-foreground">Your email hasn't been verified yet.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Check your inbox or request a new verification link.
+                  </p>
+                  <Button
+                    onClick={handleResendVerification}
+                    disabled={isResending}
+                    size="sm"
+                    className="mt-3 w-full"
+                  >
+                    {isResending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Resend Verification Email
+                      </>
+                    )}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="mt-4 text-center">
               <Link to="/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary hover:underline">
