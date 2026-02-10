@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.reset-all-verification]
 verify_jwt = false
+
+[functions.cleanup-expired-servers]
+verify_jwt = false

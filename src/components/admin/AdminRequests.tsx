@@ -58,27 +58,28 @@ const gameLabels: Record<string, { label: string; icon: string }> = {
 
 // Helper function to calculate and format time remaining
 const getExpiryInfo = (expiresAt: string | null) => {
-  if (!expiresAt) return null;
+  if (!expiresAt) return { text: 'Permanent', isUrgent: false, isExpired: false, isPermanent: true, days: Infinity };
   
   const now = new Date();
   const expiry = new Date(expiresAt);
   const diff = expiry.getTime() - now.getTime();
   
   if (diff <= 0) {
-    return { text: 'Expired', isUrgent: true, isExpired: true, days: 0 };
+    return { text: 'Expired', isUrgent: true, isExpired: true, isPermanent: false, days: 0 };
   }
   
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   
   if (days === 0) {
-    return { text: `${hours}h`, isUrgent: true, isExpired: false, days: 0 };
+    return { text: `${hours}h`, isUrgent: true, isExpired: false, isPermanent: false, days: 0 };
   }
   
   return { 
     text: `${days}d ${hours}h`, 
-    isUrgent: days < 5, 
+    isUrgent: days < 3, 
     isExpired: false,
+    isPermanent: false,
     days 
   };
 };
@@ -324,19 +325,25 @@ export function AdminRequests() {
                         <TableCell>{getStatusBadge(request.status)}</TableCell>
                         <TableCell>
                           {request.status === 'active' && expiryInfo ? (
-                            <div className={cn(
-                              'flex items-center gap-1 text-sm font-medium',
-                              expiryInfo.isExpired 
-                                ? 'text-destructive' 
-                                : expiryInfo.isUrgent 
-                                  ? 'text-warning' 
-                                  : 'text-success'
-                            )}>
-                              {expiryInfo.isUrgent && (
-                                <AlertTriangle className="h-3 w-3" />
-                              )}
-                              {expiryInfo.text}
-                            </div>
+                            expiryInfo.isPermanent ? (
+                              <Badge className="bg-primary/20 text-primary border-primary/30 gap-1">
+                                ∞ Permanent
+                              </Badge>
+                            ) : (
+                              <div className={cn(
+                                'flex items-center gap-1 text-sm font-medium',
+                                expiryInfo.isExpired 
+                                  ? 'text-destructive' 
+                                  : expiryInfo.isUrgent 
+                                    ? 'text-warning' 
+                                    : 'text-success'
+                              )}>
+                                {expiryInfo.isUrgent && (
+                                  <AlertTriangle className="h-3 w-3" />
+                                )}
+                                {expiryInfo.text}
+                              </div>
+                            )
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
@@ -471,6 +478,10 @@ export function AdminRequests() {
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
         request={selectedRequest}
+        onRequestUpdated={() => {
+          refetchSettings();
+          refetchGameLimits();
+        }}
       />
     </>
   );

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, RefreshCw, CheckCircle } from 'lucide-react';
+import { Clock, RefreshCw, CheckCircle, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface ServerExpiryCardProps {
   requestId: string;
-  expiresAt: string;
+  expiresAt: string | null;
   onRenewed: () => void;
 }
 
@@ -22,6 +22,8 @@ export function ServerExpiryCard({ requestId, expiresAt, onRenewed }: ServerExpi
   const [isRenewing, setIsRenewing] = useState(false);
 
   useEffect(() => {
+    if (expiresAt === null) return;
+
     const calculateTimeRemaining = () => {
       const now = new Date();
       const expiry = new Date(expiresAt);
@@ -40,8 +42,7 @@ export function ServerExpiryCard({ requestId, expiresAt, onRenewed }: ServerExpi
     };
 
     calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 60000); // Update every minute
-
+    const interval = setInterval(calculateTimeRemaining, 60000);
     return () => clearInterval(interval);
   }, [expiresAt]);
 
@@ -57,7 +58,7 @@ export function ServerExpiryCard({ requestId, expiresAt, onRenewed }: ServerExpi
       if (data) {
         toast({
           title: 'Server renewed!',
-          description: 'Your server has been renewed for 15 days.',
+          description: 'Your server has been renewed for 7 days.',
         });
         onRenewed();
       } else {
@@ -79,21 +80,41 @@ export function ServerExpiryCard({ requestId, expiresAt, onRenewed }: ServerExpi
     }
   };
 
+  // Permanent server — no expiry
+  if (expiresAt === null) {
+    return (
+      <Card className="gaming-card bg-primary/10 border-primary/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Shield className="h-5 w-5 text-primary" />
+            Server Lease Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-2">
+            <div className="text-2xl font-bold text-primary">Permanent Server</div>
+            <p className="text-sm text-muted-foreground mt-1">This server does not expire</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!timeRemaining) return null;
 
   const daysRemaining = timeRemaining.days;
-  const isUrgent = daysRemaining < 5;
-  const canRenew = daysRemaining < 5;
+  const isUrgent = daysRemaining < 3;
+  const canRenew = daysRemaining < 3;
 
   const getStatusColor = () => {
-    if (daysRemaining >= 5) return 'text-green-500';
-    if (daysRemaining >= 2) return 'text-warning';
+    if (daysRemaining >= 3) return 'text-green-500';
+    if (daysRemaining >= 1) return 'text-warning';
     return 'text-destructive';
   };
 
   const getStatusBg = () => {
-    if (daysRemaining >= 5) return 'bg-green-500/10 border-green-500/30';
-    if (daysRemaining >= 2) return 'bg-warning/10 border-warning/30';
+    if (daysRemaining >= 3) return 'bg-green-500/10 border-green-500/30';
+    if (daysRemaining >= 1) return 'bg-warning/10 border-warning/30';
     return 'bg-destructive/10 border-destructive/30';
   };
 
@@ -125,9 +146,9 @@ export function ServerExpiryCard({ requestId, expiresAt, onRenewed }: ServerExpi
             <div
               className={cn(
                 'h-full transition-all duration-500',
-                daysRemaining >= 5 ? 'bg-success' : daysRemaining >= 2 ? 'bg-warning' : 'bg-destructive'
+                daysRemaining >= 3 ? 'bg-success' : daysRemaining >= 1 ? 'bg-warning' : 'bg-destructive'
               )}
-              style={{ width: `${Math.min((daysRemaining / 15) * 100, 100)}%` }}
+              style={{ width: `${Math.min((daysRemaining / 7) * 100, 100)}%` }}
             />
           </div>
         </div>
@@ -146,19 +167,19 @@ export function ServerExpiryCard({ requestId, expiresAt, onRenewed }: ServerExpi
           ) : canRenew ? (
             <>
               <RefreshCw className="h-4 w-4" />
-              Renew Server (15 days)
+              Renew Server (7 days)
             </>
           ) : (
             <>
               <CheckCircle className="h-4 w-4" />
-              Renewal available in {daysRemaining - 4} days
+              Renewal available in {daysRemaining - 2} days
             </>
           )}
         </Button>
 
         {!canRenew && (
           <p className="text-xs text-center text-muted-foreground">
-            You can renew when less than 5 days remain
+            You can renew when less than 3 days remain
           </p>
         )}
       </CardContent>
