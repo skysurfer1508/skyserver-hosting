@@ -42,15 +42,41 @@ const handler = async (req: Request): Promise<Response> => {
       ? `${CUSTOM_DOMAIN}/dashboard`
       : `${CUSTOM_DOMAIN}/auth/update-password`;
 
-    const linkType = isSignup ? "signup" : "recovery";
+    // For signup: first try "signup" type, if user already exists use "magiclink"
+    // For recovery: use "recovery"
+    let linkData: any;
+    let linkError: any;
 
-    // Generate the auth link using admin API
-    const { data: linkData, error: linkError } =
-      await supabaseAdmin.auth.admin.generateLink({
-        type: linkType,
+    if (isSignup) {
+      // Try signup first
+      const result = await supabaseAdmin.auth.admin.generateLink({
+        type: "signup",
         email,
         options: { redirectTo },
       });
+
+      if (result.error?.message?.includes("already been registered")) {
+        // User exists, use magiclink instead for re-verification
+        const magicResult = await supabaseAdmin.auth.admin.generateLink({
+          type: "magiclink",
+          email,
+          options: { redirectTo },
+        });
+        linkData = magicResult.data;
+        linkError = magicResult.error;
+      } else {
+        linkData = result.data;
+        linkError = result.error;
+      }
+    } else {
+      const result = await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo },
+      });
+      linkData = result.data;
+      linkError = result.error;
+    }
 
     if (linkError || !linkData) {
       console.error("generateLink error:", linkError);
