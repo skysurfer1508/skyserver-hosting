@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,15 @@ export default function Register() {
       });
       setIsLoading(false);
       return;
+    }
+
+    // Send custom verification email via Resend
+    const { error: emailError } = await supabase.functions.invoke('send-auth-email', {
+      body: { type: 'signup', email },
+    });
+
+    if (emailError) {
+      console.error('Failed to send verification email:', emailError);
     }
 
     toast({

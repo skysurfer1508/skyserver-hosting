@@ -19,8 +19,8 @@ export default function ForgotPassword() {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://www.skyserver1508.org/auth/update-password',
+    const { error } = await supabase.functions.invoke('send-auth-email', {
+      body: { type: 'recovery', email },
     });
 
     setIsLoading(false);
