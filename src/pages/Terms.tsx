@@ -13,147 +13,425 @@ export default function Terms() {
               <ScrollText className="h-8 w-8 text-primary" />
             </div>
             <h1 className="font-display text-3xl font-bold md:text-4xl">Terms of Service</h1>
-            <p className="mt-2 text-muted-foreground">Allgemeine Geschäftsbedingungen (AGB)</p>
+            <p className="mt-2 text-muted-foreground">Last Updated: February 2026</p>
           </div>
+
+          {/* Intro */}
+          <Card className="gaming-card border-border/50 mb-6">
+            <CardContent className="p-6 md:p-8">
+              <p className="text-muted-foreground leading-relaxed">
+                Please read these Terms of Service carefully. By registering for or using the SkyServer game server hosting services (whether on the Free Tier or with Paid Add-ons), you ("User") agree to be bound by these Terms of Service ("Terms"). SkyServer ("we", "us", or "the Provider") is a Swiss-based service, and these Terms establish a contract under Swiss law between you and the Provider for use of the SkyServer services. If you do not agree with these Terms, you must not use the services.
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Legal Content */}
           <Card className="gaming-card border-border/50">
             <CardContent className="p-6 md:p-8 prose prose-invert prose-sm max-w-none">
-              {/* Section 1 */}
+
+              {/* §1 */}
               <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§1. Scope and Nature of Service</h2>
-                
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">1.1 Free Service – No Rental Agreement</h3>
+                <h2 className="text-xl font-bold text-foreground mb-4">§1 Scope and Overview</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">1.1 Services Covered</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  SkyServer is a free-of-charge hosting service for game servers (e.g. Minecraft, Terraria, Satisfactory) operated as a student project. These Terms of Service (TOS) govern the use of the SkyServer service by registered users ("User") in relation to the service provider ("Provider"). The service is provided gratuitously as a courtesy or free mandate under Swiss law, and does not establish a rental (Mietvertrag) or lease agreement for server resources. Consequently, no contractual warranty (Gewährleistung) obligations apply as they would in a paid rental situation. The User has no entitlement to any specific service performance, availability or continued provision of SkyServer beyond what the Provider voluntarily offers. The service is provided "as is" without guarantees, and the Provider assumes no duty to maintain uptime or defect-free operation.
+                  These Terms govern all use of SkyServer's services, including the Free Tier (a basic game server hosting service provided at no charge) and Paid Add-on services (enhancements such as additional RAM, CPU, storage, or game slots available for a fee). Both free and paid services are covered under this single set of Terms.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">1.2 No Consideration – No Payment</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">1.2 Free vs. Paid Legal Structure</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The use of SkyServer is entirely free for the User (a "Free Tier" service). No fees are charged, and no exchange of consideration occurs. Because the service is free, the legal relationship is characterized as an informal favor or gratuitous contract, not a commercial service contract. Provisions of Swiss contract law that presuppose payment or mutual exchange (e.g. lease or sales warranty rules) are not applicable to this service. The User acknowledges that the Provider offers SkyServer voluntarily and may discontinue or modify the service at any time (see §2 below), without the stringent obligations that would exist in a paid contractual arrangement.
+                  Under Swiss law, the Free Tier is provided as a gratuitous service (a mandate provided without remuneration) and the Paid Add-ons constitute a paid service contract. This means that for the Free Tier, we offer the service free of charge as a courtesy without a payment obligation, whereas Paid Add-ons create a contractual payment relationship. No purchase is necessary to use the basic Free Tier, but if you choose to buy Add-ons, the additional terms for payments apply.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">1.3 Acceptance of Terms</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  By using any part of the service – free or paid – you confirm that you accept these Terms. If you create an account or click "Agree" to these Terms, that action forms a binding agreement. These Terms also incorporate any Acceptable Use Policy (AUP) and Privacy provisions referenced herein. Users are responsible for ensuring that any persons they allow to use their SkyServer (e.g. game participants) also abide by relevant sections of these Terms.
                 </p>
               </section>
 
-              {/* Section 2 */}
+              {/* §2 */}
               <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§2. Right to Terminate or Suspend Service ("Kill-Switch")</h2>
-                
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">2.1 Provider's Discretion to Terminate</h3>
+                <h2 className="text-xl font-bold text-foreground mb-4">§2 Description of Services and Account Terms</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">2.1 Free Tier (Gratuitous Service)</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The Provider reserves the unconditional right to suspend or terminate the User's account, server instances, or any related services at any time, with immediate effect, and without prior notice or explanation. This "kill-switch" provision means the Provider can shut down servers or user accounts at will, for any or no reason. Such termination can include permanent deletion of all User data on the service. The User has no right or claim to continued use of the service, or to the restoration of terminated accounts or deleted data. In agreeing to these Terms, the User expressly accepts that the service may be discontinued or their access revoked at any moment, even absent cause.
+                  SkyServer's Free Tier provides basic game server hosting at no charge. This service is offered "as is" as a courtesy to users. Because it is free, it is considered a mandate without remuneration under the Swiss Code of Obligations. There is no guarantee of continued availability or performance for free services – the Provider may modify, limit, or discontinue the Free Tier (or any part of it) at any time at its discretion. The User has no ownership or vested rights in a free server, and the Provider's obligations are limited to what is mandated by law for gratuitous services.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">2.2 No Compensation or Liability for Termination</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">2.2 Paid Add-ons (Subscription Services)</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  In the event of suspension or termination, the Provider shall not be liable for any losses or damages incurred by the User due to the interruption or cessation of service. The User will not be entitled to any compensation, reimbursement, or damages for the loss of access, data, or functionality resulting from the Provider's exercise of this right. The User is advised not to rely on the continued availability of the free service and to maintain independent backups of any important data (see §3 below). By using SkyServer, the User waives any legal claims against the Provider arising from an unannounced or discretionary termination of the free service.
+                  SkyServer also offers optional Paid Add-on services for a fee. These include additional server resources such as increased RAM, CPU capacity, extra storage, more game slots, or other premium features. When you purchase a Paid Add-on, you enter into a contract for digital services in exchange for payment. The Paid Add-ons are provided on a subscription basis (normally month-to-month) as described in §3. The Provider will use commercially reasonable efforts to deliver the Paid services as advertised, subject to the terms and limitations in this agreement.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">2.3 Account Registration</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  To use SkyServer (whether free or paid), you may need to create an account with accurate information. You are responsible for maintaining the security of your account credentials and for all activities that occur under your account. You must be of legal age (or have parental/guardian consent) to form this contract. You agree not to share your account with others and to abide by all technical usage limits. The Provider reserves the right to suspend or terminate accounts that are inactive for an extended period or that violate these Terms.
                 </p>
               </section>
 
-              {/* Section 3 */}
+              {/* §3 */}
               <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§3. User Data and Backups; Risk of Data Loss</h2>
-                
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.1 User's Responsibility for Backups</h3>
+                <h2 className="text-xl font-bold text-foreground mb-4">§3 Fees, Billing, and Payment Terms</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.1 Pricing and Currency</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The User is solely responsible for maintaining current backups of any data, content, game progress, configurations, or other files uploaded to or created on the SkyServer service. The Provider does not guarantee that any backup of User data will be made on the server side, nor that any such backup (if made) will be available or up-to-date. System-side backups, if they exist, are not guaranteed and the User cannot claim restoration from them. The User is expected to regularly save and archive their own data (such as world saves, game files, settings) on personal storage outside of SkyServer.
+                  Fees for Paid Add-ons are listed in Swiss Francs (CHF) and all charges will be processed in CHF. The prices are inclusive of all applicable taxes except that Swiss VAT is not charged at present, because the Provider's annual revenue is below the Swiss VAT registration threshold. Should the Provider's revenue exceed the threshold in the future or laws change, VAT may be applied; users will be informed accordingly. International users are responsible for any currency conversion fees or bank charges on their side.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.2 No Liability for Data Loss</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.2 Subscription Model</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The Provider assumes no liability for loss of data. By using the service, the User accepts that all data stored on SkyServer may be lost or irretrievably deleted at any time, especially in cases of service termination (per §2) or technical failure. The Provider gives no warranty for the preservation or recoverability of User data. In particular, the Provider is not liable for any damage or harm resulting from data loss, corrupted files, failed backups or restorations, regardless of the cause. This exclusion applies to loss caused by the Provider's deletion of servers or accounts, hardware or software failures, attacks, or any other circumstance. Users should not rely on SkyServer as the sole storage for any important data. All data stored on the service is at the User's own risk, and the User will have no claim against the Provider in case of permanent data loss.
+                  Paid Add-ons are sold on a subscription basis, typically month-to-month. When you subscribe to a Paid plan or feature, you will be billed in advance for each subscription period (e.g. monthly) at the beginning of that period. <strong className="text-foreground">Automatic Renewal:</strong> Your subscription will automatically renew at the end of each billing period for an additional period of the same length (e.g. one month), unless you cancel the subscription in accordance with §6. We will charge your chosen payment method for each renewal without further authorization, until you cancel.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.3 Payment Method</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Payments are handled via our third-party payment processor, Stripe, Inc. You must provide a valid payment method (e.g. credit or debit card) at the time of purchase. By subscribing to a Paid service, you authorize the Provider (and Stripe) to charge your provided payment method for the recurring subscription fees and any other applicable charges. It is your responsibility to ensure your payment information is accurate and up-to-date. All billing receipts will be sent electronically.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.4 Billing Cycle and Invoicing</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The billing cycle for subscriptions is typically monthly from the date of purchase or activation of the service. For example, if you purchase an Add-on on the 15th of a month, your next billing date will be the 15th of the following month. We may align multiple add-on purchases to the same billing date for simplicity. You will receive an electronic invoice or receipt for each charge.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.5 Non-Payment</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If a payment fails or is declined, we will notify you and may retry charging the payment method. If payment is not received within a reasonable time, the Provider reserves the right to suspend or downgrade your service until payment is made. Persistent non-payment may result in termination of the Paid service and conversion of your server to the Free Tier, if available, or deletion of your server data – see §7. You are responsible for any fees incurred due to late payment; the Provider will not be liable for such costs.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">3.6 No VAT Charges</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  As noted, we do not currently charge Swiss VAT on our services due to our small-business status below the VAT threshold. No separate VAT will be added to your bills. You will pay the listed subscription price. Businesses or individuals outside Switzerland are solely responsible for any indirect taxes or duties that may apply in their home jurisdiction.
                 </p>
               </section>
 
-              {/* Section 4 */}
+              {/* §4 */}
               <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§4. Liability and Warranty Disclaimer</h2>
-                
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.1 General Disclaimer</h3>
+                <h2 className="text-xl font-bold text-foreground mb-4">§4 Provision of Services and Activation</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.1 Activation of Paid Services</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  To the fullest extent permitted by law, the Provider's liability is excluded or limited for any damages arising from or in connection with the use of SkyServer. SkyServer is provided "as is" with no warranties of any kind, whether express or implied. The Provider disclaims all warranties and representations regarding quality, performance, availability, or fitness for a particular purpose of the service. In particular, the Provider does not warrant that the service will be uninterrupted, error-free, secure, or that it will meet the User's expectations. The User bears all risk related to the use of the free service.
+                  We endeavor to provision and activate any Paid Add-on services immediately after successful payment. In most cases, additional resources or features are enabled within minutes. However, we reserve the right to an activation window of up to 24 hours from the time of payment to fully activate or deliver a purchased digital service. This activation delay is a precaution to handle technical issues or manual verification if needed. You acknowledge that a short provisioning delay (up to 24 hours) is acceptable and does not entitle you to any refund or compensation.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.2 Exclusion of Liability for Negligence</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.2 No Refund for Activation Delay</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  In accordance with Article 100 of the Swiss Code of Obligations, any pre-agreement to exclude liability for unlawful intent or gross negligence is void, but it is permissible to exclude liability for slight (ordinary) negligence. Therefore, the Provider shall not be liable for damage caused by simple or ordinary negligence. The Provider's liability is only retained for damage caused by gross negligence or willful misconduct, to the extent such liability cannot be disclaimed under mandatory law. By using this free service, the User accepts that minor faults or lapses by the Provider will not give rise to any claims against the Provider.
+                  Because the Paid Add-ons are digital services delivered online, once we begin to fulfill your order, you gain the benefit of the service. Even if activation takes some hours, you will still receive the full value of the subscription period from the time the service is activated. As such, no refund or cancellation may be claimed solely due to activation taking up to 24 hours.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.3 Specific Liability Exclusions</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.3 Service Delivery and Quality</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Provider will deliver the services digitally by enabling features on your game server account. There are no physical goods; the service is considered delivered when the features are activated on your account. The quality and performance of the service may vary based on network conditions, server load, and other factors. We will make reasonable efforts to ensure a good service, especially for paid users, but the Service Level is defined in §11 and subject to the disclaimers in §9.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.4 Support</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Basic customer support is available via email or online tickets, primarily in English. Free Tier users receive community-level or standard support when possible, while paid subscribers may receive priority or enhanced support. Support response times are not guaranteed, but we aim to address urgent Paid service issues as soon as feasible (typically within 24 hours).
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">4.5 Changes to Services</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Provider reserves the right to modify the features of the Free Tier or Paid plans over time. For Paid services, any material reduction in features or capacity will be communicated in advance and usually take effect in the next billing cycle unless required by law or security emergency. The Free Tier, being free and complimentary, can be changed or discontinued at any time without prior notice, as stated in §2.1.
+                </p>
+              </section>
+
+              {/* §5 */}
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-foreground mb-4">§5 Consumer Right of Withdrawal (Waiver for Digital Services)</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">5.1 No "Cooling-Off" Period for Digital Delivery</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  SkyServer's Paid Add-ons are digital services delivered immediately or within a short time after purchase, upon your request. If you are a consumer residing in a country that provides a statutory "cooling-off" or right of withdrawal for online purchases, you acknowledge and agree that this right is waived once the service is fully delivered or activated at your request.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">5.2 Express Consent to Early Performance</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  At the time of checkout for any Paid service, you will be asked to confirm that you want the service to start immediately and that you understand this will waive any applicable withdrawal right. By completing the purchase, you are providing your express consent to us to start the service before any statutory withdrawal period would expire.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">5.3 Exceptions</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If for some reason we do not start providing the service within the agreed timeframe, or if we materially fail to deliver the service, your statutory rights (if any) may still apply. This clause only affects the no-fault change-of-mind cancellation right during a cooling-off period. It does not affect your ability to terminate for breach or other causes under general law or under these Terms.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">5.4 Non-EU/Non-Consumer Users</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you are not an individual consumer, or if you are outside jurisdictions with such withdrawal rights, then this section may not apply to you. Business users or users in countries without mandatory withdrawal statutes have no such cooling-off period by default. All users, however, are still bound by the no-refund policies described elsewhere in these Terms once services are delivered.
+                </p>
+              </section>
+
+              {/* §6 */}
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-foreground mb-4">§6 Term, Renewal, and Cancellation by User</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">6.1 Term of Services</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Free Tier services are provided on an ongoing basis with no fixed term (at-will usage, subject to termination as per §7). Paid subscriptions run on monthly terms by default. The initial term for a Paid Add-on begins when the service is activated and lasts until the end of the billing period. Thereafter, the subscription renews automatically each month (see §3.2) until canceled.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">6.2 User Cancellation Right</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  You may cancel a Paid subscription at any time via the account dashboard or by contacting us. "Cancellation" means that the service will not renew at the next billing cycle. To avoid being charged for the next period, you should cancel before your next billing date.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">6.3 Effect of Cancellation</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  When you cancel, you will continue to have access to the Paid Add-on features until the end of the current paid term that you have already paid for. After that, the subscription will end and your service will either revert to the Free Tier (with reduced resources) or be closed, as applicable. No pro-rated refunds will be given for unused days in a monthly subscription that you chose to cancel early, except where required by law.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">6.4 Cancellation of Free Accounts</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you are using only the Free Tier and wish to stop, you may simply discontinue use of the service. There is no payment to cancel. We reserve the right to delete inactive free servers or accounts (with prior warning when feasible) to manage resources.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">6.5 Upgrades and Downgrades</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you upgrade to a higher plan or add new Paid features, those may either take effect immediately (with a pro-rated charge) or at the next billing cycle. If you downgrade at your request, the change will usually apply from the next billing cycle. We recommend contacting support or using provided tools to schedule downgrades to coincide with the end of your current term.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">6.6 Reactivation</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you cancel a subscription but later wish to re-subscribe, you may do so by purchasing the Add-on again, subject to availability and the pricing at that time. We do not guarantee the exact same server IP, configuration, or capacity will be available if you re-subscribe later.
+                </p>
+              </section>
+
+              {/* §7 */}
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-foreground mb-4">§7 Suspension and Termination by Provider</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.1 Termination of Free Tier</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Because the Free Tier is a free courtesy service, the Provider may terminate or suspend free accounts or servers at any time for any reason (or no specific reason), though we will try to give notice or explanation when practical. Users have no contractual guarantee of continued free service.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.2 Termination for Cause (Paid or Free)</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Provider may suspend or terminate your access to the service (free or paid) immediately and without prior notice if you breach these Terms, including violation of the Acceptable Use Policy in §8 or non-payment under §3.5. Serious violations will result in swift termination.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.3 No Refunds</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  You will not be entitled to any refund of fees already paid in case of termination for cause. Termination for cause is considered a result of your wrongful action, and fees are forfeited to cover administrative costs of handling the breach.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.4 Loss of Data</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Upon termination, your game server may be shut down and all associated data may be deleted. The Provider is not responsible for maintaining or providing you a copy of this data after termination, except as required by law. It is your responsibility to back up any data you wish to keep.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.5 Ban from Service</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  In cases of severe abuse, we reserve the right to ban you from creating new accounts or using the service in the future. We may also report misconduct to appropriate authorities if it involves unlawful material or activities.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.6 Termination for Convenience by Provider</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Aside from termination for cause, the Provider retains the right to terminate the service at any time for any reason, with reasonable notice when feasible. If we terminate a Paid service for convenience and not due to any fault of yours, we will either continue to provide the service for the remaining paid term or refund any unused portion of the fees on a pro-rata basis, at our discretion.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.7 Survival of Terms</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Even after your service is terminated, certain sections of these Terms will remain in effect. In particular, provisions regarding liability, indemnification, data protection, governing law, and any accrued rights will survive termination.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.8 Restoration</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If your account or service was suspended, we may, at our discretion, restore access once the issue is resolved. A reactivation fee may apply for reinstating terminated services, and restoration is not guaranteed if we have already erased data or reallocated resources.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.9 User Data on Termination</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Upon any termination, the Provider may irreversibly delete your server data and configuration after a retention period (if any) in accordance with our data protection policy (§10). Refer to §10 for more information on data handling.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">7.10 No Liability for Termination</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  To the maximum extent permitted by law, the Provider will not be liable for any losses or damages suffered by you due to the suspension, termination, or deletion of your account or server in accordance with these Terms. Your sole remedy in case of termination without cause by us is the pro-rated refund described above.
+                </p>
+              </section>
+
+              {/* §8 */}
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-foreground mb-4">§8 Acceptable Use Policy</h2>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  You agree to use SkyServer's services responsibly and lawfully. All users must adhere to this Acceptable Use Policy ("AUP"), which applies internationally regardless of your location. The following uses of the service are expressly prohibited:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-3 ml-4">
+                  <li><strong className="text-foreground">Illegal Activities:</strong> You may not use the servers for any unlawful purposes or in violation of any applicable laws or regulations, including using the service to commit crimes, infringe intellectual property rights, or breach privacy/data protection laws.</li>
+                  <li><strong className="text-foreground">Cryptocurrency Mining:</strong> The use of SkyServer resources for cryptocurrency mining or similar blockchain computations is strictly forbidden. We will immediately suspend any instance found running mining software.</li>
+                  <li><strong className="text-foreground">Network Abuse (DDoS and Hacking):</strong> You must not engage in any network abuse, including initiating DDoS attacks, flooding, mail bombing, port scanning, vulnerability scanning, hacking, or penetration testing of third-party systems without authorization.</li>
+                  <li><strong className="text-foreground">Malware and Malicious Code:</strong> You are prohibited from using our service to store, transmit, or distribute viruses, worms, trojans, ransomware, keyloggers, or any other malicious software. You also may not operate botnets from our service.</li>
+                  <li><strong className="text-foreground">Pirated Software and Copyright Infringement:</strong> You may not host or share any pirated or unlicensed content, including cracked game server software, illicit copies of games or software, warez, or any content that infringes intellectual property rights.</li>
+                  <li><strong className="text-foreground">Hate Speech and Harassment:</strong> Our service cannot be used to disseminate hateful, harassing, or discriminatory content. Servers propagating extremist ideologies, terrorist propaganda, or violent hate organizations will be shut down.</li>
+                  <li><strong className="text-foreground">Other Prohibited Content:</strong> You may not host content that is obscene, pornographic (especially content involving minors), defamatory, or libelous. Any use for fraudulent schemes, phishing, or impersonation is strictly forbidden.</li>
+                  <li><strong className="text-foreground">Resource Abuse:</strong> You must not use the service in a way that unreasonably interferes with the Provider's other customers or operations. We reserve the right to throttle or limit resource usage to ensure stability for all users.</li>
+                  <li><strong className="text-foreground">Spam and Unauthorized Communications:</strong> Using the server to send unsolicited bulk messages (spam), conduct spam operations, or run mass advertising campaigns is not allowed.</li>
+                  <li><strong className="text-foreground">Security and Integrity:</strong> You shall not attempt to circumvent or disable security features of SkyServer's infrastructure, including attempting to gain access to other users' servers or data.</li>
+                </ul>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">Enforcement</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you engage in any prohibited activities, the Provider may take any action it deems appropriate, including immediate suspension or termination of your account, deletion of offending content, and banning you from the platform. In serious cases, we may report you to law enforcement. Termination for AUP violations will result in forfeiture of any fees paid and no refund will be given.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">Monitoring and Investigations</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Provider does not actively monitor all user content or server activity. However, we reserve the right to investigate suspected violations of the AUP. By using the service, you consent to such monitoring and audit to the extent necessary to ensure compliance with these Terms and applicable law.
+                </p>
+              </section>
+
+              {/* §9 */}
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-foreground mb-4">§9 Disclaimers of Warranty; Limitation of Liability</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">9.1 No Warranties – "As Is" Service</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  SkyServer is provided on an "as is" and "as available" basis. To the maximum extent permitted by law, the Provider disclaims all warranties and representations, express or implied, regarding the service, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee that the services will be uninterrupted, error-free, or meet your specific requirements. Use of the service is at your own risk.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">9.2 Liability Limitations</h3>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  Without limiting the generality of the above, the Provider shall not be liable for:
+                  To the fullest extent permitted by applicable law, the Provider's liability to you is limited. Specifically:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-                  <li><strong className="text-foreground">Downtime or Service Unavailability:</strong> Any unavailability of the service, interruptions, delays, or downtime. The User has no guarantee of continuous service and cannot claim damages for lost access or delayed gameplay.</li>
-                  <li><strong className="text-foreground">Data Loss:</strong> Loss, deletion, or corruption of data (including game progress or configurations) stored on SkyServer. The Provider offers no compensation for data loss (see also §3.2).</li>
-                  <li><strong className="text-foreground">Indirect or Consequential Damages:</strong> Any indirect, incidental, or consequential damages, including lost profits, lost expected savings, or loss of enjoyment or opportunities arising from the inability to use the service.</li>
-                  <li><strong className="text-foreground">User's Own Materials or Third-Party Acts:</strong> Any damage arising from content or software uploaded by the User or from actions of other users or third parties (e.g. malware, hacking, or DDoS attacks affecting the service).</li>
-                </ul>
-                <p className="text-muted-foreground leading-relaxed mt-4">
-                  This liability exclusion applies regardless of the legal theory of claim, whether contractual or non-contractual, except to the extent liability cannot be lawfully excluded or limited. Nothing in these Terms shall be construed to limit the Provider's liability for intentional misconduct or gross negligence as prohibited by law. In all cases, any residual mandatory liability that cannot be disclaimed (e.g. for personal injury caused by the Provider's fault, if applicable) is capped at the minimum level allowed by law.
-                </p>
-              </section>
-
-              {/* Section 5 */}
-              <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§5. Acceptable Use Policy (Prohibited Conduct)</h2>
-                
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">5.1 Lawful and Proper Use Only</h3>
-                <p className="text-muted-foreground leading-relaxed mb-3">
-                  The User agrees to use SkyServer only for legitimate, game-hosting purposes and in compliance with all applicable laws and these Terms. Any misuse of the service is strictly prohibited. In particular – but without limitation – the User must not use SkyServer to:
-                </p>
-                <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-                  <li><strong className="text-foreground">Launch Cyber Attacks:</strong> Initiate, participate in, or facilitate any form of network attack, intrusion, or malicious interference, including Denial-of-Service (DoS/DDoS) attacks or hacking attempts against any computers, networks, or services.</li>
-                  <li><strong className="text-foreground">Mine Cryptocurrencies:</strong> Run programs or processes for cryptocurrency mining, "farming," or similar resource-intensive tasks on the servers. Such activities unfairly consume resources and are forbidden.</li>
-                  <li><strong className="text-foreground">Distribute Malware or Illicit Software:</strong> Upload, store, host, or disseminate malicious software (viruses, worms, trojans) or engage in activities like botnet control, spreading malware, or any form of malware hosting or distribution.</li>
-                  <li><strong className="text-foreground">Phishing or Fraud:</strong> Conduct phishing schemes, fraud, identity theft, scamming, or any deceptive practices. The service may not be used to collect personal data under false pretenses or to impersonate others.</li>
-                  <li><strong className="text-foreground">Infringe Intellectual Property:</strong> Store, share, or facilitate access to copyright-infringing content or other material that violates intellectual property rights. This includes pirated software, unlicensed media (pirated games, films, music), or any content that the User has no right to use.</li>
-                  <li><strong className="text-foreground">Host Illegal Content:</strong> Publish, transmit, or store any content that is illegal under Swiss law. This includes, for example, obscene or pornographic material (especially involving minors), extremist or hate content, depictions of excessive violence, or any content that would violate Swiss criminal statutes. Users must not use the server for any activities that could be deemed criminal or unlawful.</li>
+                  <li><strong className="text-foreground">Exclusion of Certain Damages:</strong> The Provider shall not be liable for any indirect, incidental, consequential, special, punitive, or exemplary damages, including damages for lost profits, lost data, lost goodwill, loss of enjoyment, or cost of substitute services.</li>
+                  <li><strong className="text-foreground">Slight/Ordinary Negligence:</strong> The Provider disclaims any liability for damages caused by slight or ordinary negligence, in accordance with Swiss law.</li>
+                  <li><strong className="text-foreground">Paid vs Free:</strong> For Free Tier users, our liability is extremely limited. For Paid users, liability is capped to the amount you paid us in the last subscription period.</li>
+                  <li><strong className="text-foreground">Force Majeure:</strong> The Provider shall not be liable for damage resulting from scheduled maintenance, unavoidable technical issues, user actions or misuse, third-party attacks, force majeure events, or data loss.</li>
                 </ul>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">5.2 Enforcement and Consequences</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">9.3 Consumer Rights & Intent/Gross Negligence</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The Provider reserves the right to monitor compliance with this Acceptable Use Policy to the extent permitted by law. If a User is found to be engaging in any prohibited conduct above (or otherwise using the service in a manner that is unlawful or jeopardizes the service or other users), the Provider may take immediate action, including suspension or termination of the User's servers or account (pursuant to §2). Prohibited content may be removed or disabled without prior notice. The Provider may also report any suspected illegal activities to law enforcement authorities if appropriate. The User shall indemnify and hold the Provider harmless from any losses or legal consequences resulting from the User's violation of this §5 or any law (including any third-party claims or governmental fines).
+                  Nothing in these Terms shall exclude or limit the Provider's liability for willful misconduct or gross negligence, or for any liability which cannot be excluded under applicable law. As a matter of Swiss law, any agreement to exclude liability for unlawful intent or gross negligence in advance is void.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">9.4 Indemnification</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  You agree to indemnify and hold harmless the Provider and its affiliates from any and all third-party claims, liabilities, damages, and expenses arising out of your use of the service, your violation of these Terms, or your infringement of any third-party rights. This indemnity survives termination of the agreement.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">9.5 No Liability for User Content</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Provider is not liable for any content that you or your users upload, create, or disseminate using SkyServer. This content is solely your responsibility.
                 </p>
               </section>
 
-              {/* Section 6 */}
+              {/* §10 */}
               <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§6. Changes to the Terms</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">§10 Data Protection and Privacy</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">10.1 Applicable Data Law</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The Provider reserves the right to modify or update these Terms of Service (AGB) at any time. Changes will typically be made to address new features, legal requirements, or operational needs. If the Terms are updated, the Provider will make the revised version available (for example, by posting it on the project website or user portal). It is the User's responsibility to review the Terms periodically for any changes. In case of a material change, the Provider may, at its discretion, notify users via the service or email, but is not obliged to individually inform each user. Continued use of SkyServer after changes to the Terms constitutes acceptance of the updated Terms. If a User does not agree with a change, their only recourse is to stop using the service and, if applicable, terminate their account. There is no specific entitlement for the User to be individually informed or to object to changes in these free service Terms (unlike paid contracts) – nonetheless, the Provider will ensure that the latest Terms are always accessible for review. The Provider may also make minor adjustments or corrections to these Terms without prior notice, with immediate effect.
+                  SkyServer is based in Switzerland. The collection and processing of personal data is primarily governed by the Swiss Federal Act on Data Protection (FADP/DSG, revised as of 2023). While the EU GDPR does not directly apply to us, Swiss data protection law is largely inspired by GDPR principles, and we strive to handle user data in a manner consistent with high international standards.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">10.2 Personal Data Collected</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  By using the service, you agree that we may collect and process personal data including information you provide (name, email address, payment information) and technical data (IP addresses, logs of server usage, game server configuration data). We use this data to provide and improve the service, process payments, and communicate with you. We do not store full credit card numbers; payments are handled through Stripe.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">10.3 Use of Personal Data</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Your personal data will be used to set up and maintain your account, enable the game hosting service, monitor for abuses, and comply with legal obligations. We will not sell or rent your personal information to third parties.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">10.4 Data Processors and International Transfers</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  We may use third-party service providers (sub-processors) to operate SkyServer, such as Stripe for payment processing and third-party data centers for hosting. When personal data is transferred outside of Switzerland, we will ensure it's protected under adequate safeguards.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">10.5 Data Security</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  We implement reasonable technical and organizational measures to protect personal data against unauthorized access, alteration, disclosure, or destruction. However, no system is perfectly secure. You are responsible for maintaining the security of your account.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">10.6 User Rights</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Under Swiss law (and if applicable, GDPR), users have certain rights regarding their personal data, including the right to access, correct, delete, and object to certain processing. You can request a copy of personal data we hold about you by contacting us. You may also request deletion of your account and personal data, subject to legal retention obligations.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">10.7 Disclosure of Data</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  We will not disclose personal data to third parties except: (a) to our service providers as needed, (b) if required by law or in response to a valid legal demand, (c) to enforce our rights, or (d) with your explicit consent.
                 </p>
               </section>
 
-              {/* Section 7 */}
+              {/* §11 */}
               <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§7. Severability Clause</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">§11 Service Level and Uptime (SLA)</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">11.1 Best-Effort Basis</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Should any provision of these Terms of Service be found invalid, illegal, or unenforceable, either in whole or in part, by a competent court or authority, the validity of the remaining provisions shall not be affected. In such an event, the invalid or unenforceable provision will be deemed replaced by a valid, enforceable provision that closely reflects the original economic intent and purpose of the invalid provision, to the extent permitted by law. The same applies in the event of any unintended gap ("lacunæ") in these Terms: an appropriate provision shall be deemed to exist that reflects what the parties would have agreed upon in good faith to achieve the same purpose, had they considered the gap. This Severability Clause ensures that these Terms remain effective even if one part is held to be imperfect.
+                  The SkyServer service (especially the Free Tier) is provided on a best-effort basis with no guaranteed uptime. We aim for high availability, but the Free Tier comes with no Service Level Agreement (SLA) or uptime guarantee. Paid users can expect a higher priority in uptime and support.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">11.2 Downtime and Credits</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If an SLA is in place and the service falls below the promised levels, the SLA will typically specify a remedy, such as service credits. Such credits will be your sole and exclusive remedy for downtime or service shortfall. We will not provide cash refunds for SLA violations, only credits.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">11.3 Service Continuity</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  We aim to keep the service running 24/7 and have monitoring in place. Paid servers may be located on more reliable infrastructure with redundancy. Periodic maintenance is necessary and we will try to schedule it during low-usage hours. Emergency maintenance may occur without notice.
                 </p>
               </section>
 
-              {/* Section 8 */}
+              {/* §12 */}
               <section className="mb-8">
-                <h2 className="text-xl font-bold text-foreground mb-4">§8. Governing Law and Jurisdiction</h2>
-                
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">8.1 Governing Law</h3>
+                <h2 className="text-xl font-bold text-foreground mb-4">§12 Changes to Terms</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">12.1 Right to Modify</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  These Terms, and any disputes arising out of or in connection with them or the use of SkyServer, are governed exclusively by the laws of Switzerland, in particular the Swiss Code of Obligations (Obligationenrecht), excluding its conflict of law provisions. The application of the United Nations Convention on Contracts for the International Sale of Goods (CISG) is excluded (as this service is not a sale of goods). Users who access the service from outside Switzerland are responsible for compliance with any local laws, but the relationship between User and Provider remains subject to Swiss law.
+                  The Provider reserves the right to change or update these Terms of Service at any time. Any update will be prospective (forward-looking) from its effective date.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">8.2 Jurisdiction</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">12.2 Notification of Changes</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  For any and all disputes or claims arising from the use of SkyServer or these Terms, the parties agree that the exclusive place of jurisdiction shall be the competent courts at the Provider's domicile in Switzerland, provided that such choice of forum is permitted. In other words, the User agrees to submit to the personal jurisdiction of the courts of the district where the Provider is resident in Switzerland for the resolution of any such disputes. This clause does not limit the Provider's right to seek interim or injunctive relief in any appropriate jurisdiction if necessary. By using the service, the User explicitly consents to Switzerland as the forum for legal disputes.
+                  When we make material changes, we will provide notice to users via the website, email, or the user dashboard. For significant changes, we will endeavor to give advance notice (e.g. 15 or 30 days) before the changes take effect.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">8.3 Venue and Costs</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">12.3 User Acceptance of Changes</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The legal venue being at the Provider's location means that any litigation, if it occurs, shall be brought to the courts in that locale. Each party will bear its own costs and attorney fees, except as provided by procedural law or awarded by the court. This section §8 applies regardless of the User's country of residence or use, to the maximum extent permissible.
+                  If you continue to use the service after the effective date of updated Terms, that will constitute your acceptance of the revised Terms. If you do not agree to the new Terms, you must stop using the service and cancel any subscriptions before the new Terms apply.
+                </p>
+              </section>
+
+              {/* §13 */}
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-foreground mb-4">§13 General Provisions</h2>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">13.1 Governing Law</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  This Agreement shall be governed by and construed in accordance with the laws of Switzerland, specifically the Swiss Code of Obligations and other applicable Swiss federal laws, excluding conflict-of-law provisions.
                 </p>
 
-                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">8.4 Final Provisions</h3>
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">13.2 Jurisdiction</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  These Terms of Service constitute the entire agreement between the User and the Provider regarding the use of the SkyServer free hosting service, superseding any prior understandings. Any waiver of rights by the Provider must be explicit and in writing to be effective, and a failure to enforce a provision on one occasion does not constitute a waiver of the right to enforce it on another occasion. The section headings (e.g. "§1, §2, …") in this document are for convenience and have no legal effect. The Terms are made available in English for broad understandability; in case of any translation (including any German version if provided), the English text shall govern for interpretation.
+                  Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the competent courts in Switzerland at the Provider's domicile.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">13.3 Severability</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If any provision of these Terms is held to be invalid, illegal, or unenforceable, that provision shall be severed to the minimum extent necessary. The remaining provisions will remain in full force and effect. The parties agree to replace any invalid provision with one that closely reflects the original intent.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">13.4 No Waiver</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  No waiver by the Provider of any breach shall be deemed a waiver of any preceding or subsequent breach. Any waiver must be in writing and signed by the Provider.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">13.5 Entire Agreement</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  These Terms (including documents incorporated by reference, such as the Acceptable Use Policy and Privacy Policy) constitute the entire agreement between you and SkyServer regarding the use of the service, and supersede all prior agreements.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">13.6 Language</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  These Terms are provided in English. If we provide a translation in another language, it is for convenience, and the English version will prevail in case of conflict.
+                </p>
+
+                <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">13.7 Acknowledgment</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  By using the service, you acknowledge that you have read and understood these Terms, and that you agree to be bound by them. If you have any questions, please contact SkyServer support before using the service.
                 </p>
               </section>
 
