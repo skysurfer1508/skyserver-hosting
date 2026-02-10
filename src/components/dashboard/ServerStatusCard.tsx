@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,7 @@ import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useDecryptedCredentials } from '@/hooks/useDecryptedCredentials';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal, Shield } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal, Shield, Zap } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
@@ -53,6 +54,7 @@ const gameOptions: { value: GameType; label: string; icon: string }[] = [
 ];
 
 export function ServerStatusCard() {
+  const navigate = useNavigate();
   const { request, isLoading, createRequest, hasActiveRequest, refetch } = useServerRequest();
   const { settings, isFull } = useSystemSettings();
   const { gameLimits, isLoading: gameLimitsLoading } = useGameLimits();
@@ -628,6 +630,18 @@ export function ServerStatusCard() {
                   <ExternalLink className="h-4 w-4" />
                 </Button>
               </a>
+            )}
+
+            {/* Need More Power Button */}
+            {!request.stripe_subscription_id && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => navigate(`/server/${request.id}/upgrade`)}
+              >
+                <Zap className="h-4 w-4" />
+                Need more power?
+              </Button>
             )}
 
             {/* Server Expiry/Renewal Card */}

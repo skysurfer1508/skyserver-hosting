@@ -20,6 +20,10 @@ interface ServerRequest {
   created_at: string;
   updated_at: string;
   expires_at: string | null;
+  // Boost fields
+  cpu_boost: number;
+  ram_boost: number;
+  stripe_subscription_id: string | null;
   // Credential fields
   assigned_ip: string | null;
   panel_url: string | null;
