@@ -66,6 +66,9 @@ export default function Register() {
       console.error('Failed to send verification email:', emailError);
     }
 
+    // Sign out immediately so the auto-confirmed session doesn't grant dashboard access
+    await supabase.auth.signOut();
+
     toast({
       title: 'Account created!',
       description: 'Please check your email to verify your account before signing in.',
