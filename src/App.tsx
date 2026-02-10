@@ -15,6 +15,7 @@ import Imprint from "./pages/Imprint";
 import Terms from "./pages/Terms";
 import ForgotPassword from "./pages/ForgotPassword";
 import UpdatePassword from "./pages/UpdatePassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/update-password" element={<UpdatePassword />} />
+            <Route path="/auth/verify" element={<VerifyEmail />} />
             <Route
               path="/dashboard"
               element={
