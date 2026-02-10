@@ -142,7 +142,25 @@ serve(async (req) => {
 
       logStep("Subscription deleted", { serverId, subscriptionId });
 
-      // Try by metadata first, then by subscription ID
+      // Query server info BEFORE clearing subscription ID
+      let serverRow: any = null;
+      if (serverId) {
+        const { data } = await supabaseClient
+          .from("server_requests")
+          .select("user_id, server_name")
+          .eq("id", serverId)
+          .single();
+        serverRow = data;
+      } else {
+        const { data } = await supabaseClient
+          .from("server_requests")
+          .select("user_id, server_name")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        serverRow = data;
+      }
+
+      // Reset boosts
       if (serverId) {
         await supabaseClient
           .from("server_requests")
@@ -156,6 +174,46 @@ serve(async (req) => {
       }
 
       logStep("Boosts reset for cancelled subscription");
+
+      // Send subscription ended email (non-blocking)
+      try {
+        if (serverRow?.user_id) {
+          const { data: profile } = await supabaseClient
+            .from("profiles")
+            .select("email")
+            .eq("id", serverRow.user_id)
+            .single();
+
+          if (profile?.email) {
+            const resendKey = Deno.env.get("RESEND_API_KEY");
+            if (resendKey) {
+              const resend = new Resend(resendKey);
+              const serverName = serverRow.server_name || "your server";
+
+              await resend.emails.send({
+                from: "SkyServer1508 <noreply@skyserver1508.org>",
+                to: [profile.email],
+                subject: "Your SkyServer1508 subscription has ended",
+                html: `
+                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h1 style="color: #6366f1;">Subscription Ended</h1>
+                    <p>Your resource upgrade subscription for <strong>${serverName}</strong> has ended.</p>
+                    <div style="background: #f4f4f5; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                      <p style="margin: 0;">Your server resources have been reverted to the free tier.</p>
+                    </div>
+                    <p>If you'd like to re-upgrade your server, visit your <a href="https://skyserver1508.org/dashboard" style="color: #6366f1;">dashboard</a>.</p>
+                    <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;" />
+                    <p style="color: #71717a; font-size: 12px;">SkyServer1508 — Game Server Hosting</p>
+                  </div>
+                `,
+              });
+              logStep("Subscription ended email sent", { email: profile.email });
+            }
+          }
+        }
+      } catch (emailError) {
+        logStep("Subscription ended email failed (non-blocking)", { error: String(emailError) });
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), {

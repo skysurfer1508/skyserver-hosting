@@ -5,6 +5,7 @@ import { ServerStatusCard } from '@/components/dashboard/ServerStatusCard';
 import { PlatformStatusCard } from '@/components/dashboard/PlatformStatusCard';
 import { PlatformStatusBanner } from '@/components/dashboard/PlatformStatusBanner';
 import { DashboardSettings } from '@/components/dashboard/DashboardSettings';
+import { BillingPurchases } from '@/components/dashboard/BillingPurchases';
 import { FeedbackWidget } from '@/components/dashboard/FeedbackWidget';
 import { ProfileCompletionModal } from '@/components/dashboard/ProfileCompletionModal';
 import { AdminOfflineBanner } from '@/components/dashboard/AdminOfflineBanner';
@@ -16,7 +17,7 @@ import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { useAdminStatus } from '@/hooks/useAdminStatus';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Server, Settings, Loader2 } from 'lucide-react';
+import { Users, Server, Settings, CreditCard, Loader2 } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@/config/constants';
 
 export default function Dashboard() {
@@ -77,6 +78,10 @@ export default function Dashboard() {
               <Settings className="h-4 w-4" />
               Settings
             </TabsTrigger>
+            <TabsTrigger value="billing" className="gap-2 data-[state=active]:bg-primary/10">
+              <CreditCard className="h-4 w-4" />
+              My Purchases
+            </TabsTrigger>
           </TabsList>
 
           {/* Server Tab */}
@@ -129,6 +134,11 @@ export default function Dashboard() {
           {/* Settings Tab */}
           <TabsContent value="settings" className="mt-6">
             <DashboardSettings />
+          </TabsContent>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing" className="mt-6">
+            <BillingPurchases />
           </TabsContent>
         </Tabs>
       </div>
