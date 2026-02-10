@@ -103,6 +103,7 @@ export type Database = {
           id: string
           is_banned: boolean
           is_verified: boolean
+          stripe_customer_id: string | null
           updated_at: string
           username: string | null
         }
@@ -114,6 +115,7 @@ export type Database = {
           id: string
           is_banned?: boolean
           is_verified?: boolean
+          stripe_customer_id?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -125,6 +127,7 @@ export type Database = {
           id?: string
           is_banned?: boolean
           is_verified?: boolean
+          stripe_customer_id?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -133,6 +136,7 @@ export type Database = {
       server_requests: {
         Row: {
           assigned_ip: string | null
+          cpu_boost: number
           created_at: string
           credentials_encrypted: boolean | null
           description: string | null
@@ -145,15 +149,18 @@ export type Database = {
           panel_url: string | null
           panel_username: string | null
           port: number | null
+          ram_boost: number
           rejection_reason: string | null
           server_config: Json | null
           server_name: string
           status: Database["public"]["Enums"]["request_status"]
+          stripe_subscription_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           assigned_ip?: string | null
+          cpu_boost?: number
           created_at?: string
           credentials_encrypted?: boolean | null
           description?: string | null
@@ -166,15 +173,18 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
+          ram_boost?: number
           rejection_reason?: string | null
           server_config?: Json | null
           server_name: string
           status?: Database["public"]["Enums"]["request_status"]
+          stripe_subscription_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           assigned_ip?: string | null
+          cpu_boost?: number
           created_at?: string
           credentials_encrypted?: boolean | null
           description?: string | null
@@ -187,10 +197,12 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
+          ram_boost?: number
           rejection_reason?: string | null
           server_config?: Json | null
           server_name?: string
           status?: Database["public"]["Enums"]["request_status"]
+          stripe_subscription_id?: string | null
           updated_at?: string
           user_id?: string
         }
