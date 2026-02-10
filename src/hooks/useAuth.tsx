@@ -106,7 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Fire and forget for ongoing changes
+          // Reset immediately — guard blocks until DB check resolves
+          setIsVerified(false);
           checkAdminRole(session.user.id).then(v => isMounted && setIsAdmin(v));
           checkVerificationStatus(session.user.id).then(v => isMounted && setIsVerified(v));
         } else {
