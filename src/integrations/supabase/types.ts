@@ -342,7 +342,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       feedback_type: "bug" | "feature" | "general"
-      game_type: "minecraft" | "terraria" | "satisfactory"
+      game_type: "minecraft" | "terraria" | "satisfactory" | "cs2" | "factorio"
       request_status: "pending" | "active" | "rejected"
     }
     CompositeTypes: {
@@ -473,7 +473,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       feedback_type: ["bug", "feature", "general"],
-      game_type: ["minecraft", "terraria", "satisfactory"],
+      game_type: ["minecraft", "terraria", "satisfactory", "cs2", "factorio"],
       request_status: ["pending", "active", "rejected"],
     },
   },

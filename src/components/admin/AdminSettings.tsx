@@ -47,6 +47,8 @@ export function AdminSettings() {
     minecraft: { maxSlots: 20, isActive: true },
     terraria: { maxSlots: 10, isActive: true },
     satisfactory: { maxSlots: 10, isActive: true },
+    cs2: { maxSlots: 10, isActive: true },
+    factorio: { maxSlots: 10, isActive: true },
   });
   const [isSavingGameLimits, setIsSavingGameLimits] = useState(false);
 

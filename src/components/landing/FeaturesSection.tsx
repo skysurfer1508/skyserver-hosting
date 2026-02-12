@@ -14,7 +14,7 @@ const gameData: {
   icon: string;
   description: string;
   tags: string[];
-  accentColor: 'green' | 'purple' | 'orange';
+  accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber';
 }[] = [
   {
     gameName: 'minecraft',
@@ -39,6 +39,22 @@ const gameData: {
     description: 'Construct massive factories and automate production on an alien planet. Perfect for co-op sessions.',
     tags: ['Experimental Branch', 'Unlimited Saves', 'High Performance'],
     accentColor: 'orange',
+  },
+  {
+    gameName: 'cs2',
+    title: 'Counter-Strike 2',
+    icon: '🔫',
+    description: 'The ultimate competitive FPS. Host your own matches with custom game modes, maps, and settings.',
+    tags: ['Competitive', 'Custom Maps', 'Workshop Support'],
+    accentColor: 'blue',
+  },
+  {
+    gameName: 'factorio',
+    title: 'Factorio',
+    icon: '⚙️',
+    description: 'Build and maintain factories on an alien planet. Automate everything from resource gathering to logistics.',
+    tags: ['Multiplayer', 'Mod Support', 'Mega Bases'],
+    accentColor: 'amber',
   },
 ];
 
@@ -133,7 +149,7 @@ export function FeaturesSection() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {/* Game cards WITHOUT scroll animation to ensure visibility */}
               {gameData.map((game) => (
                 <GameCard
