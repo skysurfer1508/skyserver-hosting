@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-export type GameName = 'minecraft' | 'terraria' | 'satisfactory';
+export type GameName = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
 
 interface GameLimit {
   game_name: GameName;
@@ -21,7 +21,7 @@ interface GameCardProps {
   icon: string;
   description: string;
   tags: string[];
-  accentColor: 'green' | 'purple' | 'orange';
+  accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber';
   limit?: GameLimit;
   onSelect: (gameName: GameName) => void;
 }
@@ -53,6 +53,24 @@ const accentStyles = {
     button: 'bg-orange-600 hover:bg-orange-500 text-white',
     glow: 'hover:shadow-orange-500/25',
     shadowColor: 'rgba(249, 115, 22, 0.25)',
+  },
+  blue: {
+    header: 'bg-sky-500/10 border-sky-500/30',
+    icon: 'bg-sky-500/20 ring-sky-500/40',
+    text: 'text-sky-400',
+    badge: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+    button: 'bg-sky-600 hover:bg-sky-500 text-white',
+    glow: 'hover:shadow-sky-500/25',
+    shadowColor: 'rgba(14, 165, 233, 0.25)',
+  },
+  amber: {
+    header: 'bg-amber-500/10 border-amber-500/30',
+    icon: 'bg-amber-500/20 ring-amber-500/40',
+    text: 'text-amber-400',
+    badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    button: 'bg-amber-600 hover:bg-amber-500 text-white',
+    glow: 'hover:shadow-amber-500/25',
+    shadowColor: 'rgba(245, 158, 11, 0.25)',
   },
 };
 

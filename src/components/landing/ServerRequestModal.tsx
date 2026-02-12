@@ -28,15 +28,19 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { MinecraftConfigForm, MinecraftConfig } from '@/components/dashboard/MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from '@/components/dashboard/TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from '@/components/dashboard/SatisfactoryConfigForm';
+import { CS2ConfigForm, CS2Config } from '@/components/dashboard/CS2ConfigForm';
+import { FactorioConfigForm, FactorioConfig } from '@/components/dashboard/FactorioConfigForm';
 import { cn } from '@/lib/utils';
 
-type GameType = 'minecraft' | 'terraria' | 'satisfactory';
-type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig;
+type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
+type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig | CS2Config | FactorioConfig;
 
 const gameOptions: { value: GameType; label: string; icon: string }[] = [
   { value: 'minecraft', label: 'Minecraft', icon: '⛏️' },
   { value: 'terraria', label: 'Terraria', icon: '🌳' },
   { value: 'satisfactory', label: 'Satisfactory', icon: '🏭' },
+  { value: 'cs2', label: 'Counter-Strike 2', icon: '🔫' },
+  { value: 'factorio', label: 'Factorio', icon: '⚙️' },
 ];
 
 interface ServerRequestModalProps {
@@ -138,6 +142,17 @@ export function ServerRequestModal({ open, onOpenChange, preSelectedGame }: Serv
     if (selectedGame === 'satisfactory') {
       const config = serverConfig as Partial<SatisfactoryConfig>;
       if (!config.branch) return 'Please select a Satisfactory branch.';
+    }
+
+    if (selectedGame === 'cs2') {
+      const config = serverConfig as Partial<CS2Config>;
+      if (!config.game_mode) return 'Please select a CS2 game mode.';
+    }
+
+    if (selectedGame === 'factorio') {
+      const config = serverConfig as Partial<FactorioConfig>;
+      if (!config.save_name?.trim()) return 'Please enter a save name.';
+      if (!config.visibility) return 'Please select visibility.';
     }
 
     return null;
@@ -334,6 +349,18 @@ export function ServerRequestModal({ open, onOpenChange, preSelectedGame }: Serv
               {selectedGame === 'satisfactory' && (
                 <SatisfactoryConfigForm
                   config={serverConfig as Partial<SatisfactoryConfig>}
+                  onChange={setServerConfig}
+                />
+              )}
+              {selectedGame === 'cs2' && (
+                <CS2ConfigForm
+                  config={serverConfig as Partial<CS2Config>}
+                  onChange={setServerConfig}
+                />
+              )}
+              {selectedGame === 'factorio' && (
+                <FactorioConfigForm
+                  config={serverConfig as Partial<FactorioConfig>}
                   onChange={setServerConfig}
                 />
               )}

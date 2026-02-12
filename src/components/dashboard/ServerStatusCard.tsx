@@ -38,19 +38,23 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
+import { CS2ConfigForm, CS2Config } from './CS2ConfigForm';
+import { FactorioConfigForm, FactorioConfig } from './FactorioConfigForm';
 import { ServerExpiryCard } from './ServerExpiryCard';
 import { CopyButton } from '@/components/ui/copy-button';
 import { triggerSuccessConfetti } from '@/lib/confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-type GameType = 'minecraft' | 'terraria' | 'satisfactory';
-type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig;
+type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
+type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig | CS2Config | FactorioConfig;
 
 const gameOptions: { value: GameType; label: string; icon: string }[] = [
   { value: 'minecraft', label: 'Minecraft', icon: '⛏️' },
   { value: 'terraria', label: 'Terraria', icon: '🌳' },
   { value: 'satisfactory', label: 'Satisfactory', icon: '🏭' },
+  { value: 'cs2', label: 'Counter-Strike 2', icon: '🔫' },
+  { value: 'factorio', label: 'Factorio', icon: '⚙️' },
 ];
 
 export function ServerStatusCard() {
@@ -144,6 +148,17 @@ export function ServerStatusCard() {
     if (selectedGame === 'satisfactory') {
       const config = serverConfig as Partial<SatisfactoryConfig>;
       if (!config.branch) return 'Please select a Satisfactory branch.';
+    }
+
+    if (selectedGame === 'cs2') {
+      const config = serverConfig as Partial<CS2Config>;
+      if (!config.game_mode) return 'Please select a CS2 game mode.';
+    }
+
+    if (selectedGame === 'factorio') {
+      const config = serverConfig as Partial<FactorioConfig>;
+      if (!config.save_name?.trim()) return 'Please enter a save name.';
+      if (!config.visibility) return 'Please select visibility.';
     }
 
     return null;
@@ -413,6 +428,18 @@ export function ServerStatusCard() {
                 {selectedGame === 'satisfactory' && (
                   <SatisfactoryConfigForm
                     config={serverConfig as Partial<SatisfactoryConfig>}
+                    onChange={setServerConfig}
+                  />
+                )}
+                {selectedGame === 'cs2' && (
+                  <CS2ConfigForm
+                    config={serverConfig as Partial<CS2Config>}
+                    onChange={setServerConfig}
+                  />
+                )}
+                {selectedGame === 'factorio' && (
+                  <FactorioConfigForm
+                    config={serverConfig as Partial<FactorioConfig>}
                     onChange={setServerConfig}
                   />
                 )}
