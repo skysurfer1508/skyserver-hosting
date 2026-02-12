@@ -28,6 +28,8 @@ const gameLabels: Record<string, { label: string; icon: string }> = {
   minecraft: { label: 'Minecraft', icon: '⛏️' },
   terraria: { label: 'Terraria', icon: '🌳' },
   satisfactory: { label: 'Satisfactory', icon: '🏭' },
+  cs2: { label: 'Counter-Strike 2', icon: '🔫' },
+  factorio: { label: 'Factorio', icon: '⚙️' },
 };
 
 export function AdminSettings() {
