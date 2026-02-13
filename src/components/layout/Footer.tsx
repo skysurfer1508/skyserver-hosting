@@ -29,15 +29,17 @@ export function Footer() {
               Join our Discord
               <ExternalLink className="h-3 w-3" />
             </a>
-            <a
-              href="https://ch.trustpilot.com/review/skyserver1508.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#00b67a] transition-colors"
+            <div
+              className="trustpilot-widget"
+              data-locale="de-DE"
+              data-template-id="56278e9abfbbba0bdcd568bc"
+              data-businessunit-id="698ee00fc479215d80d8c545"
+              data-style-height="52px"
+              data-style-width="200px"
+              data-token="e162ab0b-6e92-4e1a-b10e-d024489bfc5c"
             >
-              ⭐ Rate us on Trustpilot
-              <ExternalLink className="h-3 w-3" />
-            </a>
+              <a href="https://de.trustpilot.com/review/skyserver1508.org" target="_blank" rel="noopener">Trustpilot</a>
+            </div>
             <Link
               to="/help"
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
