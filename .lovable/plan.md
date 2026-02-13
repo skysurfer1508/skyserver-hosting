@@ -1,40 +1,40 @@
 
 
-# Add Trustpilot Widget to Footer
+# Rebuild Help Center Page
 
 ## Overview
-Embed a Trustpilot TrustBox "Mini" widget in the footer, showing your star rating and review count alongside the existing links.
+Replace the current Help Center with a modern, game-categorized FAQ page using a Tabs layout (one tab per game) with Accordion-style Q&A items inside each tab. All content will be translated from the provided German into professional, technical English.
 
-## How It Works
-Trustpilot widgets load via a script (`https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js`) and render inside a `div` with specific data attributes including your Business Unit ID. No API keys or secrets are needed -- everything is public.
+## Layout Design
+- Hero section with title "Help Center" and search bar (keep existing style)
+- Horizontal Tabs for each game: Satisfactory, CS2, Factorio, Minecraft, Rust, ARK
+- Each tab icon uses a relevant Lucide icon (Factory, Crosshair, Cog, Pickaxe, Shield, Skull)
+- Inside each tab: Accordion with Q&A pairs -- question as trigger, answer as collapsible content
+- Markdown-style rendering for code blocks, bold text, and lists within answers
+- Mobile-responsive: tabs scroll horizontally on small screens
 
-## What You Need to Provide
-Your **Trustpilot Business Unit ID** -- find it in your Trustpilot Business dashboard URL or in any TrustBox widget code snippet. It looks like a long alphanumeric string (e.g., `5f1234abcdef567890`).
+## Content Summary (6 games, ~25 total Q&A items)
+- **Satisfactory** (5 items): Timeout fixes, OOM crashes, autosave errors, tick-rate issues, memory management
+- **CS2** (5 items): GSLT setup, RCON config, server visibility, post-update RCON, remote commands
+- **Factorio** (5 items): Save file loading, new map generation, swapping saves, RCON setup, mod installation
+- **Minecraft** (5 items): Java version crashes, chunk lag, world size limits, Bedrock version issues, RAM/performance
+- **Rust** (4 items): Admin setup (ownerid), map vs blueprint wipe, users.cfg issues, post-wipe old data
+- **ARK** (4 items): Mod installation, crossplay, mod loading failures, multiple startup parameters
 
-## Changes
+## Technical Details
 
-### 1. `index.html`
-Add the Trustpilot bootstrap script in the `<head>`:
-```text
-<script src="https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
-```
+### File Changed
+`src/pages/Help.tsx` -- complete rewrite
 
-### 2. `src/components/layout/Footer.tsx`
-Add a Trustpilot TrustBox `div` in the footer layout, positioned between the logo and the nav links. The widget uses a "Mini" template (`5419b6a8b0d04a076446a9ad`) which shows a compact star rating with review count -- fitting well in a footer.
+### Approach
+- Use existing `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` from `@/components/ui/tabs`
+- Use existing `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent` from `@/components/ui/accordion`
+- Keep the `Layout` wrapper and `motion` animations from framer-motion
+- Define game data as a structured array with `id`, `label`, `icon`, and `questions[]` (each with `question`, `answer`)
+- Answers use a simple renderer for bold, inline code, and code blocks
+- Search bar filters across all games and questions
+- Icons: Factory (Satisfactory), Crosshair (CS2), Cog (Factorio), Pickaxe (Minecraft), Shield (Rust), Skull (ARK)
 
-The Business Unit ID will be stored as a constant in `src/config/constants.ts` for easy updates.
-
-### 3. `src/config/constants.ts`
-Add the Trustpilot Business Unit ID constant:
-```text
-export const TRUSTPILOT_BUSINESS_UNIT_ID = '<your-id-here>';
-```
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `index.html` | Add Trustpilot bootstrap script |
-| `src/config/constants.ts` | Add Trustpilot Business Unit ID constant |
-| `src/components/layout/Footer.tsx` | Add TrustBox widget div |
+### No other files need changes
+The route is already configured, Layout/Tabs/Accordion components already exist.
 
