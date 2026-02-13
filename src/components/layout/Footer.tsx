@@ -29,6 +29,15 @@ export function Footer() {
               Join our Discord
               <ExternalLink className="h-3 w-3" />
             </a>
+            <a
+              href="https://ch.trustpilot.com/review/skyserver1508.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#00b67a] transition-colors"
+            >
+              ⭐ Rate us on Trustpilot
+              <ExternalLink className="h-3 w-3" />
+            </a>
             <Link
               to="/help"
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
