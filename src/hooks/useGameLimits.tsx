@@ -10,6 +10,8 @@ export interface GameLimit {
   used_slots: number;
   available_slots: number;
   is_full: boolean;
+  base_ram_mb: number;
+  base_cpu_percent: number;
 }
 
 export interface GameLimitsState {
@@ -17,7 +19,7 @@ export interface GameLimitsState {
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  updateGameLimit: (gameName: GameName, maxSlots: number, isActive: boolean) => Promise<{ error: Error | null }>;
+  updateGameLimit: (gameName: GameName, maxSlots: number, isActive: boolean, baseRamMb?: number, baseCpuPercent?: number) => Promise<{ error: Error | null }>;
 }
 
 export function useGameLimits(): GameLimitsState {
@@ -64,6 +66,8 @@ export function useGameLimits(): GameLimitsState {
             used_slots: used,
             available_slots: available,
             is_full: used >= limit.max_slots,
+            base_ram_mb: limit.base_ram_mb ?? 2560,
+            base_cpu_percent: limit.base_cpu_percent ?? 100,
           };
         })
       );
@@ -80,12 +84,18 @@ export function useGameLimits(): GameLimitsState {
   const updateGameLimit = async (
     gameName: GameName,
     maxSlots: number,
-    isActive: boolean
+    isActive: boolean,
+    baseRamMb?: number,
+    baseCpuPercent?: number
   ): Promise<{ error: Error | null }> => {
     try {
+      const updateData: Record<string, unknown> = { max_slots: maxSlots, is_active: isActive };
+      if (baseRamMb !== undefined) updateData.base_ram_mb = baseRamMb;
+      if (baseCpuPercent !== undefined) updateData.base_cpu_percent = baseCpuPercent;
+
       const { error: updateError } = await supabase
         .from('game_limits')
-        .update({ max_slots: maxSlots, is_active: isActive })
+        .update(updateData)
         .eq('game_name', gameName);
 
       if (updateError) throw updateError;

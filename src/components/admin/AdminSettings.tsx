@@ -45,12 +45,12 @@ export function AdminSettings() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Game capacity state
-  const [editedGameLimits, setEditedGameLimits] = useState<Record<GameName, { maxSlots: number; isActive: boolean }>>({
-    minecraft: { maxSlots: 20, isActive: true },
-    terraria: { maxSlots: 10, isActive: true },
-    satisfactory: { maxSlots: 10, isActive: true },
-    cs2: { maxSlots: 10, isActive: true },
-    factorio: { maxSlots: 10, isActive: true },
+  const [editedGameLimits, setEditedGameLimits] = useState<Record<GameName, { maxSlots: number; isActive: boolean; baseRamMb: number; baseCpuPercent: number }>>({
+    minecraft: { maxSlots: 20, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
+    terraria: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
+    satisfactory: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
+    cs2: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
+    factorio: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
   });
   const [isSavingGameLimits, setIsSavingGameLimits] = useState(false);
 
@@ -70,6 +70,8 @@ export function AdminSettings() {
         newState[limit.game_name] = {
           maxSlots: limit.max_slots,
           isActive: limit.is_active,
+          baseRamMb: limit.base_ram_mb,
+          baseCpuPercent: limit.base_cpu_percent,
         };
       });
       setEditedGameLimits(newState);
@@ -108,7 +110,9 @@ export function AdminSettings() {
       const { error } = await updateGameLimit(
         gameName as GameName,
         values.maxSlots,
-        values.isActive
+        values.isActive,
+        values.baseRamMb,
+        values.baseCpuPercent
       );
 
       if (error) {
@@ -218,6 +222,49 @@ export function AdminSettings() {
                     }
                     className="h-8"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Base RAM (MB)</Label>
+                    <Input
+                      type="number"
+                      min={512}
+                      max={32768}
+                      step={512}
+                      value={edited?.baseRamMb ?? limit.base_ram_mb}
+                      onChange={(e) =>
+                        setEditedGameLimits((prev) => ({
+                          ...prev,
+                          [limit.game_name]: {
+                            ...prev[limit.game_name],
+                            baseRamMb: parseInt(e.target.value) || 2560,
+                          },
+                        }))
+                      }
+                      className="h-8"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Base CPU (%)</Label>
+                    <Input
+                      type="number"
+                      min={50}
+                      max={800}
+                      step={50}
+                      value={edited?.baseCpuPercent ?? limit.base_cpu_percent}
+                      onChange={(e) =>
+                        setEditedGameLimits((prev) => ({
+                          ...prev,
+                          [limit.game_name]: {
+                            ...prev[limit.game_name],
+                            baseCpuPercent: parseInt(e.target.value) || 100,
+                          },
+                        }))
+                      }
+                      className="h-8"
+                    />
+                  </div>
                 </div>
               </div>
             );
