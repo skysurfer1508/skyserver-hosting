@@ -14,7 +14,7 @@ const gameData: {
   icon: string;
   description: string;
   tags: string[];
-  accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber';
+  accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber' | 'red';
 }[] = [
   {
     gameName: 'minecraft',
@@ -55,6 +55,14 @@ const gameData: {
     description: 'Build and maintain factories on an alien planet. Automate everything from resource gathering to logistics.',
     tags: ['Multiplayer', 'Mod Support', 'Mega Bases'],
     accentColor: 'amber',
+  },
+  {
+    gameName: 'rust',
+    title: 'Rust',
+    icon: '🔥',
+    description: 'Survive, build, and dominate in one of the most brutal multiplayer survival games.',
+    tags: ['Survival', 'PvP & PvE', 'Base Building'],
+    accentColor: 'red',
   },
 ];
 
@@ -149,7 +157,7 @@ export function FeaturesSection() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
               {/* Game cards WITHOUT scroll animation to ensure visibility */}
               {gameData.map((game) => (
                 <GameCard

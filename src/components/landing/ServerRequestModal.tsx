@@ -30,10 +30,11 @@ import { TerrariaConfigForm, TerrariaConfig } from '@/components/dashboard/Terra
 import { SatisfactoryConfigForm, SatisfactoryConfig } from '@/components/dashboard/SatisfactoryConfigForm';
 import { CS2ConfigForm, CS2Config } from '@/components/dashboard/CS2ConfigForm';
 import { FactorioConfigForm, FactorioConfig } from '@/components/dashboard/FactorioConfigForm';
+import { RustConfigForm, RustConfig } from '@/components/dashboard/RustConfigForm';
 import { cn } from '@/lib/utils';
 
-type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
-type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig | CS2Config | FactorioConfig;
+type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
+type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig | CS2Config | FactorioConfig | RustConfig;
 
 const gameOptions: { value: GameType; label: string; icon: string }[] = [
   { value: 'minecraft', label: 'Minecraft', icon: '⛏️' },
@@ -41,6 +42,7 @@ const gameOptions: { value: GameType; label: string; icon: string }[] = [
   { value: 'satisfactory', label: 'Satisfactory', icon: '🏭' },
   { value: 'cs2', label: 'Counter-Strike 2', icon: '🔫' },
   { value: 'factorio', label: 'Factorio', icon: '⚙️' },
+  { value: 'rust', label: 'Rust', icon: '🔥' },
 ];
 
 interface ServerRequestModalProps {
@@ -153,6 +155,12 @@ export function ServerRequestModal({ open, onOpenChange, preSelectedGame }: Serv
       const config = serverConfig as Partial<FactorioConfig>;
       if (!config.save_name?.trim()) return 'Please enter a save name.';
       if (!config.visibility) return 'Please select visibility.';
+    }
+
+    if (selectedGame === 'rust') {
+      const config = serverConfig as Partial<RustConfig>;
+      if (!config.map_size) return 'Please select a map size.';
+      if (!config.wipe_schedule) return 'Please select a wipe schedule.';
     }
 
     return null;
@@ -361,6 +369,12 @@ export function ServerRequestModal({ open, onOpenChange, preSelectedGame }: Serv
               {selectedGame === 'factorio' && (
                 <FactorioConfigForm
                   config={serverConfig as Partial<FactorioConfig>}
+                  onChange={setServerConfig}
+                />
+              )}
+              {selectedGame === 'rust' && (
+                <RustConfigForm
+                  config={serverConfig as Partial<RustConfig>}
                   onChange={setServerConfig}
                 />
               )}

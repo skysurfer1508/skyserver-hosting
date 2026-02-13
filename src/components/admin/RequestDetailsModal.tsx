@@ -61,6 +61,7 @@ const gameLabels: Record<GameType, { label: string; icon: string }> = {
   satisfactory: { label: 'Satisfactory', icon: '🏭' },
   cs2: { label: 'Counter-Strike 2', icon: '🔫' },
   factorio: { label: 'Factorio', icon: '⚙️' },
+  rust: { label: 'Rust', icon: '🔥' },
 };
 
 // Type guards for config parsing

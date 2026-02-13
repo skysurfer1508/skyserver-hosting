@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export type GameName = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
+export type GameName = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
 
 export interface GameLimit {
   game_name: GameName;

@@ -30,6 +30,7 @@ const gameLabels: Record<string, { label: string; icon: string }> = {
   satisfactory: { label: 'Satisfactory', icon: '🏭' },
   cs2: { label: 'Counter-Strike 2', icon: '🔫' },
   factorio: { label: 'Factorio', icon: '⚙️' },
+  rust: { label: 'Rust', icon: '🔥' },
 };
 
 export function AdminSettings() {
@@ -51,6 +52,7 @@ export function AdminSettings() {
     satisfactory: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
     cs2: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
     factorio: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
+    rust: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
   });
   const [isSavingGameLimits, setIsSavingGameLimits] = useState(false);
 
