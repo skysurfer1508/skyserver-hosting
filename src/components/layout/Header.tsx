@@ -37,6 +37,9 @@ const games = [
   { name: 'Minecraft', icon: '⛏️', href: '#features' },
   { name: 'Terraria', icon: '🌳', href: '#features' },
   { name: 'Satisfactory', icon: '🏭', href: '#features' },
+  { name: 'CS2', icon: '🎯', href: '#features' },
+  { name: 'Factorio', icon: '⚙️', href: '#features' },
+  { name: 'Rust', icon: '🔥', href: '#features' },
 ];
 
 const navItems = [
