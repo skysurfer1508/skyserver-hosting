@@ -40,14 +40,15 @@ import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
 import { SatisfactoryConfigForm, SatisfactoryConfig } from './SatisfactoryConfigForm';
 import { CS2ConfigForm, CS2Config } from './CS2ConfigForm';
 import { FactorioConfigForm, FactorioConfig } from './FactorioConfigForm';
+import { RustConfigForm, RustConfig } from './RustConfigForm';
 import { ServerExpiryCard } from './ServerExpiryCard';
 import { CopyButton } from '@/components/ui/copy-button';
 import { triggerSuccessConfetti } from '@/lib/confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
-type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig | CS2Config | FactorioConfig;
+type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
+type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig | CS2Config | FactorioConfig | RustConfig;
 
 const gameOptions: { value: GameType; label: string; icon: string }[] = [
   { value: 'minecraft', label: 'Minecraft', icon: '⛏️' },
@@ -55,6 +56,7 @@ const gameOptions: { value: GameType; label: string; icon: string }[] = [
   { value: 'satisfactory', label: 'Satisfactory', icon: '🏭' },
   { value: 'cs2', label: 'Counter-Strike 2', icon: '🔫' },
   { value: 'factorio', label: 'Factorio', icon: '⚙️' },
+  { value: 'rust', label: 'Rust', icon: '🔥' },
 ];
 
 export function ServerStatusCard() {
@@ -159,6 +161,12 @@ export function ServerStatusCard() {
       const config = serverConfig as Partial<FactorioConfig>;
       if (!config.save_name?.trim()) return 'Please enter a save name.';
       if (!config.visibility) return 'Please select visibility.';
+    }
+
+    if (selectedGame === 'rust') {
+      const config = serverConfig as Partial<RustConfig>;
+      if (!config.map_size) return 'Please select a map size.';
+      if (!config.wipe_schedule) return 'Please select a wipe schedule.';
     }
 
     return null;
@@ -440,6 +448,12 @@ export function ServerStatusCard() {
                 {selectedGame === 'factorio' && (
                   <FactorioConfigForm
                     config={serverConfig as Partial<FactorioConfig>}
+                    onChange={setServerConfig}
+                  />
+                )}
+                {selectedGame === 'rust' && (
+                  <RustConfigForm
+                    config={serverConfig as Partial<RustConfig>}
                     onChange={setServerConfig}
                   />
                 )}

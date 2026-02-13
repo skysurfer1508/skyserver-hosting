@@ -92,7 +92,7 @@ export function HeroSection() {
             <div className="text-sm text-muted-foreground">Server Slots</div>
           </div>
           <div className="text-center">
-            <div className="font-display text-3xl font-bold text-primary">5</div>
+            <div className="font-display text-3xl font-bold text-primary">6</div>
             <div className="text-sm text-muted-foreground">Games Supported</div>
           </div>
           <div className="text-center">

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-export type GameName = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
+export type GameName = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
 
 interface GameLimit {
   game_name: GameName;
@@ -21,7 +21,7 @@ interface GameCardProps {
   icon: string;
   description: string;
   tags: string[];
-  accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber';
+  accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber' | 'red';
   limit?: GameLimit;
   onSelect: (gameName: GameName) => void;
 }
@@ -71,6 +71,15 @@ const accentStyles = {
     button: 'bg-amber-600 hover:bg-amber-500 text-white',
     glow: 'hover:shadow-amber-500/25',
     shadowColor: 'rgba(245, 158, 11, 0.25)',
+  },
+  red: {
+    header: 'bg-red-500/10 border-red-500/30',
+    icon: 'bg-red-500/20 ring-red-500/40',
+    text: 'text-red-400',
+    badge: 'bg-red-500/15 text-red-400 border-red-500/30',
+    button: 'bg-red-600 hover:bg-red-500 text-white',
+    glow: 'hover:shadow-red-500/25',
+    shadowColor: 'rgba(239, 68, 68, 0.25)',
   },
 };
 

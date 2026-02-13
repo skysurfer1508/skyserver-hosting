@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { Json } from '@/integrations/supabase/types';
 
-type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio';
+type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
 type RequestStatus = 'pending' | 'active' | 'rejected';
 
 interface ServerRequest {
