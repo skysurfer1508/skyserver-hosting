@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       game_limits: {
         Row: {
+          base_cpu_percent: number
+          base_ram_mb: number
           created_at: string
           game_name: string
           is_active: boolean
@@ -23,6 +25,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          base_cpu_percent?: number
+          base_ram_mb?: number
           created_at?: string
           game_name: string
           is_active?: boolean
@@ -30,6 +34,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          base_cpu_percent?: number
+          base_ram_mb?: number
           created_at?: string
           game_name?: string
           is_active?: boolean

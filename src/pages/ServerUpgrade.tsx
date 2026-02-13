@@ -7,21 +7,26 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Layout } from '@/components/layout/Layout';
 import { useServerRequest } from '@/hooks/useServerRequest';
+import { useGameLimits } from '@/hooks/useGameLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Cpu, MemoryStick, AlertTriangle, Zap, ArrowLeft } from 'lucide-react';
 
-const BASE_RAM_GB = 2.5;
-const BASE_CPU_PERCENT = 100;
 const PRICE_PER_UNIT = 1.50;
 
 export default function ServerUpgrade() {
   const { request, isLoading } = useServerRequest();
+  const { gameLimits, isLoading: gameLimitsLoading } = useGameLimits();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [ramQuantity, setRamQuantity] = useState(0);
   const [cpuQuantity, setCpuQuantity] = useState(0);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  // Get base specs from game limits for the current server's game type
+  const gameLimit = request ? gameLimits.find(g => g.game_name === request.game_type) : null;
+  const BASE_RAM_GB = gameLimit ? gameLimit.base_ram_mb / 1024 : 2.5;
+  const BASE_CPU_PERCENT = gameLimit?.base_cpu_percent ?? 100;
 
   const totalPrice = (ramQuantity + cpuQuantity) * PRICE_PER_UNIT;
 
@@ -54,7 +59,7 @@ export default function ServerUpgrade() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || gameLimitsLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
