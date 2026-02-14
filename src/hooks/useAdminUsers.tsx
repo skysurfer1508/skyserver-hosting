@@ -93,10 +93,24 @@ export function useAdminUsers() {
     }
   };
 
+  const toggleVerification = async (userId: string, currentVerified: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_verified: !currentVerified })
+        .eq('id', userId);
+
+      if (error) throw error;
+      await fetchUsers();
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   const toggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
     try {
       if (currentIsAdmin) {
-        // Demote: delete admin role
         const { error } = await supabase
           .from('user_roles')
           .delete()
@@ -105,7 +119,6 @@ export function useAdminUsers() {
 
         if (error) throw error;
       } else {
-        // Promote: insert admin role
         const { error } = await supabase
           .from('user_roles')
           .insert({ user_id: userId, role: 'admin' });
@@ -123,6 +136,7 @@ export function useAdminUsers() {
     users,
     isLoading,
     toggleBan,
+    toggleVerification,
     toggleAdmin,
     refetch: fetchUsers,
   };
