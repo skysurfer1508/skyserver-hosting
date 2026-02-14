@@ -29,7 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Users, Search, Loader2, Shield, Ban, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 export function AdminUsers() {
-  const { users, isLoading, toggleBan, toggleAdmin, refetch } = useAdminUsers();
+  const { users, isLoading, toggleBan, toggleVerification, toggleAdmin, refetch } = useAdminUsers();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
@@ -60,6 +60,26 @@ export function AdminUsers() {
     toast({
       title: currentBanned ? 'User unbanned' : 'User banned',
       description: `${email} has been ${currentBanned ? 'unbanned' : 'banned'}.`,
+    });
+  };
+
+  const handleToggleVerification = async (userId: string, currentVerified: boolean, email: string) => {
+    setIsSubmitting(userId + '-verify');
+    const { error } = await toggleVerification(userId, currentVerified);
+    setIsSubmitting(null);
+
+    if (error) {
+      toast({
+        title: 'Failed to update verification',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: currentVerified ? 'Verification removed' : 'Account verified',
+      description: `${email} has been ${currentVerified ? 'unverified' : 'verified'}.`,
     });
   };
 
@@ -208,11 +228,12 @@ export function AdminUsers() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {user.is_verified ? (
-                          <CheckCircle className="h-4 w-4 text-success mx-auto" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                        )}
+                        <Switch
+                          checked={user.is_verified}
+                          onCheckedChange={() => handleToggleVerification(user.id, user.is_verified, user.email)}
+                          disabled={isSubmitting === user.id + '-verify'}
+                          className="data-[state=checked]:bg-green-500"
+                        />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(user.created_at).toLocaleDateString()}
