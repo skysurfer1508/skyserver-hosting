@@ -33,7 +33,7 @@ import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useGameLimits, GameName } from '@/hooks/useGameLimits';
 import { useDecryptedCredentials } from '@/hooks/useDecryptedCredentials';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Clock, CheckCircle2, XCircle, Plus, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal, Shield, Zap } from 'lucide-react';
+import { Server, Clock, CheckCircle2, XCircle, Plus, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, AlertCircle, Terminal, Shield, Zap, MessageCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MinecraftConfigForm, MinecraftConfig } from './MinecraftConfigForm';
 import { TerrariaConfigForm, TerrariaConfig } from './TerrariaConfigForm';
@@ -46,6 +46,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { triggerSuccessConfetti } from '@/lib/confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { DISCORD_INVITE_URL } from '@/config/constants';
 
 type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
 type ServerConfig = MinecraftConfig | TerrariaConfig | SatisfactoryConfig | CS2Config | FactorioConfig | RustConfig;
@@ -511,8 +512,28 @@ export function ServerStatusCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Rejection Alert */}
-        {request.status === 'rejected' && (
+        {/* Rejection / Expiration Alert */}
+        {request.status === 'rejected' && request.rejection_reason === 'Server lease expired automatically.' ? (
+          <Alert className="border-warning/50 bg-warning/10 text-foreground [&>svg]:text-warning">
+            <Clock className="h-4 w-4" />
+            <AlertTitle>Server Expired</AlertTitle>
+            <AlertDescription className="mt-2 space-y-3">
+              <p>
+                Your server lease has expired. To get your server back, please open a ticket on our Discord server.
+              </p>
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="sm" className="gap-2 border-warning/30 text-warning hover:bg-warning/10">
+                  <MessageCircle className="h-4 w-4" />
+                  Open Discord Ticket
+                </Button>
+              </a>
+            </AlertDescription>
+          </Alert>
+        ) : request.status === 'rejected' ? (
           <Alert variant="destructive" className="border-destructive/50">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Request Rejected</AlertTitle>
@@ -525,7 +546,7 @@ export function ServerStatusCard() {
               </p>
             </AlertDescription>
           </Alert>
-        )}
+        ) : null}
 
         {request.status === 'pending' && (
           <div className="rounded-lg bg-warning/10 border border-warning/30 p-4 text-center">
@@ -696,7 +717,27 @@ export function ServerStatusCard() {
           </div>
         )}
 
-        {request.status === 'rejected' && (
+        {request.status === 'rejected' && request.rejection_reason === 'Server lease expired automatically.' ? (
+          <div className="rounded-lg bg-warning/10 border border-warning/30 p-4 text-center space-y-3">
+            <Clock className="mx-auto h-8 w-8 text-warning mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Your server lease has expired.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Open a Discord ticket to recover your server.
+            </p>
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="gap-2 mt-2 border-warning/30 text-warning hover:bg-warning/10">
+                <MessageCircle className="h-4 w-4" />
+                Open Discord Ticket
+              </Button>
+            </a>
+          </div>
+        ) : request.status === 'rejected' ? (
           <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-center">
             <XCircle className="mx-auto h-8 w-8 text-destructive mb-2" />
             <p className="text-sm text-muted-foreground">
@@ -706,7 +747,7 @@ export function ServerStatusCard() {
               Please open a ticket on Discord for more information.
             </p>
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
