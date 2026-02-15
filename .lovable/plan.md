@@ -1,30 +1,29 @@
 
 
-# Add "Reactivate Expired Server" Option for Admins
+# Add "Server Management (Pterodactyl)" Help Center Section
 
 ## Overview
-Give admins a button to reactivate servers that were automatically expired by the cleanup process. This sets the server back to "active" status with a fresh 7-day lease, clearing the rejection reason.
+Add a new tab to the existing Help Center at `/help` covering general Pterodactyl panel management topics: automated restarts, automated backups, SFTP access, changing Java version, and using the console. This follows the exact same pattern as the existing game-specific tabs.
 
 ## Changes
 
-### 1. `src/hooks/useAdminRequests.tsx`
-- Add a `reactivateRequest` function that updates the server request:
-  - Sets `status` back to `'active'`
-  - Sets `expires_at` to `now() + 7 days` (using `new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()`)
-  - Clears `rejection_reason` to `null`
-- Export it alongside existing functions
+### `src/data/helpArticles.ts`
+- Import the `Server` icon from `lucide-react` (represents server/panel management well)
+- Add a new `GameCategory` entry to the `gameCategories` array with:
+  - `id: 'pterodactyl'`
+  - `label: 'Server Management'`
+  - `icon: Server`
+  - Five questions covering the requested topics:
 
-### 2. `src/components/admin/AdminRequests.tsx`
-- Add a "Reactivate" button in the Actions column for rejected requests where `rejection_reason === 'Server lease expired automatically.'`
-- The button uses a `RotateCcw` icon (from lucide-react) with success-colored styling
-- Wire it to call `reactivateRequest` with loading state and toast feedback
-- Add a confirmation dialog (AlertDialog) before reactivating, showing the server name and confirming the action
+1. **"How do I set up automated server restarts?"** -- Navigating to Schedules tab, creating a schedule, simple cron explanation (Minute: 0, Hour: 4 = 4:00 AM), adding a "Send Power Action" > "Restart Server" task
+2. **"How do I set up automated backups?"** -- Same Schedules tab flow, creating a "Daily Backup" schedule, adding a "Create Backup" task, tip about preventing data loss from plugin errors
+3. **"How do I connect via SFTP to manage my server files?"** -- Finding SFTP details in the Settings tab, connecting with FileZilla/WinSCP using the server password
+4. **"How do I change the Java version for my server?"** -- Going to Startup tab, changing the Docker Image variable, switching between Java 8/17/21
+5. **"How do I use the server console?"** -- Viewing live logs, sending commands directly, basic usage tips
 
-### 3. Status Badge Enhancement
-- For expired servers specifically (rejected + expired reason), show an "Expired" badge with a Clock icon and warning styling instead of the generic red "Rejected" badge, so admins can quickly identify which servers need reactivation vs. were manually rejected
+### No other file changes needed
+The Help page (`src/pages/Help.tsx`) dynamically renders all entries from `gameCategories`, so adding to the data file is all that's required. The new tab will automatically appear with the icon, label, badge count, and accordion Q&A items.
 
-## Technical Details
-- The existing RLS policy "Admins can update all requests" already permits this update -- no database changes needed
-- The reactivation simply reverses what the `cleanup-expired-servers` edge function does
-- Credentials remain encrypted in the database, so they are preserved and the user regains access immediately
+## Tone
+Friendly, concise, step-by-step instructions matching the existing help articles. Uses bold text for UI element names, code blocks for paths/commands, and practical tips where relevant.
 
