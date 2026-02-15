@@ -160,12 +160,32 @@ export function useAdminRequests() {
     }
   };
 
+  const reactivateRequest = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('server_requests')
+        .update({
+          status: 'active' as RequestStatus,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          rejection_reason: null,
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+      await fetchRequests();
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   return {
     requests,
     isLoading,
     approveRequest,
     rejectRequest,
     deleteRequest,
+    reactivateRequest,
     refetch: fetchRequests,
   };
 }

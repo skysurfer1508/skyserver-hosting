@@ -12,6 +12,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -44,6 +54,7 @@ import {
   XCircle,
   Eye,
   AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Database } from '@/integrations/supabase/types';
@@ -85,7 +96,7 @@ const getExpiryInfo = (expiresAt: string | null) => {
 };
 
 export function AdminRequests() {
-  const { requests, isLoading, approveRequest, rejectRequest, deleteRequest } = useAdminRequests();
+  const { requests, isLoading, approveRequest, rejectRequest, deleteRequest, reactivateRequest } = useAdminRequests();
   const { refetch: refetchSettings } = useSystemSettings();
   const { refetch: refetchGameLimits } = useGameLimits();
   const { toast } = useToast();
@@ -94,6 +105,7 @@ export function AdminRequests() {
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<typeof requests[0] | null>(null);
   const [assignedIp, setAssignedIp] = useState('');
   const [panelUrl, setPanelUrl] = useState('https://panel.skyserver1508.org');
@@ -215,7 +227,48 @@ export function AdminRequests() {
     refetchSettings();
   };
 
-  const getStatusBadge = (status: RequestStatus) => {
+  const handleReactivateClick = (request: typeof requests[0]) => {
+    setSelectedRequest(request);
+    setReactivateDialogOpen(true);
+  };
+
+  const handleReactivateConfirm = async () => {
+    if (!selectedRequest) return;
+    setIsSubmitting(true);
+    const { error } = await reactivateRequest(selectedRequest.id);
+    setIsSubmitting(false);
+
+    if (error) {
+      toast({
+        title: 'Failed to reactivate',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Server reactivated',
+      description: `Server "${selectedRequest.server_name}" has been reactivated with a fresh 7-day lease.`,
+    });
+    setReactivateDialogOpen(false);
+    setSelectedRequest(null);
+    refetchSettings();
+    refetchGameLimits();
+  };
+
+  const isExpiredServer = (request: typeof requests[0]) =>
+    request.status === 'rejected' && request.rejection_reason === 'Server lease expired automatically.';
+
+  const getStatusBadge = (status: RequestStatus, request: typeof requests[0]) => {
+    if (isExpiredServer(request)) {
+      return (
+        <Badge className="bg-warning/20 text-warning border-warning/30 gap-1">
+          <Clock className="h-3 w-3" />
+          Expired
+        </Badge>
+      );
+    }
     switch (status) {
       case 'pending':
         return (
@@ -322,7 +375,7 @@ export function AdminRequests() {
                           </span>
                         </TableCell>
                         <TableCell>{request.server_name}</TableCell>
-                        <TableCell>{getStatusBadge(request.status)}</TableCell>
+                        <TableCell>{getStatusBadge(request.status, request)}</TableCell>
                         <TableCell>
                           {request.status === 'active' && expiryInfo ? (
                             expiryInfo.isPermanent ? (
@@ -372,6 +425,16 @@ export function AdminRequests() {
                                   <X className="h-4 w-4" />
                                 </Button>
                               </>
+                            )}
+                            {isExpiredServer(request) && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-success hover:text-success hover:bg-success/10"
+                                onClick={() => handleReactivateClick(request)}
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
                             )}
                             <Button
                               size="sm"
@@ -483,6 +546,31 @@ export function AdminRequests() {
           refetchGameLimits();
         }}
       />
+
+      {/* Reactivate Confirmation Dialog */}
+      <AlertDialog open={reactivateDialogOpen} onOpenChange={setReactivateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reactivate Server</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reactivate "{selectedRequest?.server_name}"? This will set the server back to active with a fresh 7-day lease.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReactivateConfirm} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Reactivating...
+                </>
+              ) : (
+                'Reactivate'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
