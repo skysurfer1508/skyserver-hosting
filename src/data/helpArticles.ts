@@ -1,4 +1,4 @@
-import { Factory, Crosshair, Cog, Pickaxe, Shield, Skull } from 'lucide-react';
+import { Factory, Crosshair, Cog, Pickaxe, Shield, Skull, Server } from 'lucide-react';
 
 export interface HelpQuestion {
   question: string;
@@ -283,6 +283,103 @@ Adjust the mod parameter under "Startup" accordingly. If needed, edit \`Game.ini
 \`\`\`
 
 Make sure each parameter starts with \`-\` and is separated by a space. Save and restart the server.`,
+      },
+    ],
+  },
+  {
+    id: 'pterodactyl',
+    label: 'Server Management',
+    icon: Server,
+    questions: [
+      {
+        question: 'How do I set up automated server restarts?',
+        answer: `**Step-by-step guide:**
+
+1. Open your server in the Panel and navigate to the **Schedules** tab.
+2. Click **Create Schedule** and give it a name, e.g. \`Daily Restart\`.
+3. Set the **Cron expression** to define when the restart should happen. A simple example:
+   - **Minute:** \`0\`
+   - **Hour:** \`4\`
+   - **Day of Month / Month / Day of Week:** \`*\`
+
+   This runs every day at **4:00 AM**.
+
+4. Save the schedule, then click **New Task**.
+5. Select **Send Power Action** as the action type.
+6. Choose **Restart Server** from the dropdown.
+7. Save the task — your server will now restart automatically at the scheduled time.
+
+**Tip:** Avoid scheduling restarts during peak hours to minimize disruption for your players.`,
+      },
+      {
+        question: 'How do I set up automated backups?',
+        answer: `**Step-by-step guide:**
+
+1. Go to the **Schedules** tab in your Panel (same place as automated restarts).
+2. Click **Create Schedule** and name it, e.g. \`Daily Backup\`.
+3. Set the Cron timing — for example, \`0 3 * * *\` runs at **3:00 AM** daily.
+4. Save the schedule, then click **New Task**.
+5. Select **Create Backup** as the action type.
+6. Save the task.
+
+Your server will now create a backup automatically at the scheduled time.
+
+**Tip:** Regular backups are crucial — they protect you from data loss caused by plugin errors, crashes, or accidental deletions. We recommend running backups **before** your scheduled restart.`,
+      },
+      {
+        question: 'How do I connect via SFTP to manage my server files?',
+        answer: `**Step-by-step guide:**
+
+1. Open your server in the Panel and navigate to the **Settings** tab.
+2. Under **SFTP Details**, you'll find:
+   - **Server Address** (host + port)
+   - **Username** (usually your Panel username + server ID)
+3. Use your **Panel account password** to authenticate.
+4. Open an SFTP client like **FileZilla** or **WinSCP**:
+   - Enter the server address and port
+   - Enter your username and password
+   - Click **Connect**
+
+You now have full access to upload, download, and manage your server files directly.
+
+**Tip:** SFTP is ideal for uploading large files (e.g. world backups or mod packs) that would be slow through the browser file manager.`,
+      },
+      {
+        question: 'How do I change the Java version for my server?',
+        answer: `**Step-by-step guide:**
+
+1. Navigate to the **Startup** tab in your Panel.
+2. Look for the **Docker Image** dropdown (or variable).
+3. Select the Java version you need:
+   - **Java 8** — for legacy Minecraft versions (1.12 and below)
+   - **Java 17** — required for Minecraft 1.18–1.20.4
+   - **Java 21** — recommended for Minecraft 1.20.5+
+
+4. Save and **restart** your server.
+
+**Common error this fixes:**
+\`\`\`
+UnsupportedClassVersionError: ... has been compiled by a more recent version of the Java Runtime
+\`\`\`
+
+If you see this error, your Java version is too old for the server JAR you're running. Switch to a newer version as described above.`,
+      },
+      {
+        question: 'How do I use the server console?',
+        answer: `**Overview:**
+
+The **Console** tab is the main page you see when opening your server in the Panel. It provides two key features:
+
+1. **Live Logs:** The console shows real-time output from your server — startup messages, player joins/leaves, errors, and plugin output. This is the first place to check when something goes wrong.
+
+2. **Command Input:** At the bottom of the console, there's a text field where you can type commands directly. These are sent to the server just as if you were typing them in-game with admin privileges.
+
+**Examples:**
+- Minecraft: \`say Hello everyone!\` or \`op YourUsername\`
+- Rust: \`ownerid <Steam64ID> "Name" "Reason"\`
+- Factorio: \`/config set autosave-interval 10\`
+
+**Tip:** You do **not** need to prefix commands with \`/\` in the Panel console — just type the command directly. The slash is only needed in-game.`,
       },
     ],
   },
