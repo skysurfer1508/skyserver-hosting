@@ -1,82 +1,24 @@
 
 
-# SEO Optimization Plan for SkyServer
+# Add "Support the Project" Button
 
 ## Overview
-Implement technical SEO improvements to maximize Google ranking potential. This covers structured data, meta tags, sitemap, semantic HTML, and crawlability -- all achievable within a React SPA.
+Add a visible "Support the Project" donation button linking to `paypal.me/skyserver1508` across the site -- in the header bar, the hamburger menu (mobile), and the footer.
 
 ## Changes
 
-### 1. Add JSON-LD Structured Data (`index.html`)
-Embed three structured data blocks directly in the HTML head:
-- **Organization schema**: Name, URL, logo, social links (Discord)
-- **WebSite schema**: Name, URL, search action potential
-- **FAQ schema**: All 9 FAQ items marked up for Google's rich snippet carousel
+### 1. `src/config/constants.ts`
+- Add `donate: 'https://paypal.me/skyserver1508'` to the `EXTERNAL_LINKS` object
 
-This is the single highest-impact SEO change -- FAQ rich snippets can dramatically increase click-through rate.
+### 2. `src/components/layout/Header.tsx`
+- **Desktop header bar**: Add a "Support Us" button (using the `Heart` icon from lucide-react) next to the Discord and Game Panel buttons, styled with a warm accent (e.g., `hover:text-red-400`)
+- **Mobile hamburger menu**: Add a "Support the Project" entry in the menu alongside the existing Discord and Game Panel mobile links, with `ExternalLink` indicator
 
-### 2. Expand Sitemap (`public/sitemap.xml`)
-Add all public routes with proper priorities:
-- `/` (1.0), `/help` (0.7), `/terms` (0.5), `/imprint` (0.5), `/register` (0.8), `/login` (0.6)
-- Add `lastmod` dates to all entries
-- Remove `/login` priority inflation (it's not a landing page)
+### 3. `src/components/layout/Footer.tsx`
+- Add a "Support Us" link in the footer nav alongside Discord, Help Center, Imprint, and Terms -- with a `Heart` icon and external link indicator
 
-### 3. Add Canonical URL and Missing Meta Tags (`index.html`)
-- Add `<link rel="canonical" href="https://www.skyserver1508.org/" />`
-- Add `<meta property="og:url" content="https://www.skyserver1508.org/" />`
-- Add `<meta name="robots" content="index, follow" />`
-- Add additional keyword-rich meta description variants
-- Add `<meta name="theme-color" content="...">` for mobile browser theming
-
-### 4. Per-Page Dynamic Titles (new `src/hooks/usePageTitle.ts`)
-Create a simple hook that sets `document.title` on each page:
-- `/` -> "SkyServer - Free Game Server Hosting | Minecraft, Terraria, Rust & More"
-- `/help` -> "Help Center - SkyServer | Game Server Guides & Tutorials"
-- `/terms` -> "Terms of Service - SkyServer"
-- `/imprint` -> "Imprint - SkyServer"
-- `/register` -> "Sign Up - SkyServer | Get Your Free Game Server"
-- `/login` -> "Login - SkyServer"
-- `/dashboard` -> "Dashboard - SkyServer"
-
-Apply the hook in each page component.
-
-### 5. Add `<noscript>` Fallback (`index.html`)
-Add a `<noscript>` block inside `<body>` with:
-- The site name and key description text
-- Links to main pages
-- This gives crawlers that don't run JS something to index
-
-### 6. Improve Semantic HTML in Hero Section (`src/components/landing/HeroSection.tsx`)
-- Update H1 to be more keyword-targeted: include "Free Minecraft Server Hosting" or "Free Game Server Hosting - SkyServer"
-- Ensure the subtext paragraph includes natural keyword variations (free server hosting, Terraria, Rust, CS2, Factorio)
-
-### 7. Update robots.txt (`public/robots.txt`)
-- Add `Sitemap: https://www.skyserver1508.org/sitemap.xml` directive so crawlers auto-discover the sitemap
-
-### 8. Improve Link Structure in Footer (`src/components/layout/Footer.tsx`)
-- Ensure all internal links use descriptive anchor text (already mostly good)
-- Add `rel="noopener noreferrer"` on external links (already done)
-
-## Files to modify
-1. `index.html` -- Structured data, canonical URL, meta tags, noscript fallback
-2. `public/sitemap.xml` -- Expand with all public routes
-3. `public/robots.txt` -- Add sitemap directive
-4. `src/hooks/usePageTitle.ts` -- New hook for dynamic page titles
-5. `src/pages/Index.tsx` -- Apply page title
-6. `src/pages/Help.tsx` -- Apply page title
-7. `src/pages/Login.tsx` -- Apply page title
-8. `src/pages/Register.tsx` -- Apply page title
-9. `src/pages/Terms.tsx` -- Apply page title
-10. `src/pages/Imprint.tsx` -- Apply page title
-11. `src/pages/Dashboard.tsx` -- Apply page title
-12. `src/pages/Admin.tsx` -- Apply page title
-13. `src/pages/NotFound.tsx` -- Apply page title
-14. `src/components/landing/HeroSection.tsx` -- Keyword-optimize H1 and subtext
-
-## What this WON'T fix (outside Lovable's control)
-- **Server-side rendering**: SPAs are inherently harder to rank. Consider Lovable's published URL or a CDN with prerendering if rankings plateau.
-- **OG image**: You need a proper 1200x630 PNG/JPG social share image. Upload one to `/public/og-image.png` and I'll wire it up.
-- **Backlinks**: The #1 off-page factor. Get listed on game server directories, Reddit communities, and gaming forums.
-- **Page speed**: Already good since it's a Vite SPA, but consider lazy-loading below-fold sections.
-- **Google Search Console**: Submit the updated sitemap there manually after publishing.
+## Technical Details
+- All three locations open the PayPal link in a new tab with `rel="noopener noreferrer"`
+- Uses the `Heart` icon from `lucide-react` for consistent visual identity
+- The URL is centralized in `constants.ts` so it can be updated in one place
 
