@@ -1,29 +1,71 @@
 
 
-# Add "Server Management (Pterodactyl)" Help Center Section
+# Mobile Optimization for SkyServer
 
 ## Overview
-Add a new tab to the existing Help Center at `/help` covering general Pterodactyl panel management topics: automated restarts, automated backups, SFTP access, changing Java version, and using the console. This follows the exact same pattern as the existing game-specific tabs.
+After reviewing all pages at 375px mobile width, the site is already quite well-optimized -- responsive grids, hidden labels on tabs, stacked CTAs, etc. However, there are several areas that need improvement for a polished mobile experience.
 
-## Changes
+## Issues Found and Fixes
 
-### `src/data/helpArticles.ts`
-- Import the `Server` icon from `lucide-react` (represents server/panel management well)
-- Add a new `GameCategory` entry to the `gameCategories` array with:
-  - `id: 'pterodactyl'`
-  - `label: 'Server Management'`
-  - `icon: Server`
-  - Five questions covering the requested topics:
+### 1. Footer Layout (Critical)
+**Problem:** The footer uses a single horizontal `flex-row` on `md:` breakpoint, but the nav links (Discord, Trustpilot, Help Center, Imprint, Terms of Service) are in a single row that wraps awkwardly on mobile.
 
-1. **"How do I set up automated server restarts?"** -- Navigating to Schedules tab, creating a schedule, simple cron explanation (Minute: 0, Hour: 4 = 4:00 AM), adding a "Send Power Action" > "Restart Server" task
-2. **"How do I set up automated backups?"** -- Same Schedules tab flow, creating a "Daily Backup" schedule, adding a "Create Backup" task, tip about preventing data loss from plugin errors
-3. **"How do I connect via SFTP to manage my server files?"** -- Finding SFTP details in the Settings tab, connecting with FileZilla/WinSCP using the server password
-4. **"How do I change the Java version for my server?"** -- Going to Startup tab, changing the Docker Image variable, switching between Java 8/17/21
-5. **"How do I use the server console?"** -- Viewing live logs, sending commands directly, basic usage tips
+**Fix in `src/components/layout/Footer.tsx`:**
+- Stack the footer content vertically on mobile: logo on top, nav links in a centered wrapped grid, copyright at bottom
+- Make the nav links wrap into a 2-column or centered flex-wrap layout on small screens
+- Add proper spacing between rows
 
-### No other file changes needed
-The Help page (`src/pages/Help.tsx`) dynamically renders all entries from `gameCategories`, so adding to the data file is all that's required. The new tab will automatically appear with the icon, label, badge count, and accordion Q&A items.
+### 2. Help Center Tab Bar Overflow
+**Problem:** With 7 game categories (now including "Server Management"), the tab bar wraps to 3 rows of icons on mobile, making it look crowded.
 
-## Tone
-Friendly, concise, step-by-step instructions matching the existing help articles. Uses bold text for UI element names, code blocks for paths/commands, and practical tips where relevant.
+**Fix in `src/pages/Help.tsx`:**
+- Make the TabsList horizontally scrollable on mobile using `overflow-x-auto` and `flex-nowrap` for small screens
+- This keeps all tabs accessible in a single scrollable row
+
+### 3. Admin Panel Tables (Horizontal Overflow)
+**Problem:** The admin tables (Requests, Users) have many columns that don't fit on mobile screens, causing horizontal overflow without a scroll indicator.
+
+**Fix in `src/components/admin/AdminRequests.tsx` and `src/components/admin/AdminUsers.tsx`:**
+- Wrap tables in a container with `overflow-x-auto` to allow horizontal scrolling
+- Add `min-w-[600px]` or similar to the table to ensure proper column widths
+
+### 4. Admin Tabs Grid
+**Problem:** `grid-cols-7` on the admin TabsList is very tight on mobile (7 icon-only tabs squished together).
+
+**Fix in `src/pages/Admin.tsx`:**
+- Change from `grid grid-cols-7` to a scrollable flex row on mobile, or use `grid-cols-4` on small screens with wrapping for the remaining tabs
+
+### 5. Dashboard Welcome Header Text Size
+**Problem:** The `text-3xl` heading on mobile is fine, but could be slightly smaller for very narrow screens.
+
+**Fix in `src/pages/Dashboard.tsx`:**
+- Change `text-3xl` to `text-2xl sm:text-3xl` for the welcome header
+
+### 6. Stats Row in Hero Section
+**Problem:** The 3-column stats grid (`grid-cols-3`) works but the `text-3xl` numbers are large for mobile.
+
+**Fix in `src/components/landing/HeroSection.tsx`:**
+- Change stat numbers from `text-3xl` to `text-2xl sm:text-3xl` for better mobile fit
+
+### 7. Remove Unused App.css
+**Problem:** `src/App.css` contains Vite boilerplate CSS that's not imported anywhere. Dead code.
+
+**Fix:** Delete `src/App.css` to keep the project clean.
+
+## Technical Details
+
+### Files to modify:
+1. **`src/components/layout/Footer.tsx`** -- Restructure to stack vertically on mobile with flex-wrap nav links
+2. **`src/pages/Help.tsx`** -- Add `overflow-x-auto` and `flex-nowrap` to TabsList on mobile
+3. **`src/pages/Admin.tsx`** -- Change TabsList from rigid grid-cols-7 to scrollable flex or responsive grid
+4. **`src/pages/Dashboard.tsx`** -- Responsive text size on welcome header
+5. **`src/components/landing/HeroSection.tsx`** -- Responsive stat number sizing
+6. **`src/App.css`** -- Delete (unused file)
+
+### Files NOT modified (already mobile-friendly):
+- Header/hamburger menu -- already works well
+- Game cards -- single column on mobile, looks great
+- Login/Register pages -- centered card with `max-w-md`, already responsive
+- FAQ section -- accordion works perfectly on mobile
+- Server request modal -- dialog already responsive
 
