@@ -1,24 +1,62 @@
 
 
-# Add "Support the Project" Button
+# Hintergrundbilder fuer Game Cards
 
-## Overview
-Add a visible "Support the Project" donation button linking to `paypal.me/skyserver1508` across the site -- in the header bar, the hamburger menu (mobile), and the footer.
+## Uebersicht
+Jede Game Card bekommt ein atmosphaerisches Hintergrundbild im Header-Bereich, das dem jeweiligen Spiel entspricht. Die Bilder werden als URL-Referenzen aus frei verfuegbaren Quellen eingebunden und mit einem dunklen Overlay versehen, damit Text und Icons weiterhin gut lesbar bleiben.
 
-## Changes
+## Aenderungen
 
-### 1. `src/config/constants.ts`
-- Add `donate: 'https://paypal.me/skyserver1508'` to the `EXTERNAL_LINKS` object
+### 1. Game-Bilder als URLs definieren (`src/components/landing/FeaturesSection.tsx`)
+- Dem `gameData`-Array wird pro Spiel ein neues Feld `backgroundImage` hinzugefuegt
+- Verwendet werden hochwertige, frei verfuegbare Bilder (z.B. von Unsplash oder offizielle Promo-Bilder via CDN)
+- Alternativ: Du kannst eigene Bilder hochladen (per Chat-Upload), die ich dann direkt einbinde
 
-### 2. `src/components/layout/Header.tsx`
-- **Desktop header bar**: Add a "Support Us" button (using the `Heart` icon from lucide-react) next to the Discord and Game Panel buttons, styled with a warm accent (e.g., `hover:text-red-400`)
-- **Mobile hamburger menu**: Add a "Support the Project" entry in the menu alongside the existing Discord and Game Panel mobile links, with `ExternalLink` indicator
+### 2. GameCard-Komponente erweitern (`src/components/landing/GameCard.tsx`)
+- Neues Prop `backgroundImage?: string` hinzufuegen
+- Im CardHeader-Bereich wird das Bild als `background-image` mit CSS eingesetzt
+- Darueber kommt ein dunkles Gradient-Overlay (`bg-gradient-to-t from-black/80 via-black/50 to-black/30`), damit der Titel und das Icon lesbar bleiben
+- Der Header wird etwas hoeher (z.B. `h-32` statt der aktuellen kompakten Hoehe)
+- Das Icon und der Titel werden ueber dem Overlay positioniert (`relative z-10`)
 
-### 3. `src/components/layout/Footer.tsx`
-- Add a "Support Us" link in the footer nav alongside Discord, Help Center, Imprint, and Terms -- with a `Heart` icon and external link indicator
+### Visuelles Ergebnis
 
-## Technical Details
-- All three locations open the PayPal link in a new tab with `rel="noopener noreferrer"`
-- Uses the `Heart` icon from `lucide-react` for consistent visual identity
-- The URL is centralized in `constants.ts` so it can be updated in one place
+Jede Karte zeigt im oberen Bereich ein stimmungsvolles Spielbild mit einem sanften dunklen Verlauf. Darunter bleiben Beschreibung, Tags, Fortschrittsbalken und Button unveraendert.
+
+```text
++---------------------------+
+|  [Hintergrundbild]        |
+|  ~~~~~~~~~~~~~~~~~~~~~~~~ |
+|  Icon  Spielname          |
++---------------------------+
+|  Beschreibung...          |
+|  [Tag] [Tag] [Tag]        |
+|                           |
+|  ████████░░░ 5/10 Claimed |
+|  [ Select Minecraft ]     |
++---------------------------+
+```
+
+## Technische Details
+
+### Dateien die geaendert werden:
+1. **`src/components/landing/FeaturesSection.tsx`** -- `backgroundImage`-Feld zum gameData-Array hinzufuegen und als Prop an GameCard weitergeben
+2. **`src/components/landing/GameCard.tsx`** -- Neues Prop akzeptieren, Header-Bereich mit Hintergrundbild und Overlay gestalten
+
+### GameCard Header-Aenderung (Kern-Idee):
+- Der `CardHeader` bekommt `position: relative`, `overflow: hidden` und eine feste Hoehe
+- Ein `div` mit `background-image`, `background-size: cover`, `background-position: center` wird absolut positioniert
+- Ein zweites `div` als Gradient-Overlay liegt darueber
+- Icon und Titel bleiben relativ positioniert mit `z-10`
+
+### Bild-Quellen:
+Es werden Unsplash-URLs verwendet (kostenlos, keine Lizenzprobleme):
+- **Minecraft**: Blockiges Landschafts-/Craft-Motiv
+- **Terraria**: Pixelart / Naturlandschaft
+- **Satisfactory**: Fabrik-/Industriemotiv
+- **CS2**: Taktisches/FPS-Motiv
+- **Factorio**: Mechanik-/Zahnrad-Motiv
+- **Rust**: Survival-/Wildnis-Motiv
+
+Falls du lieber eigene Bilder verwenden moechtest, kannst du sie einfach hier im Chat hochladen -- ich baue sie dann direkt ein.
 
