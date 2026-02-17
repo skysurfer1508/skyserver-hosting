@@ -152,7 +152,7 @@ export function GameCard({
             />
           )}
           {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/50" />
           
           {/* Content */}
           <div className="relative z-10 flex items-end gap-3 h-full p-5">
