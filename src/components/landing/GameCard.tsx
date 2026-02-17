@@ -126,7 +126,7 @@ export function GameCard({
       whileTap={{ scale: 0.98 }}
     >
       <Card className={cn(
-        'gaming-card border-border/50 flex flex-col h-full transition-all duration-300',
+        'gaming-card border-border/50 flex flex-col h-full transition-all duration-300 overflow-hidden',
         'hover:border-primary/50',
         isDisabled && 'opacity-60'
       )}
@@ -143,17 +143,18 @@ export function GameCard({
       }}
       >
         {/* Header with icon and title */}
-        <CardHeader className={cn('relative overflow-hidden rounded-t-lg border-b h-36 p-0', backgroundImage ? 'border-border/30' : styles.header)}>
+        <CardHeader className={cn('relative overflow-hidden border-b h-36 p-0', backgroundImage ? 'border-border/30' : styles.header)}>
           {/* Background image */}
           {backgroundImage && (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${backgroundImage})` }}
+            <img
+              src={backgroundImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {/* Dark overlay - full coverage */}
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           
           {/* Content */}
           <div className="relative z-10 flex items-end gap-3 h-full p-5">
