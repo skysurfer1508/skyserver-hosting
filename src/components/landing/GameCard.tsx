@@ -142,8 +142,8 @@ export function GameCard({
         e.currentTarget.style.boxShadow = 'none';
       }}
       >
-        {/* Header with icon and title */}
-        <CardHeader className={cn('relative overflow-hidden border-b h-36 p-0', backgroundImage ? 'border-border/30' : styles.header)}>
+        {/* Header with background image */}
+        <div className="relative overflow-hidden h-36" style={{ margin: '-1px -1px 0 -1px' }}>
           {/* Background image */}
           {backgroundImage && (
             <img
@@ -152,7 +152,7 @@ export function GameCard({
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          {/* Dark overlay - full coverage */}
+          {/* Dark overlay */}
           <div className="absolute inset-0 bg-black/60" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           
@@ -171,7 +171,7 @@ export function GameCard({
               {title}
             </h3>
           </div>
-        </CardHeader>
+        </div>
 
         <CardContent className="flex flex-col flex-1 p-5 space-y-4">
           {/* Description */}
