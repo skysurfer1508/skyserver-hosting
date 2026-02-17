@@ -143,7 +143,7 @@ export function GameCard({
       }}
       >
         {/* Header with icon and title */}
-        <CardHeader className={cn('relative overflow-hidden rounded-t-lg border-b h-36 p-0', styles.header)}>
+        <CardHeader className={cn('relative overflow-hidden rounded-t-lg border-b h-36 p-0', backgroundImage ? 'border-border/30' : styles.header)}>
           {/* Background image */}
           {backgroundImage && (
             <div
@@ -152,7 +152,8 @@ export function GameCard({
             />
           )}
           {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/50" />
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           {/* Content */}
           <div className="relative z-10 flex items-end gap-3 h-full p-5">
