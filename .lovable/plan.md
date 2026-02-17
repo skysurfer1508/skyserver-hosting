@@ -1,71 +1,82 @@
 
 
-# Mobile Optimization for SkyServer
+# SEO Optimization Plan for SkyServer
 
 ## Overview
-After reviewing all pages at 375px mobile width, the site is already quite well-optimized -- responsive grids, hidden labels on tabs, stacked CTAs, etc. However, there are several areas that need improvement for a polished mobile experience.
+Implement technical SEO improvements to maximize Google ranking potential. This covers structured data, meta tags, sitemap, semantic HTML, and crawlability -- all achievable within a React SPA.
 
-## Issues Found and Fixes
+## Changes
 
-### 1. Footer Layout (Critical)
-**Problem:** The footer uses a single horizontal `flex-row` on `md:` breakpoint, but the nav links (Discord, Trustpilot, Help Center, Imprint, Terms of Service) are in a single row that wraps awkwardly on mobile.
+### 1. Add JSON-LD Structured Data (`index.html`)
+Embed three structured data blocks directly in the HTML head:
+- **Organization schema**: Name, URL, logo, social links (Discord)
+- **WebSite schema**: Name, URL, search action potential
+- **FAQ schema**: All 9 FAQ items marked up for Google's rich snippet carousel
 
-**Fix in `src/components/layout/Footer.tsx`:**
-- Stack the footer content vertically on mobile: logo on top, nav links in a centered wrapped grid, copyright at bottom
-- Make the nav links wrap into a 2-column or centered flex-wrap layout on small screens
-- Add proper spacing between rows
+This is the single highest-impact SEO change -- FAQ rich snippets can dramatically increase click-through rate.
 
-### 2. Help Center Tab Bar Overflow
-**Problem:** With 7 game categories (now including "Server Management"), the tab bar wraps to 3 rows of icons on mobile, making it look crowded.
+### 2. Expand Sitemap (`public/sitemap.xml`)
+Add all public routes with proper priorities:
+- `/` (1.0), `/help` (0.7), `/terms` (0.5), `/imprint` (0.5), `/register` (0.8), `/login` (0.6)
+- Add `lastmod` dates to all entries
+- Remove `/login` priority inflation (it's not a landing page)
 
-**Fix in `src/pages/Help.tsx`:**
-- Make the TabsList horizontally scrollable on mobile using `overflow-x-auto` and `flex-nowrap` for small screens
-- This keeps all tabs accessible in a single scrollable row
+### 3. Add Canonical URL and Missing Meta Tags (`index.html`)
+- Add `<link rel="canonical" href="https://www.skyserver1508.org/" />`
+- Add `<meta property="og:url" content="https://www.skyserver1508.org/" />`
+- Add `<meta name="robots" content="index, follow" />`
+- Add additional keyword-rich meta description variants
+- Add `<meta name="theme-color" content="...">` for mobile browser theming
 
-### 3. Admin Panel Tables (Horizontal Overflow)
-**Problem:** The admin tables (Requests, Users) have many columns that don't fit on mobile screens, causing horizontal overflow without a scroll indicator.
+### 4. Per-Page Dynamic Titles (new `src/hooks/usePageTitle.ts`)
+Create a simple hook that sets `document.title` on each page:
+- `/` -> "SkyServer - Free Game Server Hosting | Minecraft, Terraria, Rust & More"
+- `/help` -> "Help Center - SkyServer | Game Server Guides & Tutorials"
+- `/terms` -> "Terms of Service - SkyServer"
+- `/imprint` -> "Imprint - SkyServer"
+- `/register` -> "Sign Up - SkyServer | Get Your Free Game Server"
+- `/login` -> "Login - SkyServer"
+- `/dashboard` -> "Dashboard - SkyServer"
 
-**Fix in `src/components/admin/AdminRequests.tsx` and `src/components/admin/AdminUsers.tsx`:**
-- Wrap tables in a container with `overflow-x-auto` to allow horizontal scrolling
-- Add `min-w-[600px]` or similar to the table to ensure proper column widths
+Apply the hook in each page component.
 
-### 4. Admin Tabs Grid
-**Problem:** `grid-cols-7` on the admin TabsList is very tight on mobile (7 icon-only tabs squished together).
+### 5. Add `<noscript>` Fallback (`index.html`)
+Add a `<noscript>` block inside `<body>` with:
+- The site name and key description text
+- Links to main pages
+- This gives crawlers that don't run JS something to index
 
-**Fix in `src/pages/Admin.tsx`:**
-- Change from `grid grid-cols-7` to a scrollable flex row on mobile, or use `grid-cols-4` on small screens with wrapping for the remaining tabs
+### 6. Improve Semantic HTML in Hero Section (`src/components/landing/HeroSection.tsx`)
+- Update H1 to be more keyword-targeted: include "Free Minecraft Server Hosting" or "Free Game Server Hosting - SkyServer"
+- Ensure the subtext paragraph includes natural keyword variations (free server hosting, Terraria, Rust, CS2, Factorio)
 
-### 5. Dashboard Welcome Header Text Size
-**Problem:** The `text-3xl` heading on mobile is fine, but could be slightly smaller for very narrow screens.
+### 7. Update robots.txt (`public/robots.txt`)
+- Add `Sitemap: https://www.skyserver1508.org/sitemap.xml` directive so crawlers auto-discover the sitemap
 
-**Fix in `src/pages/Dashboard.tsx`:**
-- Change `text-3xl` to `text-2xl sm:text-3xl` for the welcome header
+### 8. Improve Link Structure in Footer (`src/components/layout/Footer.tsx`)
+- Ensure all internal links use descriptive anchor text (already mostly good)
+- Add `rel="noopener noreferrer"` on external links (already done)
 
-### 6. Stats Row in Hero Section
-**Problem:** The 3-column stats grid (`grid-cols-3`) works but the `text-3xl` numbers are large for mobile.
+## Files to modify
+1. `index.html` -- Structured data, canonical URL, meta tags, noscript fallback
+2. `public/sitemap.xml` -- Expand with all public routes
+3. `public/robots.txt` -- Add sitemap directive
+4. `src/hooks/usePageTitle.ts` -- New hook for dynamic page titles
+5. `src/pages/Index.tsx` -- Apply page title
+6. `src/pages/Help.tsx` -- Apply page title
+7. `src/pages/Login.tsx` -- Apply page title
+8. `src/pages/Register.tsx` -- Apply page title
+9. `src/pages/Terms.tsx` -- Apply page title
+10. `src/pages/Imprint.tsx` -- Apply page title
+11. `src/pages/Dashboard.tsx` -- Apply page title
+12. `src/pages/Admin.tsx` -- Apply page title
+13. `src/pages/NotFound.tsx` -- Apply page title
+14. `src/components/landing/HeroSection.tsx` -- Keyword-optimize H1 and subtext
 
-**Fix in `src/components/landing/HeroSection.tsx`:**
-- Change stat numbers from `text-3xl` to `text-2xl sm:text-3xl` for better mobile fit
-
-### 7. Remove Unused App.css
-**Problem:** `src/App.css` contains Vite boilerplate CSS that's not imported anywhere. Dead code.
-
-**Fix:** Delete `src/App.css` to keep the project clean.
-
-## Technical Details
-
-### Files to modify:
-1. **`src/components/layout/Footer.tsx`** -- Restructure to stack vertically on mobile with flex-wrap nav links
-2. **`src/pages/Help.tsx`** -- Add `overflow-x-auto` and `flex-nowrap` to TabsList on mobile
-3. **`src/pages/Admin.tsx`** -- Change TabsList from rigid grid-cols-7 to scrollable flex or responsive grid
-4. **`src/pages/Dashboard.tsx`** -- Responsive text size on welcome header
-5. **`src/components/landing/HeroSection.tsx`** -- Responsive stat number sizing
-6. **`src/App.css`** -- Delete (unused file)
-
-### Files NOT modified (already mobile-friendly):
-- Header/hamburger menu -- already works well
-- Game cards -- single column on mobile, looks great
-- Login/Register pages -- centered card with `max-w-md`, already responsive
-- FAQ section -- accordion works perfectly on mobile
-- Server request modal -- dialog already responsive
+## What this WON'T fix (outside Lovable's control)
+- **Server-side rendering**: SPAs are inherently harder to rank. Consider Lovable's published URL or a CDN with prerendering if rankings plateau.
+- **OG image**: You need a proper 1200x630 PNG/JPG social share image. Upload one to `/public/og-image.png` and I'll wire it up.
+- **Backlinks**: The #1 off-page factor. Get listed on game server directories, Reddit communities, and gaming forums.
+- **Page speed**: Already good since it's a Vite SPA, but consider lazy-loading below-fold sections.
+- **Google Search Console**: Submit the updated sitemap there manually after publishing.
 
