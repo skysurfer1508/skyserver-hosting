@@ -5,6 +5,7 @@ export const DISCORD_INVITE_URL = 'https://discord.gg/4apa75XS9Q';
 export const EXTERNAL_LINKS = {
   discord: DISCORD_INVITE_URL,
   gamePanel: 'https://panel.skyserver1508.org',
+  donate: 'https://paypal.me/skyserver1508',
 } as const;
 
 export const STRIPE_PRICES = {

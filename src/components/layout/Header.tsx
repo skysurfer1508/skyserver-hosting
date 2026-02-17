@@ -29,6 +29,7 @@ import {
   Terminal,
   ExternalLink,
   MessageCircle,
+  Heart,
 } from 'lucide-react';
 import { useState } from 'react';
 import { DISCORD_INVITE_URL, EXTERNAL_LINKS } from '@/config/constants';
@@ -121,6 +122,23 @@ export function Header() {
             >
               <MessageCircle className="h-5 w-5" />
               <span className="sr-only">Join Discord</span>
+            </Button>
+          </a>
+
+          {/* Support Us */}
+          <a
+            href={EXTERNAL_LINKS.donate}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex"
+          >
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            >
+              <Heart className="h-5 w-5" />
+              <span className="sr-only">Support Us</span>
             </Button>
           </a>
 
@@ -285,6 +303,26 @@ export function Header() {
                   <span className="flex items-center gap-3">
                     <Terminal className="h-5 w-5" />
                     Game Panel
+                  </span>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </a>
+
+              {/* Support the Project - Mobile only */}
+              <a
+                href={EXTERNAL_LINKS.donate}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sm:hidden"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between gap-3 h-12 text-base hover:bg-red-500/10 hover:text-red-400"
+                >
+                  <span className="flex items-center gap-3">
+                    <Heart className="h-5 w-5" />
+                    Support the Project
                   </span>
                   <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </Button>
