@@ -19,8 +19,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Server, Settings, CreditCard, Loader2 } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@/config/constants';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function Dashboard() {
+  usePageTitle('Dashboard - SkyServer');
   const { user } = useAuth();
   const { settings } = useSystemSettings();
   const { status, panelOnline, nodeOnline, lastChecked, refresh } = usePlatformStatus();

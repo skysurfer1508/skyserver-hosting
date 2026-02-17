@@ -9,8 +9,10 @@ import { AdminFeedback } from '@/components/admin/AdminFeedback';
 import { AdminUpgrades } from '@/components/admin/AdminUpgrades';
 import { AdminStatusToggle } from '@/components/admin/AdminStatusToggle';
 import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox, Zap } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function Admin() {
+  usePageTitle('Admin - SkyServer');
   return (
     <Layout showFooter={false}>
       <div className="container py-8">
