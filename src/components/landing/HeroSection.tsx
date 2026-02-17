@@ -32,15 +32,15 @@ export function HeroSection() {
 
           {/* Headline */}
           <h1 className="mb-6 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-            Your own Game Server:{' '}
-            <span className="text-primary glow-text-primary">100% Free</span>
+            Free Game Server Hosting:{' '}
+            <span className="text-primary glow-text-primary">100% Free Forever</span>
           </h1>
 
           {/* Subtext */}
           <p className="mb-8 text-lg text-muted-foreground sm:text-xl lg:text-2xl">
-            SkyServer is an independent non-profit student project from Switzerland.
+            Host Minecraft, Terraria, Rust, CS2, Factorio & Satisfactory servers for free.
             <br className="hidden sm:block" />
-            No credit card. No hidden fees. Pure performance.
+            A non-profit student project from Switzerland. No credit card required.
           </p>
 
           {/* CTA Buttons */}

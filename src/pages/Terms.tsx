@@ -1,8 +1,10 @@
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollText } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function Terms() {
+  usePageTitle('Terms of Service - SkyServer');
   return (
     <Layout>
       <div className="container py-12 md:py-16">

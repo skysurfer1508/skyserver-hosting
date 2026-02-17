@@ -10,8 +10,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, AlertTriangle } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function Login() {
+  usePageTitle('Login - SkyServer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);

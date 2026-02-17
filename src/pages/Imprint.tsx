@@ -2,8 +2,10 @@ import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Building, Mail, Globe } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@/config/constants';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function Imprint() {
+  usePageTitle('Imprint - SkyServer');
   return (
     <Layout>
       <div className="container py-12 md:py-16">

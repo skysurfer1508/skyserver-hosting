@@ -13,6 +13,7 @@ import { Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { gameCategories } from '@/data/helpArticles';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 function renderAnswer(answer: string) {
   const lines = answer.split('\n');
@@ -80,6 +81,7 @@ function renderAnswer(answer: string) {
 }
 
 export default function Help() {
+  usePageTitle('Help Center - SkyServer | Game Server Guides & Tutorials');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredCategories = useMemo(() => {
