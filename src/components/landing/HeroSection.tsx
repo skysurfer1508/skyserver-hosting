@@ -88,15 +88,15 @@ export function HeroSection() {
           style={{ transitionDelay: isStatsVisible ? '200ms' : '0ms' }}
         >
           <div className="text-center">
-            <div className="font-display text-3xl font-bold text-primary">50+</div>
+            <div className="font-display text-2xl sm:text-3xl font-bold text-primary">50+</div>
             <div className="text-sm text-muted-foreground">Server Slots</div>
           </div>
           <div className="text-center">
-            <div className="font-display text-3xl font-bold text-primary">6</div>
+            <div className="font-display text-2xl sm:text-3xl font-bold text-primary">6</div>
             <div className="text-sm text-muted-foreground">Games Supported</div>
           </div>
           <div className="text-center">
-            <div className="font-display text-3xl font-bold text-primary">99.9%</div>
+            <div className="font-display text-2xl sm:text-3xl font-bold text-primary">99.9%</div>
             <div className="text-sm text-muted-foreground">Uptime</div>
           </div>
         </div>

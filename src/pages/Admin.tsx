@@ -30,7 +30,7 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-[700px]">
+          <TabsList className="flex w-full overflow-x-auto lg:w-[700px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>

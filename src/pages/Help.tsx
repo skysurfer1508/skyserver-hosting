@@ -155,7 +155,7 @@ export default function Help() {
             </div>
           ) : (
             <Tabs defaultValue={defaultTab} key={defaultTab}>
-              <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1.5 rounded-lg">
+              <TabsList className="w-full flex flex-nowrap overflow-x-auto h-auto gap-1 bg-muted/50 p-1.5 rounded-lg scrollbar-hide">
                 {filteredCategories.map((cat) => {
                   const Icon = cat.icon;
                   return (
