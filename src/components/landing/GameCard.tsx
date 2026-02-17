@@ -22,6 +22,7 @@ interface GameCardProps {
   description: string;
   tags: string[];
   accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber' | 'red';
+  backgroundImage?: string;
   limit?: GameLimit;
   onSelect: (gameName: GameName) => void;
 }
@@ -90,6 +91,7 @@ export function GameCard({
   description,
   tags,
   accentColor,
+  backgroundImage,
   limit,
   onSelect,
 }: GameCardProps) {
@@ -141,18 +143,29 @@ export function GameCard({
       }}
       >
         {/* Header with icon and title */}
-        <CardHeader className={cn('pb-3 rounded-t-lg border-b', styles.header)}>
-          <div className="flex items-center gap-3">
+        <CardHeader className={cn('relative overflow-hidden rounded-t-lg border-b h-36 p-0', styles.header)}>
+          {/* Background image */}
+          {backgroundImage && (
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${backgroundImage})` }}
+            />
+          )}
+          {/* Dark gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
+          
+          {/* Content */}
+          <div className="relative z-10 flex items-end gap-3 h-full p-5">
             <motion.div 
               className={cn(
-                'flex h-12 w-12 items-center justify-center rounded-xl text-2xl ring-2',
+                'flex h-12 w-12 items-center justify-center rounded-xl text-2xl ring-2 shrink-0',
                 styles.icon
               )}
               whileHover={{ rotate: [0, -10, 10, 0], transition: { duration: 0.5 } }}
             >
               {icon}
             </motion.div>
-            <h3 className={cn('text-xl font-bold font-display', styles.text)}>
+            <h3 className="text-xl font-bold font-display text-white drop-shadow-lg">
               {title}
             </h3>
           </div>

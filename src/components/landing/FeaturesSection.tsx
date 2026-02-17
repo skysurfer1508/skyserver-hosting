@@ -7,6 +7,12 @@ import { ServerRequestModal } from './ServerRequestModal';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import minecraftBg from '@/assets/games/minecraft-bg.jpg';
+import terrariaBg from '@/assets/games/terraria-bg.jpg';
+import satisfactoryBg from '@/assets/games/satisfactory-bg.jpg';
+import cs2Bg from '@/assets/games/cs2-bg.jpg';
+import factorioBg from '@/assets/games/factorio-bg.jpg';
+import rustBg from '@/assets/games/rust-bg.jpg';
 
 const gameData: {
   gameName: GameName;
@@ -15,6 +21,7 @@ const gameData: {
   description: string;
   tags: string[];
   accentColor: 'green' | 'purple' | 'orange' | 'blue' | 'amber' | 'red';
+  backgroundImage: string;
 }[] = [
   {
     gameName: 'minecraft',
@@ -23,6 +30,7 @@ const gameData: {
     description: 'Build, explore, and survive in infinite worlds. Full support for Spigot, Paper, and Forge.',
     tags: ['Java & Bedrock', 'Mods & Plugins', '24/7 Online'],
     accentColor: 'green',
+    backgroundImage: minecraftBg,
   },
   {
     gameName: 'terraria',
@@ -31,6 +39,7 @@ const gameData: {
     description: 'Dig, fight, explore, and build. The world is at your fingertips as you fight for survival, fortune, and glory.',
     tags: ['tModLoader Supported', 'Large Worlds', 'Journey Mode'],
     accentColor: 'purple',
+    backgroundImage: terrariaBg,
   },
   {
     gameName: 'satisfactory',
@@ -39,6 +48,7 @@ const gameData: {
     description: 'Construct massive factories and automate production on an alien planet. Perfect for co-op sessions.',
     tags: ['Experimental Branch', 'Unlimited Saves', 'High Performance'],
     accentColor: 'orange',
+    backgroundImage: satisfactoryBg,
   },
   {
     gameName: 'cs2',
@@ -47,6 +57,7 @@ const gameData: {
     description: 'The ultimate competitive FPS. Host your own matches with custom game modes, maps, and settings.',
     tags: ['Competitive', 'Custom Maps', 'Workshop Support'],
     accentColor: 'blue',
+    backgroundImage: cs2Bg,
   },
   {
     gameName: 'factorio',
@@ -55,6 +66,7 @@ const gameData: {
     description: 'Build and maintain factories on an alien planet. Automate everything from resource gathering to logistics.',
     tags: ['Multiplayer', 'Mod Support', 'Mega Bases'],
     accentColor: 'amber',
+    backgroundImage: factorioBg,
   },
   {
     gameName: 'rust',
@@ -63,6 +75,7 @@ const gameData: {
     description: 'Survive, build, and dominate in one of the most brutal multiplayer survival games.',
     tags: ['Survival', 'PvP & PvE', 'Base Building'],
     accentColor: 'red',
+    backgroundImage: rustBg,
   },
 ];
 
@@ -168,6 +181,7 @@ export function FeaturesSection() {
                   description={game.description}
                   tags={game.tags}
                   accentColor={game.accentColor}
+                  backgroundImage={game.backgroundImage}
                   limit={getGameLimit(game.gameName)}
                   onSelect={handleSelectGame}
                 />
