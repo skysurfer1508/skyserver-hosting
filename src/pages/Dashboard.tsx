@@ -59,7 +59,7 @@ export default function Dashboard() {
         {!isAdminOnline && <AdminOfflineBanner />}
         {/* Welcome Header */}
         <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
             Welcome, <span className="text-primary">{user?.email?.split('@')[0]}</span>
           </h1>
           <p className="text-muted-foreground">

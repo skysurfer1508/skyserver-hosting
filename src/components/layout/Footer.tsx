@@ -6,7 +6,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-card/50">
       <div className="container py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col items-center gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
@@ -18,7 +18,7 @@ export function Footer() {
           </div>
 
           {/* Links */}
-          <nav className="flex items-center gap-6">
+          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
             <a
               href={DISCORD_INVITE_URL}
               target="_blank"
