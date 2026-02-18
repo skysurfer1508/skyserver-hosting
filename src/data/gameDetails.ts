@@ -81,7 +81,7 @@ export const gameDetails: Record<string, GameDetail> = {
       { title: 'Dedicated Server Support', description: 'Official Satisfactory dedicated server with full multiplayer support.' },
       { title: 'Save Management', description: 'Upload existing saves or start fresh. Full save file management through the panel.' },
       { title: 'Auto-Restart', description: 'Automatic server restarts to keep your factory running smoothly 24/7.' },
-      { title: 'Update 1.0 Ready', description: 'Always running the latest version of Satisfactory with automatic updates.' },
+      { title: 'Update 1.1 Ready', description: 'Always running the latest version of Satisfactory with automatic updates.' },
       { title: 'Multi-Session', description: 'Manage multiple game sessions from the same server instance.' },
       { title: 'Admin Controls', description: 'Full server admin commands and player management tools.' },
     ],
