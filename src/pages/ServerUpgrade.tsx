@@ -10,7 +10,7 @@ import { useServerRequest } from '@/hooks/useServerRequest';
 import { useGameLimits } from '@/hooks/useGameLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Cpu, MemoryStick, AlertTriangle, Zap, ArrowLeft } from 'lucide-react';
+import { Loader2, Cpu, MemoryStick, AlertTriangle, Zap, ArrowLeft, Check, Headset, Shield, Clock } from 'lucide-react';
 
 const PRICE_PER_UNIT = 1.50;
 
@@ -139,6 +139,39 @@ export default function ServerUpgrade() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Benefits */}
+        {!request.stripe_subscription_id && (
+          <Card className="gaming-card border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Upgrade Benefits
+              </CardTitle>
+              <CardDescription>
+                What you get when you purchase extra resources
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  { icon: Headset, title: 'Prioritized Support', desc: 'Faster response times from the support team' },
+                  { icon: Shield, title: 'Permanent Server', desc: 'Your server will never expire — no more 7-day renewals' },
+                  { icon: Clock, title: 'Priority Queue', desc: 'Your upgrade requests are processed first' },
+                  { icon: Zap, title: 'Performance Boost', desc: 'Direct hardware resource improvements for your server' },
+                ].map((b) => (
+                  <div key={b.title} className="flex gap-3 rounded-lg bg-muted/30 border border-border/50 p-4">
+                    <Check className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium">{b.title}</p>
+                      <p className="text-sm text-muted-foreground">{b.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Upgrade Sliders */}
         {request.stripe_subscription_id ? (
