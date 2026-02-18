@@ -18,6 +18,7 @@ import UpdatePassword from "./pages/UpdatePassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
 import ServerUpgrade from "./pages/ServerUpgrade";
+import Compare from "./pages/Compare";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/compare" element={<Compare />} />
             <Route path="/help" element={<Help />} />
             <Route path="/imprint" element={<Imprint />} />
             <Route path="/terms" element={<Terms />} />
