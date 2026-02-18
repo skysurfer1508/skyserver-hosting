@@ -707,13 +707,11 @@ export function ServerStatusCard() {
             )}
 
             {/* Server Expiry/Renewal Card */}
-            {request.expires_at && (
-              <ServerExpiryCard
-                requestId={request.id}
-                expiresAt={request.expires_at}
-                onRenewed={refetch}
-              />
-            )}
+            <ServerExpiryCard
+              requestId={request.id}
+              expiresAt={request.expires_at}
+              onRenewed={refetch}
+            />
           </div>
         )}
 
