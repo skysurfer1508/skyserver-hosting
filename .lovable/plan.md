@@ -1,92 +1,41 @@
 
+# Dynamic Game Specs from Database
 
-## Live Statistics Section for Landing Page
+## Summary
+Replace the hardcoded specs on each game detail page with live data pulled from the `game_limits` database table, and update Storage and Players to show "Unlimited".
 
-Add a "Live Statistics" section to the landing page that fetches real-time data from the Pterodactyl Panel via a secure backend function, with animated count-up numbers and cyberpunk styling.
+## What Changes
 
-### Architecture
+### 1. Update `src/pages/GameDetail.tsx`
+- Fetch the game's limits from the `game_limits` table using the slug (which matches `game_name` in the DB).
+- Build the specs bar dynamically:
+  - **RAM**: From `base_ram_mb` (e.g., 2560 -> "2.5 GB")
+  - **CPU**: From `base_cpu_percent` (e.g., 100 -> "100%", 300 -> "300%")
+  - **Storage**: Always "Unlimited"
+  - **DDoS Protection**: Always "Included"
+  - **Players**: Always "Unlimited"
+- Show a loading skeleton while the data loads; fall back to the static specs from `gameDetails.ts` if the fetch fails.
 
-The Pterodactyl API key stays securely on the backend. A new backend function fetches stats from the panel, caches them in a database table (refreshed every 5 minutes), and serves them to the frontend without exposing any credentials.
+### 2. Update `src/data/gameDetails.ts`
+- Remove the per-game `specs` arrays (or keep them as fallback defaults).
+- Update the `GameDetail` interface -- the `specs` field becomes optional since it will be overridden by live data.
 
-```text
-Frontend (Landing Page)
-   |
-   v
-Edge Function: panel-stats (public, no auth needed)
-   |
-   v
-Cache table: panel_stats_cache (single row, updated every 5 min)
-   |
-   v
-Pterodactyl API (https://panel.skyserver1508.org/api/application/*)
-```
+### 3. No database changes needed
+The `game_limits` table already has `base_ram_mb` and `base_cpu_percent` per game, and is publicly readable via RLS.
 
-### Prerequisites
+## Technical Details
 
-A new secret **PTERODACTYL_API_KEY** must be added to the project. This is the Application API key from the Pterodactyl Panel (found under Admin > Application API).
-
-### Database Changes
-
-**New table: `panel_stats_cache`**
-- `id` (integer, primary key, default 1) -- single-row cache
-- `total_servers` (integer)
-- `total_users` (integer)
-- `total_ram_mb` (bigint) -- sum of all server memory limits in MB
-- `nodes_online` (integer)
-- `updated_at` (timestamptz)
-
-RLS: SELECT allowed for everyone (public data), no INSERT/UPDATE/DELETE from client side.
-
-### New Edge Function: `panel-stats`
-
-**File:** `supabase/functions/panel-stats/index.ts`
-
-- Public endpoint (no JWT required)
-- On each call, checks `panel_stats_cache.updated_at`
-- If stale (older than 5 minutes), fetches fresh data from Pterodactyl API:
-  - `GET /api/application/servers` -- count total + sum memory limits
-  - `GET /api/application/users` -- count total
-  - `GET /api/application/nodes` -- count total
-- Upserts the cache row and returns the stats as JSON
-- If fresh, returns cached data directly
-- Uses `PTERODACTYL_API_KEY` from environment (never exposed to frontend)
-- Paginates through all API pages to get accurate totals
-
-### New Frontend Component: `LiveStatsSection`
-
-**File:** `src/components/landing/LiveStatsSection.tsx`
-
-- 4-card horizontal grid with icons:
-  - **Total Servers** (Server icon) -- e.g., "24"
-  - **Happy Gamers** (Users icon) -- e.g., "156"
-  - **RAM Powered** (MemoryStick/Cpu icon) -- e.g., "12.4 GB"
-  - **Nodes Online** (Network icon) -- e.g., "2"
-- Count-up animation triggered by scroll visibility (using existing `useScrollReveal` hook)
-- Numbers animate from 0 to target value over ~2 seconds when section scrolls into view
-- Styled with the existing gaming-card / cyberpunk dark theme with primary (neon blue/cyan) accents
-- Fetches data from the edge function via `supabase.functions.invoke('panel-stats')`
-- Shows skeleton loading state while fetching
-- Gracefully falls back to "--" if the fetch fails
-
-### Modified Files
-
-**`src/pages/Index.tsx`**
-- Import and add `<LiveStatsSection />` between `<HeroSection />` and `<NewsSection />`
-
-### Visual Layout
+The component will use a simple `useEffect` + Supabase query:
 
 ```text
-+----------------------------------------------------+
-|              Live Platform Statistics               |
-|                                                     |
-|  +----------+  +----------+  +--------+  +-------+ |
-|  | Server   |  | Users    |  | Cpu    |  | Globe | |
-|  |   24     |  |   156    |  | 12.4GB |  |   2   | |
-|  | Servers  |  | Happy    |  | RAM    |  | Nodes | |
-|  | Deployed |  | Gamers   |  | Powered|  | Online| |
-|  +----------+  +----------+  +--------+  +-------+ |
-+----------------------------------------------------+
+supabase.from('game_limits').select('base_ram_mb, base_cpu_percent').eq('game_name', slug).single()
 ```
 
-Each card uses the existing `gaming-card` class with a glowing icon in `bg-primary/10`, matching the `StatCard` pattern used in the admin panel.
+Then construct specs array:
+- RAM: `(base_ram_mb / 1024)` GB (or MB if < 1024)
+- CPU: `base_cpu_percent + "%"`
+- Storage: "Unlimited"
+- DDoS Protection: "Included"
+- Players: "Unlimited"
 
+The static `specs` in `gameDetails.ts` will remain as fallback but will be overridden by the live DB values when available.
