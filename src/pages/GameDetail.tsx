@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ExternalLink, Server, Cpu, HardDrive, Shield, Users, Zap, CheckCircle } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const accentMap = {
   green: { text: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30', button: 'bg-emerald-600 hover:bg-emerald-500', glow: 'rgba(16,185,129,0.3)' },
@@ -30,8 +32,38 @@ const GameDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const game = getGameBySlug(slug || '');
+  const [specsLoading, setSpecsLoading] = useState(true);
+  const [liveSpecs, setLiveSpecs] = useState<{ label: string; value: string }[] | null>(null);
 
   usePageTitle(game ? `Free ${game.name} Server Hosting | SkyServer` : 'Game Not Found | SkyServer');
+
+  useEffect(() => {
+    if (!slug) return;
+    const fetchSpecs = async () => {
+      setSpecsLoading(true);
+      const { data, error } = await supabase
+        .from('game_limits')
+        .select('base_ram_mb, base_cpu_percent')
+        .eq('game_name', slug)
+        .maybeSingle();
+
+      if (!error && data) {
+        const ramMb = data.base_ram_mb;
+        const ramValue = ramMb >= 1024
+          ? `${(ramMb / 1024).toFixed(ramMb % 1024 === 0 ? 0 : 1)} GB`
+          : `${ramMb} MB`;
+        setLiveSpecs([
+          { label: 'RAM', value: ramValue },
+          { label: 'CPU', value: `${data.base_cpu_percent}%` },
+          { label: 'Storage', value: 'Unlimited' },
+          { label: 'DDoS Protection', value: 'Included' },
+          { label: 'Players', value: 'Unlimited' },
+        ]);
+      }
+      setSpecsLoading(false);
+    };
+    fetchSpecs();
+  }, [slug]);
 
   useEffect(() => {
     if (game) {
@@ -143,23 +175,35 @@ const GameDetail = () => {
       <section className="border-y border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {game.specs.map((spec) => (
-              <motion.div
-                key={spec.label}
-                className="flex items-center gap-3 justify-center"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-              >
-                <div className={`p-2 rounded-lg ${colors.bg}`}>
-                  <span className={colors.text}>{specIcons[spec.label] || <Server className="h-4 w-4" />}</span>
+            {specsLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 justify-center">
+                  <Skeleton className="h-9 w-9 rounded-lg" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{spec.label}</p>
-                  <p className="font-semibold text-sm">{spec.value}</p>
-                </div>
-              </motion.div>
-            ))}
+              ))
+            ) : (
+              (liveSpecs || game.specs).map((spec) => (
+                <motion.div
+                  key={spec.label}
+                  className="flex items-center gap-3 justify-center"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
+                  <div className={`p-2 rounded-lg ${colors.bg}`}>
+                    <span className={colors.text}>{specIcons[spec.label] || <Server className="h-4 w-4" />}</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{spec.label}</p>
+                    <p className="font-semibold text-sm">{spec.value}</p>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>
