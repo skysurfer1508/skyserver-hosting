@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.cancel-subscription]
 verify_jwt = false
+
+[functions.panel-stats]
+verify_jwt = false
