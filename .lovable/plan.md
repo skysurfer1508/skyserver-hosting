@@ -1,24 +1,67 @@
 
-## Add Benefits Section to Server Upgrade Page
 
-Add a visually appealing "Benefits" card on the Server Upgrade page that highlights the perks users get when purchasing extra resources.
+## Add "Free vs. Permanent" Comparison Page
 
-### What will be added
+A new `/compare` page with dynamic game specs fetched from the backend, accessible via the hamburger menu.
 
-A new card placed between the "Current Server Specs" card and the "Add Extra Resources" card, listing the following benefits:
+### What will be built
 
-- **Prioritized Support** -- Faster response times from the support team
-- **Permanent Server** -- Server will never expire (no more 7-day lease renewals)
-- **Priority Queue** -- Upgrade requests are processed first
-- **Performance Boost** -- Direct hardware resource improvements
+1. **New page** at `/compare` showing a comparison between Free and Permanent tiers
+2. **Per-game spec cards** with dynamic RAM/CPU values from `game_limits` table via `useGameLimits()`
+3. **Feature comparison table** (server lifetime, support level, queue priority, etc.)
+4. **"Upgrade Now" CTA** linking to dashboard
+5. **Navigation link** added only to the hamburger menu (not the header bar)
 
-Each benefit will be displayed as a list item with a checkmark icon, a title, and a short description, styled consistently with the existing gaming-card design.
+### Files changed
 
-### Technical Details
+**New file: `src/pages/Compare.tsx`**
+- Uses `useGameLimits()` hook to fetch dynamic free-tier specs
+- Displays per-game cards with Free vs Permanent columns
+- General feature comparison table
+- Loading state while fetching
+- Wrapped in existing `Layout` component
 
-**File modified:** `src/pages/ServerUpgrade.tsx`
+**Modified: `src/App.tsx`**
+- Add route: `<Route path="/compare" element={<Compare />} />`
 
-- Import `Shield`, `Headset`, `Clock`, `Check` icons from `lucide-react`
-- Add a new `Card` component between lines 141 and 143 (after Current Specs, before Upgrade Sliders)
-- The card will contain a grid/list of benefit items, each with a green check icon, bold title, and muted description
-- Only shown when the user does NOT already have an active subscription (same condition as the sliders)
+**Modified: `src/components/layout/Header.tsx`**
+- Add "Free vs. Permanent" entry to the `navItems` array with `isRoute: true` so it appears in the hamburger menu on all pages
+- No changes to the top header bar
+
+### Page structure
+
+```text
++------------------------------------------+
+|         Free vs. Permanent               |
+|   Compare what each tier offers          |
++------------------------------------------+
+|                                          |
+|  Per-Game Cards (6 games):               |
+|  +----------------------------------+   |
+|  |  Minecraft                       |   |
+|  |  FREE        |  PERMANENT        |   |
+|  |  2.5 GB RAM  |  +8 GB extra      |   |
+|  |  100% CPU    |  +800% extra      |   |
+|  |  7-day lease |  Never expires    |   |
+|  +----------------------------------+   |
+|  ... (repeat for active games)       |   |
+|                                          |
++------------------------------------------+
+|  Feature Comparison Table                |
+|  Server Lifetime: 7 days vs Forever      |
+|  Support: Standard vs Priority           |
+|  Queue: Normal vs Priority               |
+|  Extra Resources: No vs Yes              |
++------------------------------------------+
+|        [ Upgrade Now Button ]            |
++------------------------------------------+
+```
+
+### Technical details
+
+- `useGameLimits()` returns `base_ram_mb` and `base_cpu_percent` per game -- these are converted for display (e.g., 2560 MB to "2.5 GB")
+- Only active games (`is_active: true`) are shown
+- Game icons/names mapped using the same pattern as the landing page
+- No database changes needed -- all data already exists in `game_limits` table
+- The hamburger menu entry uses `isRoute: true` so it navigates directly and appears on all pages (not just the home page)
+
