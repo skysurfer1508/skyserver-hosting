@@ -3,6 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { Info } from 'lucide-react';
 
 export type GameName = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
 
@@ -224,17 +226,29 @@ export function GameCard({
             </div>
           )}
 
-          {/* Action Button */}
-          <Button
-            className={cn('w-full font-semibold', styles.button)}
-            onClick={() => onSelect(gameName)}
-            disabled={isDisabled}
-          >
-            {isDisabled 
-              ? (limit?.is_full ? 'Sold Out' : 'Unavailable')
-              : `Select ${title}`
-            }
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              className={cn('flex-1 font-semibold', styles.button)}
+              onClick={() => onSelect(gameName)}
+              disabled={isDisabled}
+            >
+              {isDisabled 
+                ? (limit?.is_full ? 'Sold Out' : 'Unavailable')
+                : `Select ${title}`
+              }
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="border-border/50 hover:border-primary/50 shrink-0"
+              asChild
+            >
+              <Link to={`/games/${gameName}`} title="More Information">
+                <Info className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </motion.div>
