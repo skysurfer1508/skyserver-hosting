@@ -1,62 +1,24 @@
 
+## Add Benefits Section to Server Upgrade Page
 
-# Hintergrundbilder fuer Game Cards
+Add a visually appealing "Benefits" card on the Server Upgrade page that highlights the perks users get when purchasing extra resources.
 
-## Uebersicht
-Jede Game Card bekommt ein atmosphaerisches Hintergrundbild im Header-Bereich, das dem jeweiligen Spiel entspricht. Die Bilder werden als URL-Referenzen aus frei verfuegbaren Quellen eingebunden und mit einem dunklen Overlay versehen, damit Text und Icons weiterhin gut lesbar bleiben.
+### What will be added
 
-## Aenderungen
+A new card placed between the "Current Server Specs" card and the "Add Extra Resources" card, listing the following benefits:
 
-### 1. Game-Bilder als URLs definieren (`src/components/landing/FeaturesSection.tsx`)
-- Dem `gameData`-Array wird pro Spiel ein neues Feld `backgroundImage` hinzugefuegt
-- Verwendet werden hochwertige, frei verfuegbare Bilder (z.B. von Unsplash oder offizielle Promo-Bilder via CDN)
-- Alternativ: Du kannst eigene Bilder hochladen (per Chat-Upload), die ich dann direkt einbinde
+- **Prioritized Support** -- Faster response times from the support team
+- **Permanent Server** -- Server will never expire (no more 7-day lease renewals)
+- **Priority Queue** -- Upgrade requests are processed first
+- **Performance Boost** -- Direct hardware resource improvements
 
-### 2. GameCard-Komponente erweitern (`src/components/landing/GameCard.tsx`)
-- Neues Prop `backgroundImage?: string` hinzufuegen
-- Im CardHeader-Bereich wird das Bild als `background-image` mit CSS eingesetzt
-- Darueber kommt ein dunkles Gradient-Overlay (`bg-gradient-to-t from-black/80 via-black/50 to-black/30`), damit der Titel und das Icon lesbar bleiben
-- Der Header wird etwas hoeher (z.B. `h-32` statt der aktuellen kompakten Hoehe)
-- Das Icon und der Titel werden ueber dem Overlay positioniert (`relative z-10`)
+Each benefit will be displayed as a list item with a checkmark icon, a title, and a short description, styled consistently with the existing gaming-card design.
 
-### Visuelles Ergebnis
+### Technical Details
 
-Jede Karte zeigt im oberen Bereich ein stimmungsvolles Spielbild mit einem sanften dunklen Verlauf. Darunter bleiben Beschreibung, Tags, Fortschrittsbalken und Button unveraendert.
+**File modified:** `src/pages/ServerUpgrade.tsx`
 
-```text
-+---------------------------+
-|  [Hintergrundbild]        |
-|  ~~~~~~~~~~~~~~~~~~~~~~~~ |
-|  Icon  Spielname          |
-+---------------------------+
-|  Beschreibung...          |
-|  [Tag] [Tag] [Tag]        |
-|                           |
-|  ████████░░░ 5/10 Claimed |
-|  [ Select Minecraft ]     |
-+---------------------------+
-```
-
-## Technische Details
-
-### Dateien die geaendert werden:
-1. **`src/components/landing/FeaturesSection.tsx`** -- `backgroundImage`-Feld zum gameData-Array hinzufuegen und als Prop an GameCard weitergeben
-2. **`src/components/landing/GameCard.tsx`** -- Neues Prop akzeptieren, Header-Bereich mit Hintergrundbild und Overlay gestalten
-
-### GameCard Header-Aenderung (Kern-Idee):
-- Der `CardHeader` bekommt `position: relative`, `overflow: hidden` und eine feste Hoehe
-- Ein `div` mit `background-image`, `background-size: cover`, `background-position: center` wird absolut positioniert
-- Ein zweites `div` als Gradient-Overlay liegt darueber
-- Icon und Titel bleiben relativ positioniert mit `z-10`
-
-### Bild-Quellen:
-Es werden Unsplash-URLs verwendet (kostenlos, keine Lizenzprobleme):
-- **Minecraft**: Blockiges Landschafts-/Craft-Motiv
-- **Terraria**: Pixelart / Naturlandschaft
-- **Satisfactory**: Fabrik-/Industriemotiv
-- **CS2**: Taktisches/FPS-Motiv
-- **Factorio**: Mechanik-/Zahnrad-Motiv
-- **Rust**: Survival-/Wildnis-Motiv
-
-Falls du lieber eigene Bilder verwenden moechtest, kannst du sie einfach hier im Chat hochladen -- ich baue sie dann direkt ein.
-
+- Import `Shield`, `Headset`, `Clock`, `Check` icons from `lucide-react`
+- Add a new `Card` component between lines 141 and 143 (after Current Specs, before Upgrade Sliders)
+- The card will contain a grid/list of benefit items, each with a green check icon, bold title, and muted description
+- Only shown when the user does NOT already have an active subscription (same condition as the sliders)
