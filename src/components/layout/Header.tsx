@@ -49,6 +49,7 @@ const navItems = [
   { name: 'Roadmap', href: '#roadmap', icon: Map },
   { name: 'FAQ', href: '#faq', icon: HelpCircle },
   { name: 'Tech Stack', href: '#tech-stack', icon: Cpu },
+  { name: 'Free vs. Permanent', href: '/compare', icon: Zap, isRoute: true },
   { name: 'Help Center', href: '/help', icon: HelpCircle, isRoute: true },
   { name: 'Imprint', href: '/imprint', icon: Server, isRoute: true },
 ];
