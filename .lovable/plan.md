@@ -1,41 +1,25 @@
 
-# Dynamic Game Specs from Database
+
+# Update Favicon and SEO Icons
 
 ## Summary
-Replace the hardcoded specs on each game detail page with live data pulled from the `game_limits` database table, and update Storage and Players to show "Unlimited".
+Replace the current favicon with the uploaded logo and add proper SEO icon tags for Google, Apple devices, and social media previews.
 
-## What Changes
+## Changes
 
-### 1. Update `src/pages/GameDetail.tsx`
-- Fetch the game's limits from the `game_limits` table using the slug (which matches `game_name` in the DB).
-- Build the specs bar dynamically:
-  - **RAM**: From `base_ram_mb` (e.g., 2560 -> "2.5 GB")
-  - **CPU**: From `base_cpu_percent` (e.g., 100 -> "100%", 300 -> "300%")
-  - **Storage**: Always "Unlimited"
-  - **DDoS Protection**: Always "Included"
-  - **Players**: Always "Unlimited"
-- Show a loading skeleton while the data loads; fall back to the static specs from `gameDetails.ts` if the fetch fails.
+### 1. Copy the uploaded icon to the public directory
+- Copy `user-uploads://icon.ico` to `public/logo.png` (for use in meta tags)
+- The existing `public/icon.ico` will also be kept as fallback
 
-### 2. Update `src/data/gameDetails.ts`
-- Remove the per-game `specs` arrays (or keep them as fallback defaults).
-- Update the `GameDetail` interface -- the `specs` field becomes optional since it will be overridden by live data.
+### 2. Update `index.html` head section
+- Replace `<link rel="icon" href="/icon.ico" />` with:
+  - `<link rel="icon" href="/logo.png" type="image/png">`
+  - `<link rel="apple-touch-icon" href="/logo.png">`
+- Update all `og:image` meta tags to point to `https://www.skyserver1508.org/logo.png`
+- Update `twitter:image` to the same URL
+- Update the JSON-LD Organization `logo` field to match
 
-### 3. No database changes needed
-The `game_limits` table already has `base_ram_mb` and `base_cpu_percent` per game, and is publicly readable via RLS.
+### 3. Note on image size
+- The uploaded `.ico` file will be copied as-is. For best Google compatibility, the icon should be a multiple of 48px (e.g., 96x96, 144x144). If the current file doesn't meet that, you may want to upload a properly sized PNG version later.
+- For a high-quality Open Graph banner (1200x630px for Discord/WhatsApp previews), you would need to provide a separate banner image. For now, the logo will be used as the `og:image`.
 
-## Technical Details
-
-The component will use a simple `useEffect` + Supabase query:
-
-```text
-supabase.from('game_limits').select('base_ram_mb, base_cpu_percent').eq('game_name', slug).single()
-```
-
-Then construct specs array:
-- RAM: `(base_ram_mb / 1024)` GB (or MB if < 1024)
-- CPU: `base_cpu_percent + "%"`
-- Storage: "Unlimited"
-- DDoS Protection: "Included"
-- Players: "Unlimited"
-
-The static `specs` in `gameDetails.ts` will remain as fallback but will be overridden by the live DB values when available.
