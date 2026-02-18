@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      panel_stats_cache: {
+        Row: {
+          id: number
+          nodes_online: number
+          total_ram_mb: number
+          total_servers: number
+          total_users: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          nodes_online?: number
+          total_ram_mb?: number
+          total_servers?: number
+          total_users?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          nodes_online?: number
+          total_ram_mb?: number
+          total_servers?: number
+          total_users?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       password_reset_tokens: {
         Row: {
           created_at: string
