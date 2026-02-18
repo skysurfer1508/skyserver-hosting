@@ -105,10 +105,12 @@ const GameDetail = () => {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'Product',
+            '@type': 'Service',
             name: `Free ${game.name} Server Hosting`,
             description: game.seoDescription,
-            brand: { '@type': 'Organization', name: 'SkyServer' },
+            image: `https://www.skyserver1508.org${game.backgroundImage}`,
+            brand: { '@type': 'Brand', name: 'SkyServer' },
+            provider: { '@type': 'Organization', name: 'SkyServer', url: 'https://www.skyserver1508.org' },
             offers: {
               '@type': 'Offer',
               price: '0',
