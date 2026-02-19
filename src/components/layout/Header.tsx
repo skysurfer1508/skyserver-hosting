@@ -135,11 +135,11 @@ export function Header() {
           >
             <Button 
               variant="ghost" 
-              size="icon" 
-              className="hover:bg-amber-500/10 hover:text-amber-400 transition-colors"
+              size="sm"
+              className="gap-2 hover:bg-amber-500/10 hover:text-amber-400 transition-colors"
             >
-              <span className="text-lg">☕</span>
-              <span className="sr-only">Buy us a Coffee</span>
+              <span>☕</span>
+              <span className="hidden md:inline">Buy us a Coffee</span>
             </Button>
           </a>
 
