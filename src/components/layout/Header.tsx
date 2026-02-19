@@ -136,10 +136,10 @@ export function Header() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="hover:bg-red-500/10 hover:text-red-400 transition-colors"
+              className="hover:bg-amber-500/10 hover:text-amber-400 transition-colors"
             >
-              <Heart className="h-5 w-5" />
-              <span className="sr-only">Support Us</span>
+              <span className="text-lg">☕</span>
+              <span className="sr-only">Buy us a Coffee</span>
             </Button>
           </a>
 
@@ -319,11 +319,11 @@ export function Header() {
               >
                 <Button
                   variant="ghost"
-                  className="w-full justify-between gap-3 h-12 text-base hover:bg-red-500/10 hover:text-red-400"
+                  className="w-full justify-between gap-3 h-12 text-base hover:bg-amber-500/10 hover:text-amber-400"
                 >
                   <span className="flex items-center gap-3">
-                    <Heart className="h-5 w-5" />
-                    Support the Project
+                    <span className="text-lg">☕</span>
+                    Buy us a Coffee
                   </span>
                   <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </Button>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, Server, MessageCircle, HelpCircle, Heart } from 'lucide-react';
+import { ExternalLink, Server, MessageCircle, HelpCircle } from 'lucide-react';
 import { DISCORD_INVITE_URL, EXTERNAL_LINKS } from '@/config/constants';
 
 export function Footer() {
@@ -44,10 +44,10 @@ export function Footer() {
               href={EXTERNAL_LINKS.donate}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-red-400 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-amber-400 transition-colors"
             >
-              <Heart className="h-4 w-4" />
-              Support Us
+              <span>☕</span>
+              Buy us a Coffee
               <ExternalLink className="h-3 w-3" />
             </a>
             <Link
