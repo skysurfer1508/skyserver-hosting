@@ -34,31 +34,25 @@ serve(async (req) => {
 
     if (!PTERODACTYL_API_KEY || !PTERODACTYL_PANEL_URL) {
       log("ERROR: Missing PTERODACTYL_API_KEY or PTERODACTYL_PANEL_URL");
-      log(`PTERODACTYL_API_KEY set: ${!!PTERODACTYL_API_KEY}`);
-      log(`PTERODACTYL_PANEL_URL set: ${!!PTERODACTYL_PANEL_URL}`);
       return new Response(
-        JSON.stringify({ error: "Pterodactyl configuration missing. Required secrets: PTERODACTYL_API_KEY and PTERODACTYL_PANEL_URL", logs }),
+        JSON.stringify({ error: "Pterodactyl configuration missing", logs }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate PTERODACTYL_PANEL_URL looks like a URL
     if (!PTERODACTYL_PANEL_URL.startsWith("http://") && !PTERODACTYL_PANEL_URL.startsWith("https://")) {
       log(`ERROR: PTERODACTYL_PANEL_URL does not look like a URL. Got: "${PTERODACTYL_PANEL_URL.substring(0, 20)}..."`);
-      log("HINT: PTERODACTYL_PANEL_URL should be like https://panel.example.com (NOT the API key)");
       return new Response(
-        JSON.stringify({ 
-          error: "PTERODACTYL_PANEL_URL is not a valid URL. It should be like https://panel.example.com — check if your secrets are swapped.", 
-          logs 
-        }),
+        JSON.stringify({ error: "PTERODACTYL_PANEL_URL is not a valid URL. Check if your secrets are swapped.", logs }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    log(`[Config] Panel URL: ${PTERODACTYL_PANEL_URL}`);
+    const panelUrl = PTERODACTYL_PANEL_URL.replace(/\/+$/, "");
+    log(`[Config] Panel URL: ${panelUrl}`);
     log(`[Config] API Key: ${PTERODACTYL_API_KEY.substring(0, 8)}...`);
 
-    // Authenticate the calling user
+    // Step 1: Authenticate the calling user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       log("ERROR: No valid Authorization header");
@@ -93,15 +87,14 @@ serve(async (req) => {
       );
     }
 
-    const panelUrl = PTERODACTYL_PANEL_URL.replace(/\/+$/, "");
+    // Step 2: Lookup Pterodactyl user by email WITH included servers
     const pteroHeaders = {
       Authorization: `Bearer ${PTERODACTYL_API_KEY}`,
       Accept: "application/vnd.pterodactyl.v1+json",
       "Content-Type": "application/json",
     };
 
-    // Step 2: Find Pterodactyl user by email
-    const userLookupUrl = `${panelUrl}/api/application/users?filter[email]=${encodeURIComponent(userEmail)}`;
+    const userLookupUrl = `${panelUrl}/api/application/users?filter[email]=${encodeURIComponent(userEmail)}&include=servers`;
     log(`[Step 2] Looking up Pterodactyl user at: ${userLookupUrl}`);
 
     let userRes: Response;
@@ -116,24 +109,19 @@ serve(async (req) => {
       );
     }
 
-    log(`[Step 2] Pterodactyl user lookup HTTP status: ${userRes.status}`);
+    log(`[Step 2] HTTP status: ${userRes.status} ${userRes.statusText}`);
 
     if (!userRes.ok) {
       const errText = await userRes.text();
       log(`[Step 2] Ptero Response Body: ${errText}`);
-      log(`[Step 2] ERROR: Pterodactyl user lookup failed with ${userRes.status} ${userRes.statusText}`);
       return new Response(
-        JSON.stringify({ 
-          error: `Pterodactyl API error: ${userRes.status} ${userRes.statusText}`, 
-          details: errText, 
-          logs 
-        }),
+        JSON.stringify({ error: `Pterodactyl API error: ${userRes.status} ${userRes.statusText}`, details: errText, logs }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const pteroUserData = await userRes.json();
-    const pteroUsers = pteroUserData?.data || [];
+    const pteroData = await userRes.json();
+    const pteroUsers = pteroData?.data || [];
     log(`[Step 2] Pterodactyl users found: ${pteroUsers.length}`);
 
     if (pteroUsers.length === 0) {
@@ -144,60 +132,32 @@ serve(async (req) => {
       );
     }
 
-    const pteroUserId = pteroUsers[0].attributes.id;
-    log(`[Step 2] Found Pterodactyl user ID: ${pteroUserId} (username: ${pteroUsers[0].attributes.username})`);
+    // Step 3: Extract servers from the included relationship (email-only, ignore username)
+    const pteroUser = pteroUsers[0];
+    const pteroUserId = pteroUser.attributes.id;
+    log(`[Step 3] Using Pterodactyl user ID: ${pteroUserId} (email match only, username ignored)`);
 
-    // Step 3: Fetch servers owned by this Pterodactyl user
-    let allServers: any[] = [];
-    let page = 1;
-    let lastPage = 1;
+    const includedServers = pteroUser.attributes?.relationships?.servers?.data || [];
+    log(`[Step 3] Servers included in response: ${includedServers.length}`);
 
-    do {
-      const serverUrl = `${panelUrl}/api/application/servers?filter[user]=${pteroUserId}&page=${page}`;
-      log(`[Step 3] Fetching servers page ${page}: ${serverUrl}`);
-
-      let serverRes: Response;
-      try {
-        serverRes = await fetch(serverUrl, { headers: pteroHeaders });
-      } catch (fetchErr) {
-        const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
-        log(`[Step 3] FETCH ERROR: ${msg}`);
-        break;
-      }
-
-      log(`[Step 3] Server fetch HTTP status: ${serverRes.status}`);
-
-      if (!serverRes.ok) {
-        const errText = await serverRes.text();
-        log(`[Step 3] Ptero Response Body: ${errText}`);
-        log(`[Step 3] ERROR: Server lookup failed: ${serverRes.status} ${serverRes.statusText}`);
-        break;
-      }
-
-      const serverData = await serverRes.json();
-      const pageServers = serverData?.data || [];
-      log(`[Step 3] Page ${page}: found ${pageServers.length} server(s)`);
-
-      for (const srv of pageServers) {
-        log(`[Step 3]   - Server: "${srv.attributes.name}" (id: ${srv.attributes.id}, user: ${srv.attributes.user})`);
-      }
-
-      allServers = allServers.concat(pageServers);
-      lastPage = serverData?.meta?.pagination?.total_pages || 1;
-      page++;
-    } while (page <= lastPage);
-
-    log(`[Step 3] Total Pterodactyl servers found: ${allServers.length}`);
-
-    if (allServers.length === 0) {
-      log(`[Step 3] No servers found for Pterodactyl user ${pteroUserId}`);
+    if (includedServers.length === 0) {
+      log(`[Step 3] No servers found for this Pterodactyl user`);
       return new Response(
-        JSON.stringify({ message: "No Pterodactyl servers found", synced: 0, logs }),
+        JSON.stringify({ message: "No Pterodactyl servers found", synced: 0, ptero_user_id: pteroUserId, logs }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Step 4: Match servers to server_requests and update pterodactyl_server_id
+    // Build name -> id map from included servers
+    const pteroServerMap = new Map<string, number>();
+    for (const srv of includedServers) {
+      const name = (srv.attributes.name as string).toLowerCase().trim();
+      const id = srv.attributes.id as number;
+      pteroServerMap.set(name, id);
+      log(`[Step 3]   - Server: "${srv.attributes.name}" (id: ${id})`);
+    }
+
+    // Step 4: Match to database server_requests and update
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { data: requests, error: reqError } = await supabaseAdmin
@@ -214,59 +174,50 @@ serve(async (req) => {
       );
     }
 
-    log(`[Step 4] Found ${requests?.length || 0} server request(s) in database`);
-    for (const req of requests || []) {
-      log(`[Step 4]   - Request: "${req.server_name}" (id: ${req.id}, status: ${req.status}, ptero_id: ${req.pterodactyl_server_id || "null"})`);
+    log(`[Step 4] DB server requests: ${requests?.length || 0}`);
+    for (const r of requests || []) {
+      log(`[Step 4]   - "${r.server_name}" (status: ${r.status}, ptero_id: ${r.pterodactyl_server_id || "null"})`);
     }
 
     let syncedCount = 0;
-
-    // Build a map of pterodactyl server name -> pterodactyl server id
-    const pteroServerMap = new Map<string, number>();
-    for (const srv of allServers) {
-      const name = (srv.attributes.name as string).toLowerCase().trim();
-      pteroServerMap.set(name, srv.attributes.id);
-    }
-
-    log(`[Step 4] Pterodactyl server name map: ${JSON.stringify(Object.fromEntries(pteroServerMap))}`);
 
     for (const req of requests || []) {
       const reqName = req.server_name.toLowerCase().trim();
       const pteroId = pteroServerMap.get(reqName);
 
       if (pteroId) {
-        log(`[Step 4] Match found: "${req.server_name}" -> pterodactyl_server_id ${pteroId}`);
+        log(`[Step 4] Match: "${req.server_name}" -> pterodactyl_server_id ${pteroId}`);
         const { error: updateError } = await supabaseAdmin
           .from("server_requests")
           .update({ pterodactyl_server_id: pteroId })
           .eq("id", req.id);
 
         if (updateError) {
-          log(`[Step 4] ERROR: DB update failed for request ${req.id}: ${updateError.message}`);
+          log(`[Step 4] ERROR updating ${req.id}: ${updateError.message}`);
         } else {
-          log(`[Step 4] SUCCESS: Updated request "${req.server_name}" with pterodactyl_server_id ${pteroId}`);
+          log(`[Step 4] SUCCESS: Updated "${req.server_name}" with ptero_id ${pteroId}`);
           syncedCount++;
         }
       } else {
-        log(`[Step 4] No name match for "${req.server_name}" (searched as "${reqName}")`);
+        log(`[Step 4] No match for "${req.server_name}"`);
       }
     }
 
-    // Fallback: If only one request and one server, force-match
-    if (syncedCount === 0 && requests && requests.length === 1 && allServers.length === 1) {
-      const req = requests[0];
-      if (!req.pterodactyl_server_id) {
-        const pteroId = allServers[0].attributes.id;
-        log(`[Step 4] Attempting force-match: single request "${req.server_name}" -> single server id ${pteroId}`);
+    // Fallback: 1 request + 1 server = force-match
+    if (syncedCount === 0 && requests && requests.length === 1 && includedServers.length === 1) {
+      const r = requests[0];
+      if (!r.pterodactyl_server_id) {
+        const pteroId = includedServers[0].attributes.id;
+        log(`[Step 4] Force-match: "${r.server_name}" -> ptero_id ${pteroId}`);
         const { error: updateError } = await supabaseAdmin
           .from("server_requests")
           .update({ pterodactyl_server_id: pteroId })
-          .eq("id", req.id);
+          .eq("id", r.id);
 
         if (updateError) {
-          log(`[Step 4] ERROR: Force-match DB update failed: ${updateError.message}`);
+          log(`[Step 4] ERROR force-match: ${updateError.message}`);
         } else {
-          log(`[Step 4] SUCCESS: Force-matched "${req.server_name}" -> pterodactyl_server_id ${pteroId}`);
+          log(`[Step 4] SUCCESS force-match`);
           syncedCount = 1;
         }
       }
@@ -279,7 +230,7 @@ serve(async (req) => {
         message: `Synced ${syncedCount} server(s)`,
         synced: syncedCount,
         ptero_user_id: pteroUserId,
-        ptero_servers: allServers.length,
+        ptero_servers: includedServers.length,
         db_requests: requests?.length || 0,
         logs,
       }),
