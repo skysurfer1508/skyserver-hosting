@@ -182,6 +182,7 @@ export type Database = {
           panel_url: string | null
           panel_username: string | null
           port: number | null
+          pterodactyl_server_id: number | null
           ram_boost: number
           rejection_reason: string | null
           server_config: Json | null
@@ -206,6 +207,7 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
+          pterodactyl_server_id?: number | null
           ram_boost?: number
           rejection_reason?: string | null
           server_config?: Json | null
@@ -230,6 +232,7 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
+          pterodactyl_server_id?: number | null
           ram_boost?: number
           rejection_reason?: string | null
           server_config?: Json | null
@@ -382,7 +385,7 @@ export type Database = {
         | "cs2"
         | "factorio"
         | "rust"
-      request_status: "pending" | "active" | "rejected"
+      request_status: "pending" | "active" | "rejected" | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -520,7 +523,7 @@ export const Constants = {
         "factorio",
         "rust",
       ],
-      request_status: ["pending", "active", "rejected"],
+      request_status: ["pending", "active", "rejected", "suspended"],
     },
   },
 } as const
