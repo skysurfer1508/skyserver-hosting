@@ -15,6 +15,8 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const PTERODACTYL_API_KEY = Deno.env.get("PTERODACTYL_API_KEY");
+    const PTERODACTYL_PANEL_URL = Deno.env.get("PTERODACTYL_PANEL_URL");
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -29,7 +31,7 @@ serve(async (req) => {
     // Find expired active servers — CRITICAL: only where expires_at IS NOT NULL
     const { data: expiredServers, error: fetchError } = await supabaseAdmin
       .from("server_requests")
-      .select("id, server_name, user_id, expires_at")
+      .select("id, server_name, user_id, expires_at, pterodactyl_server_id")
       .eq("status", "active")
       .not("expires_at", "is", null)
       .lt("expires_at", new Date().toISOString());
@@ -50,15 +52,52 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${expiredServers.length} expired server(s). Setting to rejected.`);
+    console.log(`Found ${expiredServers.length} expired server(s). Processing suspension.`);
 
+    // Suspend each server on Pterodactyl panel
+    const panelUrl = PTERODACTYL_PANEL_URL?.replace(/\/+$/, "");
+    for (const server of expiredServers) {
+      if (server.pterodactyl_server_id && PTERODACTYL_API_KEY && panelUrl) {
+        try {
+          const response = await fetch(
+            `${panelUrl}/api/application/servers/${server.pterodactyl_server_id}/suspend`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${PTERODACTYL_API_KEY}`,
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.ok || response.status === 204) {
+            console.log(`Successfully suspended server ${server.pterodactyl_server_id} (${server.server_name}) on panel`);
+          } else {
+            const errorText = await response.text();
+            console.error(`Failed to suspend server ${server.pterodactyl_server_id} on panel (${response.status}):`, errorText);
+          }
+        } catch (apiError) {
+          console.error(`Pterodactyl API error for server ${server.pterodactyl_server_id}:`,
+            apiError instanceof Error ? apiError.message : String(apiError));
+        }
+      } else {
+        if (!server.pterodactyl_server_id) {
+          console.warn(`No pterodactyl_server_id for server "${server.server_name}" (${server.id}), skipping panel suspend`);
+        } else {
+          console.warn(`Missing PTERODACTYL_API_KEY or PTERODACTYL_PANEL_URL, skipping panel suspend for server ${server.pterodactyl_server_id}`);
+        }
+      }
+    }
+
+    // Update all expired servers to suspended status
     const expiredIds = expiredServers.map((s) => s.id);
 
     const { error: updateError } = await supabaseAdmin
       .from("server_requests")
       .update({
-        status: "rejected",
-        rejection_reason: "Server lease expired automatically.",
+        status: "suspended",
+        rejection_reason: "Server lease expired -- automatically suspended.",
       })
       .in("id", expiredIds);
 
@@ -70,7 +109,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Successfully expired ${expiredIds.length} server(s).`);
+    console.log(`Successfully suspended ${expiredIds.length} server(s).`);
 
     // Send expiration emails (non-blocking)
     try {
@@ -78,7 +117,6 @@ serve(async (req) => {
       if (resendKey) {
         const resend = new Resend(resendKey);
 
-        // Get user emails for expired servers
         const userIds = [...new Set(expiredServers.map((s) => s.user_id))];
         const { data: profiles } = await supabaseAdmin
           .from("profiles")
@@ -96,39 +134,40 @@ serve(async (req) => {
             await resend.emails.send({
               from: "SkyServer1508 <noreply@skyserver1508.org>",
               to: [profile.email],
-              subject: "⚠️ Your Server has Expired",
+              subject: "⚠️ Your Server has been Suspended",
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h1 style="color: #dc2626; text-align: center;">⚠️ Server Expired</h1>
+                  <h1 style="color: #dc2626; text-align: center;">⚠️ Server Suspended</h1>
                   <p>Hello ${userName},</p>
-                  <p>Your server <strong>'${server.server_name}'</strong> has expired and has been suspended.</p>
-                  <p>Please renew it immediately to avoid data loss.</p>
+                  <p>Your server <strong>'${server.server_name}'</strong> has expired and has been <strong>suspended</strong>.</p>
+                  <p>Your server data is still preserved, but you won't be able to start or access it until it's reactivated.</p>
+                  <p>Please contact us via Discord to get your server reactivated.</p>
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="https://www.skyserver1508.org/dashboard"
                        style="background-color: #7c3aed; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                      Renew Now
+                      View Dashboard
                     </a>
                   </div>
                   <p style="color: #666; font-size: 14px;">If you have any questions, feel free to reach out via Discord.</p>
                 </div>
               `,
             });
-            console.log(`Expiration email sent to ${profile.email} for server ${server.server_name}`);
+            console.log(`Suspension email sent to ${profile.email} for server ${server.server_name}`);
           } catch (emailErr) {
-            console.error(`Failed to send expiration email to ${profile.email}:`,
+            console.error(`Failed to send suspension email to ${profile.email}:`,
               emailErr instanceof Error ? emailErr.message : String(emailErr));
           }
         }
       } else {
-        console.warn("RESEND_API_KEY not set, skipping expiration emails");
+        console.warn("RESEND_API_KEY not set, skipping suspension emails");
       }
     } catch (emailError) {
-      console.error("Failed to process expiration emails (non-blocking):",
+      console.error("Failed to process suspension emails (non-blocking):",
         emailError instanceof Error ? emailError.message : String(emailError));
     }
 
     return new Response(
-      JSON.stringify({ message: "Expired servers processed", count: expiredIds.length }),
+      JSON.stringify({ message: "Expired servers suspended", count: expiredIds.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {

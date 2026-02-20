@@ -29,6 +29,7 @@ export interface ServerRequest {
   ram_boost: number;
   cpu_boost: number;
   stripe_subscription_id: string | null;
+  pterodactyl_server_id: number | null;
 }
 
 interface ApprovalData {
@@ -36,6 +37,7 @@ interface ApprovalData {
   panelUrl: string;
   panelUsername: string;
   panelPassword: string;
+  pterodactylServerId?: number;
 }
 
 export function useAdminRequests() {
@@ -98,6 +100,7 @@ export function useAdminRequests() {
           panelUrl: approvalData.panelUrl,
           panelUsername: approvalData.panelUsername,
           panelPassword: approvalData.panelPassword,
+          pterodactylServerId: approvalData.pterodactylServerId,
         },
       });
 
@@ -162,16 +165,18 @@ export function useAdminRequests() {
 
   const reactivateRequest = async (requestId: string) => {
     try {
-      const { error } = await supabase
-        .from('server_requests')
-        .update({
-          status: 'active' as RequestStatus,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          rejection_reason: null,
-        })
-        .eq('id', requestId);
+      const response = await supabase.functions.invoke('unsuspend-server', {
+        body: { requestId },
+      });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to unsuspend server');
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
       await fetchRequests();
       return { error: null };
     } catch (error) {

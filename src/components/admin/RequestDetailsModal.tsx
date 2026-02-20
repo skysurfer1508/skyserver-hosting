@@ -221,6 +221,13 @@ function getStatusBadge(status: RequestStatus) {
           Active
         </Badge>
       );
+    case 'suspended' as RequestStatus:
+      return (
+        <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 gap-1">
+          <XCircle className="h-3 w-3" />
+          Suspended
+        </Badge>
+      );
     case 'rejected':
       return (
         <Badge variant="destructive" className="gap-1">
@@ -391,6 +398,9 @@ export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpda
             <div className="grid grid-cols-2 gap-4 pl-6">
               <InfoRow label="Server Name" value={request.server_name} />
               <InfoRow label="Game" value={`${game?.icon} ${game?.label}`} />
+              {request.pterodactyl_server_id && (
+                <InfoRow label="Pterodactyl ID" value={`#${request.pterodactyl_server_id}`} icon={Server} />
+              )}
             </div>
           </div>
 

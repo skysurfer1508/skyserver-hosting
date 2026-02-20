@@ -13,6 +13,7 @@ interface EncryptRequest {
   panelUrl: string;
   panelUsername: string;
   panelPassword: string;
+  pterodactylServerId?: number;
 }
 
 serve(async (req) => {
@@ -101,7 +102,7 @@ serve(async (req) => {
 
     // Parse request body
     const body: EncryptRequest = await req.json();
-    const { requestId, assignedIp, panelUrl, panelUsername, panelPassword } = body;
+    const { requestId, assignedIp, panelUrl, panelUsername, panelPassword, pterodactylServerId } = body;
 
     if (!requestId || !assignedIp || !panelUsername || !panelPassword) {
       return new Response(
@@ -146,16 +147,22 @@ serve(async (req) => {
     }
 
     // Update server request with encrypted credentials
+    const updateData: Record<string, unknown> = {
+      status: "active",
+      assigned_ip: encryptedAssignedIp,
+      panel_url: encryptedPanelUrl,
+      panel_username: encryptedPanelUsername,
+      panel_password: encryptedPanelPassword,
+      credentials_encrypted: true,
+    };
+
+    if (pterodactylServerId !== undefined && pterodactylServerId !== null) {
+      updateData.pterodactyl_server_id = pterodactylServerId;
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from("server_requests")
-      .update({
-        status: "active",
-        assigned_ip: encryptedAssignedIp,
-        panel_url: encryptedPanelUrl,
-        panel_username: encryptedPanelUsername,
-        panel_password: encryptedPanelPassword,
-        credentials_encrypted: true,
-      })
+      .update(updateData)
       .eq("id", requestId);
 
     if (updateError) {
