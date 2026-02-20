@@ -77,13 +77,21 @@ serve(async (req) => {
       );
     }
 
+    // Parse the first numeric server ID from the text field (e.g. "12" or "Server#1: 12, Server#2: 15")
+    const parseFirstServerId = (val: string | null): number | null => {
+      if (!val) return null;
+      const match = val.match(/(\d+)/);
+      return match ? parseInt(match[1], 10) : null;
+    };
+
     // Call Pterodactyl API to unsuspend if we have a server ID
     let panelUnsuspended = false;
-    if (serverRequest.pterodactyl_server_id && PTERODACTYL_API_KEY && PTERODACTYL_PANEL_URL) {
+    const numericServerId = parseFirstServerId(serverRequest.pterodactyl_server_id);
+    if (numericServerId && PTERODACTYL_API_KEY && PTERODACTYL_PANEL_URL) {
       try {
         const panelUrl = PTERODACTYL_PANEL_URL.replace(/\/+$/, "");
         const response = await fetch(
-          `${panelUrl}/api/application/servers/${serverRequest.pterodactyl_server_id}/unsuspend`,
+          `${panelUrl}/api/application/servers/${numericServerId}/unsuspend`,
           {
             method: "POST",
             headers: {
@@ -96,7 +104,7 @@ serve(async (req) => {
 
         if (response.ok || response.status === 204) {
           panelUnsuspended = true;
-          console.log(`Successfully unsuspended server ${serverRequest.pterodactyl_server_id} on panel`);
+          console.log(`Successfully unsuspended server ${numericServerId} on panel`);
         } else {
           const errorText = await response.text();
           console.error(`Pterodactyl unsuspend failed (${response.status}):`, errorText);
@@ -105,7 +113,7 @@ serve(async (req) => {
         console.error("Pterodactyl API call failed:", apiError instanceof Error ? apiError.message : String(apiError));
       }
     } else {
-      if (!serverRequest.pterodactyl_server_id) {
+      if (!numericServerId) {
         console.warn(`No pterodactyl_server_id for request ${requestId}, skipping panel unsuspend`);
       }
       if (!PTERODACTYL_API_KEY || !PTERODACTYL_PANEL_URL) {

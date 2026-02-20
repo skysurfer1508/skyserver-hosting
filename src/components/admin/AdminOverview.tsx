@@ -25,8 +25,8 @@ export function AdminOverview() {
           data.logs.forEach((l: string) => console.log(l));
         }
         toast({
-          title: 'Sync Complete',
-          description: `${data?.synced ?? 0} server(s) synced. Ptero servers: ${data?.ptero_servers ?? 0}. DB requests: ${data?.db_requests ?? 0}.`,
+          title: 'Global Sync Complete',
+          description: `Updated ${data?.updated_users ?? 0} user(s). Matched: ${data?.total_matched ?? 0}. Ptero users: ${data?.ptero_users ?? 0}.`,
         });
       }
     } catch (err: any) {

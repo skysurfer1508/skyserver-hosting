@@ -182,7 +182,7 @@ export type Database = {
           panel_url: string | null
           panel_username: string | null
           port: number | null
-          pterodactyl_server_id: number | null
+          pterodactyl_server_id: string | null
           ram_boost: number
           rejection_reason: string | null
           server_config: Json | null
@@ -207,7 +207,7 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
-          pterodactyl_server_id?: number | null
+          pterodactyl_server_id?: string | null
           ram_boost?: number
           rejection_reason?: string | null
           server_config?: Json | null
@@ -232,7 +232,7 @@ export type Database = {
           panel_url?: string | null
           panel_username?: string | null
           port?: number | null
-          pterodactyl_server_id?: number | null
+          pterodactyl_server_id?: string | null
           ram_boost?: number
           rejection_reason?: string | null
           server_config?: Json | null
