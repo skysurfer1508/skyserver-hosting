@@ -54,13 +54,21 @@ serve(async (req) => {
 
     console.log(`Found ${expiredServers.length} expired server(s). Processing suspension.`);
 
+    // Parse the first numeric server ID from the text field
+    const parseFirstServerId = (val: string | null): number | null => {
+      if (!val) return null;
+      const match = val.match(/(\d+)/);
+      return match ? parseInt(match[1], 10) : null;
+    };
+
     // Suspend each server on Pterodactyl panel
     const panelUrl = PTERODACTYL_PANEL_URL?.replace(/\/+$/, "");
     for (const server of expiredServers) {
-      if (server.pterodactyl_server_id && PTERODACTYL_API_KEY && panelUrl) {
+      const numericId = parseFirstServerId(server.pterodactyl_server_id);
+      if (numericId && PTERODACTYL_API_KEY && panelUrl) {
         try {
           const response = await fetch(
-            `${panelUrl}/api/application/servers/${server.pterodactyl_server_id}/suspend`,
+            `${panelUrl}/api/application/servers/${numericId}/suspend`,
             {
               method: "POST",
               headers: {
@@ -72,20 +80,20 @@ serve(async (req) => {
           );
 
           if (response.ok || response.status === 204) {
-            console.log(`Successfully suspended server ${server.pterodactyl_server_id} (${server.server_name}) on panel`);
+            console.log(`Successfully suspended server ${numericId} (${server.server_name}) on panel`);
           } else {
             const errorText = await response.text();
-            console.error(`Failed to suspend server ${server.pterodactyl_server_id} on panel (${response.status}):`, errorText);
+            console.error(`Failed to suspend server ${numericId} on panel (${response.status}):`, errorText);
           }
         } catch (apiError) {
-          console.error(`Pterodactyl API error for server ${server.pterodactyl_server_id}:`,
+          console.error(`Pterodactyl API error for server ${numericId}:`,
             apiError instanceof Error ? apiError.message : String(apiError));
         }
       } else {
-        if (!server.pterodactyl_server_id) {
+        if (!numericId) {
           console.warn(`No pterodactyl_server_id for server "${server.server_name}" (${server.id}), skipping panel suspend`);
         } else {
-          console.warn(`Missing PTERODACTYL_API_KEY or PTERODACTYL_PANEL_URL, skipping panel suspend for server ${server.pterodactyl_server_id}`);
+          console.warn(`Missing PTERODACTYL_API_KEY or PTERODACTYL_PANEL_URL, skipping panel suspend for server ${numericId}`);
         }
       }
     }

@@ -32,7 +32,7 @@ interface ServerRequest {
   // Rejection field
   rejection_reason: string | null;
   // Pterodactyl
-  pterodactyl_server_id: number | null;
+  pterodactyl_server_id: string | null;
 }
 
 export function useServerRequest() {

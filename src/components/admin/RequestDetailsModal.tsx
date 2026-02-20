@@ -400,7 +400,7 @@ export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpda
               <InfoRow label="Game" value={`${game?.icon} ${game?.label}`} />
               <InfoRow 
                 label="Pterodactyl ID" 
-                value={request.pterodactyl_server_id ? `#${request.pterodactyl_server_id}` : <span className="text-muted-foreground italic">Not synced</span>} 
+                value={request.pterodactyl_server_id ? request.pterodactyl_server_id : <span className="text-muted-foreground italic">Not synced</span>} 
                 icon={Server} 
               />
             </div>

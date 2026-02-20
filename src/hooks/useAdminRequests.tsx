@@ -29,7 +29,7 @@ export interface ServerRequest {
   ram_boost: number;
   cpu_boost: number;
   stripe_subscription_id: string | null;
-  pterodactyl_server_id: number | null;
+  pterodactyl_server_id: string | null;
 }
 
 interface ApprovalData {
