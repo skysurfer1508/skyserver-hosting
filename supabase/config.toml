@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.panel-stats]
 verify_jwt = false
+
+[functions.sync-pterodactyl-ids]
+verify_jwt = false
