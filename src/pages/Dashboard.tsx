@@ -17,10 +17,12 @@ import { usePlatformStatus } from '@/hooks/usePlatformStatus';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { useAdminStatus } from '@/hooks/useAdminStatus';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Server, Settings, CreditCard, Loader2 } from 'lucide-react';
+import { Users, Server, Settings, CreditCard, Loader2, RefreshCw } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@/config/constants';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { toast } from '@/hooks/use-toast';
 
 export default function Dashboard() {
   usePageTitle('Dashboard - SkyServer');
@@ -30,13 +32,44 @@ export default function Dashboard() {
   const { isProfileIncomplete, isChecking, markComplete } = useProfileCompletion();
   const { isAdminOnline } = useAdminStatus();
   const [activeTab, setActiveTab] = useState('server');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const triggerSync = async (manual = false) => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-pterodactyl-ids');
+      if (error) {
+        console.error('Pterodactyl sync error:', error);
+        if (manual) {
+          toast({ title: 'Sync Failed', description: error.message || 'Unknown error', variant: 'destructive' });
+        }
+      } else {
+        console.log('Pterodactyl sync result:', data);
+        if (data?.logs) {
+          console.log('--- Sync Logs ---');
+          data.logs.forEach((l: string) => console.log(l));
+        }
+        if (manual) {
+          toast({
+            title: `Sync Complete`,
+            description: `${data?.synced ?? 0} server(s) synced. Ptero servers found: ${data?.ptero_servers ?? 0}. DB requests: ${data?.db_requests ?? 0}.`,
+          });
+        }
+      }
+    } catch (err: any) {
+      console.error('Sync exception:', err);
+      if (manual) {
+        toast({ title: 'Sync Error', description: err.message, variant: 'destructive' });
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Sync Pterodactyl server IDs on dashboard load
   useEffect(() => {
     if (user) {
-      supabase.functions.invoke('sync-pterodactyl-ids').then(({ error }) => {
-        if (error) console.error('Pterodactyl sync error:', error);
-      });
+      triggerSync(false);
     }
   }, [user]);
 
@@ -98,6 +131,18 @@ export default function Dashboard() {
 
           {/* Server Tab */}
           <TabsContent value="server" className="mt-6">
+            <div className="mb-4 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => triggerSync(true)}
+                disabled={isSyncing}
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Syncing…' : 'Force Sync Pterodactyl'}
+              </Button>
+            </div>
             <div className="grid gap-6 lg:grid-cols-3">
               {/* Main Server Card */}
               <div className="lg:col-span-2">
