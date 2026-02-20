@@ -398,9 +398,11 @@ export function RequestDetailsModal({ open, onOpenChange, request, onRequestUpda
             <div className="grid grid-cols-2 gap-4 pl-6">
               <InfoRow label="Server Name" value={request.server_name} />
               <InfoRow label="Game" value={`${game?.icon} ${game?.label}`} />
-              {request.pterodactyl_server_id && (
-                <InfoRow label="Pterodactyl ID" value={`#${request.pterodactyl_server_id}`} icon={Server} />
-              )}
+              <InfoRow 
+                label="Pterodactyl ID" 
+                value={request.pterodactyl_server_id ? `#${request.pterodactyl_server_id}` : <span className="text-muted-foreground italic">Not synced</span>} 
+                icon={Server} 
+              />
             </div>
           </div>
 
