@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
+import { supabase } from '@/integrations/supabase/client';
 import { MaintenanceBanner } from '@/components/dashboard/MaintenanceBanner';
 import { ServerStatusCard } from '@/components/dashboard/ServerStatusCard';
 import { PlatformStatusCard } from '@/components/dashboard/PlatformStatusCard';
@@ -29,6 +30,15 @@ export default function Dashboard() {
   const { isProfileIncomplete, isChecking, markComplete } = useProfileCompletion();
   const { isAdminOnline } = useAdminStatus();
   const [activeTab, setActiveTab] = useState('server');
+
+  // Sync Pterodactyl server IDs on dashboard load
+  useEffect(() => {
+    if (user) {
+      supabase.functions.invoke('sync-pterodactyl-ids').then(({ error }) => {
+        if (error) console.error('Pterodactyl sync error:', error);
+      });
+    }
+  }, [user]);
 
   // Show loading state while checking profile
   if (isChecking) {

@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import { Json } from '@/integrations/supabase/types';
 
 type GameType = 'minecraft' | 'terraria' | 'satisfactory' | 'cs2' | 'factorio' | 'rust';
-type RequestStatus = 'pending' | 'active' | 'rejected';
+type RequestStatus = 'pending' | 'active' | 'rejected' | 'suspended';
 
 interface ServerRequest {
   id: string;
@@ -31,6 +31,8 @@ interface ServerRequest {
   panel_password: string | null;
   // Rejection field
   rejection_reason: string | null;
+  // Pterodactyl
+  pterodactyl_server_id: number | null;
 }
 
 export function useServerRequest() {
@@ -53,7 +55,7 @@ export function useServerRequest() {
         .from('server_requests')
         .select('*')
         .eq('user_id', user.id)
-        .in('status', ['pending', 'active'])
+        .in('status', ['pending', 'active', 'suspended'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
