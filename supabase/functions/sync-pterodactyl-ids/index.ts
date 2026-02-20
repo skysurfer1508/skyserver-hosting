@@ -37,12 +37,26 @@ serve(async (req) => {
       log(`PTERODACTYL_API_KEY set: ${!!PTERODACTYL_API_KEY}`);
       log(`PTERODACTYL_PANEL_URL set: ${!!PTERODACTYL_PANEL_URL}`);
       return new Response(
-        JSON.stringify({ error: "Pterodactyl configuration missing", logs }),
+        JSON.stringify({ error: "Pterodactyl configuration missing. Required secrets: PTERODACTYL_API_KEY and PTERODACTYL_PANEL_URL", logs }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    log(`PTERODACTYL_PANEL_URL: ${PTERODACTYL_PANEL_URL}`);
+    // Validate PTERODACTYL_PANEL_URL looks like a URL
+    if (!PTERODACTYL_PANEL_URL.startsWith("http://") && !PTERODACTYL_PANEL_URL.startsWith("https://")) {
+      log(`ERROR: PTERODACTYL_PANEL_URL does not look like a URL. Got: "${PTERODACTYL_PANEL_URL.substring(0, 20)}..."`);
+      log("HINT: PTERODACTYL_PANEL_URL should be like https://panel.example.com (NOT the API key)");
+      return new Response(
+        JSON.stringify({ 
+          error: "PTERODACTYL_PANEL_URL is not a valid URL. It should be like https://panel.example.com — check if your secrets are swapped.", 
+          logs 
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    log(`[Config] Panel URL: ${PTERODACTYL_PANEL_URL}`);
+    log(`[Config] API Key: ${PTERODACTYL_API_KEY.substring(0, 8)}...`);
 
     // Authenticate the calling user
     const authHeader = req.headers.get("Authorization");
@@ -54,7 +68,6 @@ serve(async (req) => {
       );
     }
 
-    // Use getUser() for reliable auth
     const supabaseUser = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -91,15 +104,31 @@ serve(async (req) => {
     const userLookupUrl = `${panelUrl}/api/application/users?filter[email]=${encodeURIComponent(userEmail)}`;
     log(`[Step 2] Looking up Pterodactyl user at: ${userLookupUrl}`);
 
-    const userRes = await fetch(userLookupUrl, { headers: pteroHeaders });
+    let userRes: Response;
+    try {
+      userRes = await fetch(userLookupUrl, { headers: pteroHeaders });
+    } catch (fetchErr) {
+      const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+      log(`[Step 2] FETCH ERROR: Could not reach Pterodactyl panel: ${msg}`);
+      return new Response(
+        JSON.stringify({ error: `Cannot reach Pterodactyl panel: ${msg}`, logs }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     log(`[Step 2] Pterodactyl user lookup HTTP status: ${userRes.status}`);
 
     if (!userRes.ok) {
       const errText = await userRes.text();
-      log(`[Step 2] ERROR: Pterodactyl user lookup failed: ${userRes.status} - ${errText}`);
+      log(`[Step 2] Ptero Response Body: ${errText}`);
+      log(`[Step 2] ERROR: Pterodactyl user lookup failed with ${userRes.status} ${userRes.statusText}`);
       return new Response(
-        JSON.stringify({ error: `Pterodactyl API error: ${userRes.status}`, details: errText, logs }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          error: `Pterodactyl API error: ${userRes.status} ${userRes.statusText}`, 
+          details: errText, 
+          logs 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -127,12 +156,21 @@ serve(async (req) => {
       const serverUrl = `${panelUrl}/api/application/servers?filter[user]=${pteroUserId}&page=${page}`;
       log(`[Step 3] Fetching servers page ${page}: ${serverUrl}`);
 
-      const serverRes = await fetch(serverUrl, { headers: pteroHeaders });
+      let serverRes: Response;
+      try {
+        serverRes = await fetch(serverUrl, { headers: pteroHeaders });
+      } catch (fetchErr) {
+        const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        log(`[Step 3] FETCH ERROR: ${msg}`);
+        break;
+      }
+
       log(`[Step 3] Server fetch HTTP status: ${serverRes.status}`);
 
       if (!serverRes.ok) {
         const errText = await serverRes.text();
-        log(`[Step 3] ERROR: Server lookup failed: ${serverRes.status} - ${errText}`);
+        log(`[Step 3] Ptero Response Body: ${errText}`);
+        log(`[Step 3] ERROR: Server lookup failed: ${serverRes.status} ${serverRes.statusText}`);
         break;
       }
 
