@@ -111,6 +111,7 @@ export function AdminRequests() {
   const [panelUrl, setPanelUrl] = useState('https://panel.skyserver1508.org');
   const [panelUsername, setPanelUsername] = useState('');
   const [panelPassword, setPanelPassword] = useState('');
+  const [pterodactylServerId, setPterodactylServerId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredRequests = requests.filter((r) =>
@@ -123,6 +124,7 @@ export function AdminRequests() {
     setPanelUrl('https://panel.skyserver1508.org');
     setPanelUsername('');
     setPanelPassword('');
+    setPterodactylServerId('');
     setApproveDialogOpen(true);
   };
 
@@ -163,6 +165,7 @@ export function AdminRequests() {
       panelUrl: panelUrl.trim(),
       panelUsername: panelUsername.trim(),
       panelPassword: panelPassword.trim(),
+      pterodactylServerId: pterodactylServerId.trim() ? parseInt(pterodactylServerId.trim(), 10) : undefined,
     });
     setIsSubmitting(false);
 
@@ -260,7 +263,21 @@ export function AdminRequests() {
   const isExpiredServer = (request: typeof requests[0]) =>
     request.status === 'rejected' && request.rejection_reason === 'Server lease expired automatically.';
 
+  const isSuspendedServer = (request: typeof requests[0]) =>
+    request.status === ('suspended' as RequestStatus);
+
+  const canReactivate = (request: typeof requests[0]) =>
+    isExpiredServer(request) || isSuspendedServer(request);
+
   const getStatusBadge = (status: RequestStatus, request: typeof requests[0]) => {
+    if (isSuspendedServer(request)) {
+      return (
+        <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Suspended
+        </Badge>
+      );
+    }
     if (isExpiredServer(request)) {
       return (
         <Badge className="bg-warning/20 text-warning border-warning/30 gap-1">
@@ -319,6 +336,7 @@ export function AdminRequests() {
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
@@ -426,7 +444,7 @@ export function AdminRequests() {
                                 </Button>
                               </>
                             )}
-                            {isExpiredServer(request) && (
+                            {canReactivate(request) && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -507,6 +525,20 @@ export function AdminRequests() {
                   onChange={(e) => setPanelPassword(e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pterodactylServerId">Pterodactyl Server ID (optional)</Label>
+              <Input
+                id="pterodactylServerId"
+                type="number"
+                placeholder="e.g. 42"
+                value={pterodactylServerId}
+                onChange={(e) => setPterodactylServerId(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                The server ID from the Pterodactyl panel. Used for auto-suspend/unsuspend.
+              </p>
             </div>
           </div>
 

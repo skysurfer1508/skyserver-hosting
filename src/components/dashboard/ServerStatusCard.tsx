@@ -240,6 +240,13 @@ export function ServerStatusCard() {
             Active
           </Badge>
         );
+      case 'suspended' as string:
+        return (
+          <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            Suspended
+          </Badge>
+        );
       case 'rejected':
         return (
           <Badge variant="destructive" className="gap-1">
@@ -512,6 +519,32 @@ export function ServerStatusCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Suspension Alert */}
+        {(request.status as string) === 'suspended' && (
+          <Alert className="border-orange-500/50 bg-orange-500/10 text-foreground [&>svg]:text-orange-500">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Server Suspended</AlertTitle>
+            <AlertDescription className="mt-2 space-y-3">
+              <p>
+                Your server lease has expired and has been suspended. Your data is still preserved, but you can't start or access the server.
+              </p>
+              <p className="text-xs">
+                Please open a ticket on our Discord server to get your server reactivated.
+              </p>
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="sm" className="gap-2 border-orange-500/30 text-orange-500 hover:bg-orange-500/10">
+                  <MessageCircle className="h-4 w-4" />
+                  Open Discord Ticket
+                </Button>
+              </a>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Rejection / Expiration Alert */}
         {request.status === 'rejected' && request.rejection_reason === 'Server lease expired automatically.' ? (
           <Alert className="border-warning/50 bg-warning/10 text-foreground [&>svg]:text-warning">
@@ -712,6 +745,29 @@ export function ServerStatusCard() {
               expiresAt={request.expires_at}
               onRenewed={refetch}
             />
+          </div>
+        )}
+
+        {/* Suspended status bottom section */}
+        {(request.status as string) === 'suspended' && (
+          <div className="rounded-lg bg-orange-500/10 border border-orange-500/30 p-4 text-center space-y-3">
+            <AlertTriangle className="mx-auto h-8 w-8 text-orange-500 mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Your server has been suspended due to an expired lease.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Your data is preserved. Open a Discord ticket to reactivate.
+            </p>
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="gap-2 mt-2 border-orange-500/30 text-orange-500 hover:bg-orange-500/10">
+                <MessageCircle className="h-4 w-4" />
+                Open Discord Ticket
+              </Button>
+            </a>
           </div>
         )}
 
