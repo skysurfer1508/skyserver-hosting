@@ -15,6 +15,7 @@ interface GameLimit {
   available_slots: number;
   is_active: boolean;
   is_full: boolean;
+  unlimited?: boolean;
 }
 
 interface GameCardProps {
@@ -99,12 +100,14 @@ export function GameCard({
 }: GameCardProps) {
   const styles = accentStyles[accentColor];
   
-  const percentage = limit && limit.max_slots > 0 
+  const isUnlimited = limit?.unlimited ?? false;
+  const percentage = !isUnlimited && limit && limit.max_slots > 0 
     ? Math.min(100, (limit.used_slots / limit.max_slots) * 100)
     : 0;
 
   const getProgressColor = () => {
     if (!limit?.is_active) return 'bg-muted';
+    if (isUnlimited) return styles.text.replace('text-', 'bg-');
     if (limit.is_full) return 'bg-destructive';
     if (percentage >= 80) return 'bg-warning';
     return styles.text.replace('text-', 'bg-');
@@ -113,6 +116,7 @@ export function GameCard({
   const getStatusText = () => {
     if (!limit) return '';
     if (!limit.is_active) return 'Unavailable';
+    if (isUnlimited) return `${limit.used_slots} Active • Unlimited`;
     if (limit.is_full) return 'Sold Out';
     return `${limit.used_slots} / ${limit.max_slots} Claimed`;
   };
@@ -200,18 +204,32 @@ export function GameCard({
           {/* Availability Progress */}
           {limit && (
             <div className="space-y-2">
-              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                <motion.div
-                  className={cn('h-full', getProgressColor())}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${percentage}%` }}
-                  transition={{ duration: 1, ease: 'easeOut' }}
-                />
-              </div>
+              {isUnlimited ? (
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <motion.div
+                    className={cn('h-full', getProgressColor())}
+                    initial={{ width: '0%' }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 1.5, ease: 'easeOut' }}
+                    style={{ opacity: 0.5 }}
+                  />
+                </div>
+              ) : (
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <motion.div
+                    className={cn('h-full', getProgressColor())}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${percentage}%` }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                  />
+                </div>
+              )}
               <p className={cn(
                 'text-xs font-medium',
                 !limit.is_active
                   ? 'text-muted-foreground'
+                  : isUnlimited
+                  ? styles.text
                   : limit.is_full
                   ? 'text-destructive'
                   : limit.available_slots <= 2
@@ -219,7 +237,7 @@ export function GameCard({
                   : 'text-muted-foreground'
               )}>
                 {getStatusText()}
-                {limit.is_active && !limit.is_full && limit.available_slots <= 3 && (
+                {!isUnlimited && limit.is_active && !limit.is_full && limit.available_slots <= 3 && (
                   <span className="ml-2 text-warning">• Only {limit.available_slots} left!</span>
                 )}
               </p>
