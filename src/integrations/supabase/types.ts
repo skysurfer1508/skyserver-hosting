@@ -22,6 +22,7 @@ export type Database = {
           game_name: string
           is_active: boolean
           max_slots: number
+          unlimited: boolean
           updated_at: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           game_name: string
           is_active?: boolean
           max_slots?: number
+          unlimited?: boolean
           updated_at?: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           game_name?: string
           is_active?: boolean
           max_slots?: number
+          unlimited?: boolean
           updated_at?: string
         }
         Relationships: []
