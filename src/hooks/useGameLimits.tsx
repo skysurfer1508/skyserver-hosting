@@ -7,6 +7,7 @@ export interface GameLimit {
   game_name: GameName;
   max_slots: number;
   is_active: boolean;
+  unlimited: boolean;
   used_slots: number;
   available_slots: number;
   is_full: boolean;
@@ -19,7 +20,7 @@ export interface GameLimitsState {
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  updateGameLimit: (gameName: GameName, maxSlots: number, isActive: boolean, baseRamMb?: number, baseCpuPercent?: number) => Promise<{ error: Error | null }>;
+  updateGameLimit: (gameName: GameName, maxSlots: number, isActive: boolean, baseRamMb?: number, baseCpuPercent?: number, unlimited?: boolean) => Promise<{ error: Error | null }>;
 }
 
 export function useGameLimits(): GameLimitsState {
@@ -57,15 +58,17 @@ export function useGameLimits(): GameLimitsState {
           }
 
           const used = usedSlots ?? 0;
-          const available = Math.max(0, limit.max_slots - used);
+          const isUnlimited = limit.unlimited ?? false;
+          const available = isUnlimited ? Infinity : Math.max(0, limit.max_slots - used);
 
           return {
             game_name: limit.game_name as GameName,
             max_slots: limit.max_slots,
             is_active: limit.is_active,
+            unlimited: isUnlimited,
             used_slots: used,
             available_slots: available,
-            is_full: used >= limit.max_slots,
+            is_full: isUnlimited ? false : used >= limit.max_slots,
             base_ram_mb: limit.base_ram_mb ?? 2560,
             base_cpu_percent: limit.base_cpu_percent ?? 100,
           };
@@ -86,12 +89,14 @@ export function useGameLimits(): GameLimitsState {
     maxSlots: number,
     isActive: boolean,
     baseRamMb?: number,
-    baseCpuPercent?: number
+    baseCpuPercent?: number,
+    unlimited?: boolean
   ): Promise<{ error: Error | null }> => {
     try {
       const updateData: Record<string, unknown> = { max_slots: maxSlots, is_active: isActive };
       if (baseRamMb !== undefined) updateData.base_ram_mb = baseRamMb;
       if (baseCpuPercent !== undefined) updateData.base_cpu_percent = baseCpuPercent;
+      if (unlimited !== undefined) updateData.unlimited = unlimited;
 
       const { error: updateError } = await supabase
         .from('game_limits')

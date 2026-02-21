@@ -1,0 +1,1 @@
+ALTER TABLE public.game_limits ADD COLUMN unlimited boolean NOT NULL DEFAULT false;

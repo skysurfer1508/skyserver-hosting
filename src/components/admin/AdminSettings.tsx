@@ -46,13 +46,13 @@ export function AdminSettings() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Game capacity state
-  const [editedGameLimits, setEditedGameLimits] = useState<Record<GameName, { maxSlots: number; isActive: boolean; baseRamMb: number; baseCpuPercent: number }>>({
-    minecraft: { maxSlots: 20, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
-    terraria: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
-    satisfactory: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
-    cs2: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
-    factorio: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
-    rust: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100 },
+  const [editedGameLimits, setEditedGameLimits] = useState<Record<GameName, { maxSlots: number; isActive: boolean; baseRamMb: number; baseCpuPercent: number; unlimited: boolean }>>({
+    minecraft: { maxSlots: 20, isActive: true, baseRamMb: 2560, baseCpuPercent: 100, unlimited: false },
+    terraria: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100, unlimited: false },
+    satisfactory: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100, unlimited: false },
+    cs2: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100, unlimited: false },
+    factorio: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100, unlimited: false },
+    rust: { maxSlots: 10, isActive: true, baseRamMb: 2560, baseCpuPercent: 100, unlimited: false },
   });
   const [isSavingGameLimits, setIsSavingGameLimits] = useState(false);
 
@@ -74,6 +74,7 @@ export function AdminSettings() {
           isActive: limit.is_active,
           baseRamMb: limit.base_ram_mb,
           baseCpuPercent: limit.base_cpu_percent,
+          unlimited: limit.unlimited,
         };
       });
       setEditedGameLimits(newState);
@@ -114,7 +115,8 @@ export function AdminSettings() {
         values.maxSlots,
         values.isActive,
         values.baseRamMb,
-        values.baseCpuPercent
+        values.baseCpuPercent,
+        values.unlimited
       );
 
       if (error) {
@@ -165,9 +167,10 @@ export function AdminSettings() {
           {gameLimits.map((limit) => {
             const game = gameLabels[limit.game_name];
             const edited = editedGameLimits[limit.game_name];
-            const percentage = limit.max_slots > 0
+            const isUnlimited = edited?.unlimited ?? limit.unlimited;
+            const percentage = isUnlimited ? 0 : (limit.max_slots > 0
               ? Math.min(100, (limit.used_slots / limit.max_slots) * 100)
-              : 0;
+              : 0);
 
             return (
               <div key={limit.game_name} className="space-y-3 p-3 rounded-lg bg-muted/30">
@@ -192,39 +195,64 @@ export function AdminSettings() {
                 
                 {/* Progress bar */}
                 <div className="space-y-1">
-                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className={cn(
-                        'h-full transition-all duration-500',
-                        limit.is_full ? 'bg-destructive' : 'bg-primary'
-                      )}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
+                  {isUnlimited ? (
+                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full w-full bg-primary/40 animate-pulse" />
+                    </div>
+                  ) : (
+                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className={cn(
+                          'h-full transition-all duration-500',
+                          limit.is_full ? 'bg-destructive' : 'bg-primary'
+                        )}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground">
-                    {limit.used_slots} / {limit.max_slots} active
+                    {limit.used_slots} / {isUnlimited ? '∞' : limit.max_slots} active
                   </p>
                 </div>
 
-                <div className="space-y-1">
-                  <Label className="text-xs">Max Slots</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={edited?.maxSlots ?? limit.max_slots}
-                    onChange={(e) =>
+                {/* Unlimited toggle */}
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Unlimited Slots</Label>
+                  <Switch
+                    checked={isUnlimited}
+                    onCheckedChange={(checked) =>
                       setEditedGameLimits((prev) => ({
                         ...prev,
                         [limit.game_name]: {
                           ...prev[limit.game_name],
-                          maxSlots: parseInt(e.target.value) || 1,
+                          unlimited: checked,
                         },
                       }))
                     }
-                    className="h-8"
                   />
                 </div>
+
+                {!isUnlimited && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">Max Slots</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={edited?.maxSlots ?? limit.max_slots}
+                      onChange={(e) =>
+                        setEditedGameLimits((prev) => ({
+                          ...prev,
+                          [limit.game_name]: {
+                            ...prev[limit.game_name],
+                            maxSlots: parseInt(e.target.value) || 1,
+                          },
+                        }))
+                      }
+                      className="h-8"
+                    />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
