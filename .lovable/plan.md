@@ -1,111 +1,45 @@
 
 
-# New Pricing Logic and UI for Server Upgrades
+# Add Bonus Resources to Heavy-Duty Packages
 
 ## Overview
-Revamp the upgrade page with tiered discount pricing for both RAM and CPU, plus fixed "Heavy-Duty" bundle packages. Users will see two clear options: a custom slider with dynamic pricing (including a 10% discount badge at 7+ units) and a prominent pre-built bundle card.
+Update the Heavy-Duty RAM package to also include +100% CPU, and the Heavy-Duty CPU package to also include +2 GB RAM. This affects the webhook boost calculation and the frontend UI descriptions.
 
 ---
 
-## 1. Create New Stripe Products and Prices
+## Changes
 
-Using the Stripe tools, create:
+### 1. `supabase/functions/stripe-webhook/index.ts` -- `calculateBoosts` function
 
-- **Heavy-Duty RAM Package**: A new recurring product "10GB Heavy-Duty RAM" at **13.00 CHF/month**
-- **Heavy-Duty CPU Package**: A new recurring product "800% Heavy-Duty CPU" at **10.00 CHF/month** (equivalent discount to RAM)
-- **10% Off Coupon**: A Stripe coupon named "Bulk Upgrade 10% Off" with `percent_off: 10`, `duration: "forever"` -- applied automatically at checkout when slider is at 7+ units
+Update the mapping so both heavy-duty prices grant combined boosts:
 
----
+- `PRICE_HEAVY_RAM`: ramBoost = 10 * 1024 (10 GB), **cpuBoost += 100** (was 0)
+- `PRICE_HEAVY_CPU`: cpuBoost = 800, **ramBoost += 2 * 1024** (was 0)
 
-## 2. Update `src/config/constants.ts`
+Since the loop processes items independently and the heavy-duty packages are mutually exclusive (user selects one), we can safely set both values per price ID using additive `+=` to avoid overwriting any per-unit slider values (though in practice heavy-duty is standalone).
 
-Add the new Stripe price IDs for the heavy-duty packages and the coupon ID:
+### 2. `src/pages/ServerUpgrade.tsx` -- Heavy-Duty card descriptions and details
 
-```
-STRIPE_PRICES = {
-  ram: '...',
-  cpu: '...',
-  heavyDutyRam: 'price_xxx',   // 10GB @ 13.00 CHF
-  heavyDutyCpu: 'price_yyy',   // 800% @ 10.00 CHF
-}
-STRIPE_COUPON_BULK = 'coupon_id'
-```
+Update the two Heavy-Duty cards to show the bonus resources:
 
----
+**Heavy-Duty RAM card:**
+- Title stays: "10GB Heavy-Duty RAM"
+- Add a subtitle/badge: "+ 100% CPU included"
+- Description updated to mention the CPU bonus
 
-## 3. Redesign `src/pages/ServerUpgrade.tsx`
-
-### New State
-- `selectedPackage`: `'custom' | 'heavy-duty-ram' | 'heavy-duty-cpu' | null` -- tracks which option the user picked
-
-### Pricing Logic (frontend display only)
-```
-PRICE_PER_UNIT = 1.50
-DISCOUNT_THRESHOLD = 6
-
-For quantity <= 6:  price = quantity * 1.50
-For quantity > 6:   price = (quantity * 1.50) * 0.90
-                    originalPrice = quantity * 1.50  (shown crossed out)
-```
-
-### UI Layout (replaces current "Add Extra Resources" card)
-
-**Section: "Choose Your Upgrade"**
-
-Two sub-sections side by side (stacked on mobile):
-
-**Option A -- Custom Slider Card:**
-- RAM slider: 1-12 GB (changed from 0-8)
-- CPU slider: 1-8 units (100%-800%)
-- Real-time price display:
-  - If <= 6 units: show price normally (e.g., "9.00 CHF")
-  - If > 6 units: show ~~original price~~ crossed out + discounted price + "10% Off!" badge
-- Total at bottom combining RAM + CPU
-
-**Option B -- Heavy-Duty Bundle Cards:**
-- **RAM Card** (highlighted with border-primary glow):
-  - Title: "10GB Heavy-Duty RAM"
-  - Price: "13.00 CHF / month"
-  - Description: "Best value for large Satisfactory factories or busy Minecraft networks."
-  - "Select Package" button
-- **CPU Card** (same styling):
-  - Title: "800% Heavy-Duty CPU"  
-  - Price: "10.00 CHF / month"
-  - Description: "Maximum processing power for modded servers and heavy workloads."
-  - "Select Package" button
-
-When a Heavy-Duty package is selected, the card gets a checkmark and the checkout button activates.
+**Heavy-Duty CPU card:**
+- Title stays: "800% Heavy-Duty CPU"
+- Add a subtitle/badge: "+ 2 GB RAM included"
+- Description updated to mention the RAM bonus
 
 ---
 
-## 4. Update `supabase/functions/create-checkout-session/index.ts`
-
-Accept a new optional field in the request body: `heavyDutyPackage: 'ram' | 'cpu' | null` and `applyBulkDiscount: boolean`.
-
-- If `heavyDutyPackage` is set, use the fixed heavy-duty price ID (quantity 1) instead of per-unit prices.
-- If `applyBulkDiscount` is true (slider quantity > 6 for either resource), attach the Stripe coupon to the checkout session via `discounts: [{ coupon: COUPON_ID }]`.
-- Otherwise, keep existing per-unit pricing logic.
-
----
-
-## 5. Update `supabase/functions/stripe-webhook/index.ts`
-
-Add the new heavy-duty price IDs to the `calculateBoosts` function:
-- `PRICE_HEAVY_RAM` maps to 10 * 1024 MB RAM boost
-- `PRICE_HEAVY_CPU` maps to 800% CPU boost
-
-This ensures the webhook correctly processes boosts regardless of whether the user bought via slider or bundle.
-
----
-
-## 6. Files Changed Summary
+## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/config/constants.ts` | Add heavy-duty price IDs and coupon ID |
-| `src/pages/ServerUpgrade.tsx` | New UI with discount logic, heavy-duty cards, updated checkout call |
-| `supabase/functions/create-checkout-session/index.ts` | Handle heavy-duty packages and bulk discount coupon |
-| `supabase/functions/stripe-webhook/index.ts` | Recognize new heavy-duty price IDs in boost calculation |
+| `supabase/functions/stripe-webhook/index.ts` | Heavy-duty RAM also sets cpuBoost=100; heavy-duty CPU also sets ramBoost=2048 |
+| `src/pages/ServerUpgrade.tsx` | Update card descriptions to show bonus resources |
 
-No database changes required.
+No Stripe product changes needed -- the boost values are determined server-side by the webhook, not by Stripe pricing.
 
