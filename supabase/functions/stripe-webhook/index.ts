@@ -10,6 +10,8 @@ const logStep = (step: string, details?: any) => {
 
 const PRICE_RAM = "price_1Sz653GTSSIIOUojGFw4LyEm";
 const PRICE_CPU = "price_1Sz65FGTSSIIOUoje6QD4l9Q";
+const PRICE_HEAVY_RAM = "price_1T46tGGTSSIIOUojXUjXTjjO";
+const PRICE_HEAVY_CPU = "price_1T46tcGTSSIIOUojfL0vl3xf";
 
 /** Calculate ram/cpu boosts from subscription line items */
 function calculateBoosts(items: Stripe.SubscriptionItem[]): { ramBoost: number; cpuBoost: number } {
@@ -20,6 +22,8 @@ function calculateBoosts(items: Stripe.SubscriptionItem[]): { ramBoost: number; 
     const quantity = item.quantity || 0;
     if (priceId === PRICE_RAM) ramBoost = quantity * 1024;
     else if (priceId === PRICE_CPU) cpuBoost = quantity * 100;
+    else if (priceId === PRICE_HEAVY_RAM) ramBoost = 10 * 1024;
+    else if (priceId === PRICE_HEAVY_CPU) cpuBoost = 800;
   }
   return { ramBoost, cpuBoost };
 }
