@@ -11,4 +11,8 @@ export const EXTERNAL_LINKS = {
 export const STRIPE_PRICES = {
   ram: 'price_1Sz653GTSSIIOUojGFw4LyEm',
   cpu: 'price_1Sz65FGTSSIIOUoje6QD4l9Q',
+  heavyDutyRam: 'price_1T46tGGTSSIIOUojXUjXTjjO',
+  heavyDutyCpu: 'price_1T46tcGTSSIIOUojfL0vl3xf',
 } as const;
+
+export const STRIPE_COUPON_BULK = 'Njo6FIEr';

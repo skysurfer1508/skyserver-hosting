@@ -7,6 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const PRICE_RAM = "price_1Sz653GTSSIIOUojGFw4LyEm";
+const PRICE_CPU = "price_1Sz65FGTSSIIOUoje6QD4l9Q";
+const PRICE_HEAVY_RAM = "price_1T46tGGTSSIIOUojXUjXTjjO";
+const PRICE_HEAVY_CPU = "price_1T46tcGTSSIIOUojfL0vl3xf";
+const COUPON_BULK = "Njo6FIEr";
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -39,12 +45,8 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { ramQuantity, cpuQuantity, serverId } = await req.json();
-    logStep("Request body", { ramQuantity, cpuQuantity, serverId });
-
-    if ((!ramQuantity || ramQuantity <= 0) && (!cpuQuantity || cpuQuantity <= 0)) {
-      throw new Error("At least one of RAM or CPU quantity must be greater than 0");
-    }
+    const { ramQuantity, cpuQuantity, serverId, heavyDutyPackage, applyBulkDiscount } = await req.json();
+    logStep("Request body", { ramQuantity, cpuQuantity, serverId, heavyDutyPackage, applyBulkDiscount });
 
     if (!serverId) throw new Error("serverId is required");
 
@@ -67,7 +69,6 @@ serve(async (req) => {
         const customer = await stripe.customers.create({ email: user.email });
         customerId = customer.id;
       }
-      // Save customer ID to profile
       await supabaseClient
         .from("profiles")
         .update({ stripe_customer_id: customerId })
@@ -75,41 +76,49 @@ serve(async (req) => {
       logStep("Stripe customer created/linked", { customerId });
     }
 
-    // Build line items
+    // Build line items based on package type
     const lineItems: any[] = [];
-    if (ramQuantity && ramQuantity > 0) {
-      lineItems.push({
-        price: "price_1Sz653GTSSIIOUojGFw4LyEm",
-        quantity: ramQuantity,
-      });
-    }
-    if (cpuQuantity && cpuQuantity > 0) {
-      lineItems.push({
-        price: "price_1Sz65FGTSSIIOUoje6QD4l9Q",
-        quantity: cpuQuantity,
-      });
+    let discounts: any[] = [];
+
+    if (heavyDutyPackage === 'ram') {
+      lineItems.push({ price: PRICE_HEAVY_RAM, quantity: 1 });
+    } else if (heavyDutyPackage === 'cpu') {
+      lineItems.push({ price: PRICE_HEAVY_CPU, quantity: 1 });
+    } else {
+      // Custom slider pricing
+      if ((!ramQuantity || ramQuantity <= 0) && (!cpuQuantity || cpuQuantity <= 0)) {
+        throw new Error("At least one of RAM or CPU quantity must be greater than 0");
+      }
+      if (ramQuantity && ramQuantity > 0) {
+        lineItems.push({ price: PRICE_RAM, quantity: ramQuantity });
+      }
+      if (cpuQuantity && cpuQuantity > 0) {
+        lineItems.push({ price: PRICE_CPU, quantity: cpuQuantity });
+      }
+      if (applyBulkDiscount) {
+        discounts = [{ coupon: COUPON_BULK }];
+      }
     }
 
     const origin = req.headers.get("origin") || "https://skyserver1508.org";
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       customer: customerId,
       line_items: lineItems,
       mode: "subscription",
       success_url: `${origin}/dashboard?upgrade=success`,
       cancel_url: `${origin}/dashboard?upgrade=cancelled`,
-      metadata: {
-        serverId,
-        userId: user.id,
-      },
+      metadata: { serverId, userId: user.id },
       subscription_data: {
-        metadata: {
-          serverId,
-          userId: user.id,
-        },
+        metadata: { serverId, userId: user.id },
       },
-    });
+    };
 
+    if (discounts.length > 0) {
+      sessionParams.discounts = discounts;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
     return new Response(JSON.stringify({ url: session.url }), {
