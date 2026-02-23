@@ -22,8 +22,8 @@ function calculateBoosts(items: Stripe.SubscriptionItem[]): { ramBoost: number; 
     const quantity = item.quantity || 0;
     if (priceId === PRICE_RAM) ramBoost = quantity * 1024;
     else if (priceId === PRICE_CPU) cpuBoost = quantity * 100;
-    else if (priceId === PRICE_HEAVY_RAM) ramBoost = 10 * 1024;
-    else if (priceId === PRICE_HEAVY_CPU) cpuBoost = 800;
+    else if (priceId === PRICE_HEAVY_RAM) { ramBoost += 10 * 1024; cpuBoost += 100; }
+    else if (priceId === PRICE_HEAVY_CPU) { cpuBoost += 800; ramBoost += 2 * 1024; }
   }
   return { ramBoost, cpuBoost };
 }
