@@ -333,8 +333,9 @@ export default function ServerUpgrade() {
                           <Package className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h3 className="font-semibold">10GB Heavy-Duty RAM</h3>
-                          <p className="text-sm text-muted-foreground mt-0.5">Best value for large Satisfactory factories or busy Minecraft networks.</p>
+                         <h3 className="font-semibold">10GB Heavy-Duty RAM</h3>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20 mt-1 w-fit">+ 100% CPU included</Badge>
+                          <p className="text-sm text-muted-foreground mt-0.5">Best value for large Satisfactory factories or busy Minecraft networks. Includes bonus CPU power.</p>
                           <p className="text-xl font-bold mt-2">13.00 CHF <span className="text-sm font-normal text-muted-foreground">/ month</span></p>
                         </div>
                       </div>
@@ -361,8 +362,9 @@ export default function ServerUpgrade() {
                           <Cpu className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h3 className="font-semibold">800% Heavy-Duty CPU</h3>
-                          <p className="text-sm text-muted-foreground mt-0.5">Maximum processing power for modded servers and heavy workloads.</p>
+                         <h3 className="font-semibold">800% Heavy-Duty CPU</h3>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20 mt-1 w-fit">+ 2 GB RAM included</Badge>
+                          <p className="text-sm text-muted-foreground mt-0.5">Maximum processing power for modded servers and heavy workloads. Includes bonus RAM.</p>
                           <p className="text-xl font-bold mt-2">10.00 CHF <span className="text-sm font-normal text-muted-foreground">/ month</span></p>
                         </div>
                       </div>
