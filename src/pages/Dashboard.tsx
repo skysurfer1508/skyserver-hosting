@@ -10,6 +10,7 @@ import { FeedbackWidget } from '@/components/dashboard/FeedbackWidget';
 import { ProfileCompletionModal } from '@/components/dashboard/ProfileCompletionModal';
 import { AdminOfflineBanner } from '@/components/dashboard/AdminOfflineBanner';
 import { NewsFeed } from '@/components/NewsFeed';
+import { WalletCard } from '@/components/dashboard/WalletCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { usePlatformStatus } from '@/hooks/usePlatformStatus';
@@ -105,6 +106,9 @@ export default function Dashboard() {
                   maintenanceMode={settings?.maintenance_mode}
                   onRefresh={refresh}
                 />
+
+                {/* Wallet */}
+                <WalletCard />
 
                 {/* News Feed */}
                 <NewsFeed limit={5} maxHeight="250px" />
