@@ -49,33 +49,17 @@ export function useWallet() {
     fetchWallet();
   }, [fetchWallet]);
 
-  const topUp = async (amount: number) => {
+  const topUp = async (amount: number): Promise<string> => {
     if (!user) throw new Error('Not authenticated');
 
-    // Simulate payment delay
-    await new Promise((r) => setTimeout(r, 2000));
+    const { data, error } = await supabase.functions.invoke('create-wallet-topup', {
+      body: { amount },
+    });
 
-    const newBalance = balance + amount;
+    if (error) throw new Error(error.message || 'Failed to create checkout session');
+    if (!data?.url) throw new Error('No checkout URL returned');
 
-    const { error: updateErr } = await supabase
-      .from('profiles')
-      .update({ wallet_balance: newBalance } as any)
-      .eq('id', user.id);
-
-    if (updateErr) throw updateErr;
-
-    const { error: txErr } = await supabase
-      .from('wallet_transactions' as any)
-      .insert({
-        user_id: user.id,
-        amount,
-        type: 'credit',
-        description: `Top-up: ${amount.toFixed(2)} CHF`,
-      } as any);
-
-    if (txErr) throw txErr;
-
-    await fetchWallet();
+    return data.url;
   };
 
   const deduct = async (amount: number, description: string) => {

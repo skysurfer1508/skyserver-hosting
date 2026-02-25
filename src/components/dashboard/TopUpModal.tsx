@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Wallet } from 'lucide-react';
+import { Loader2, Wallet, ExternalLink } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface TopUpModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onTopUp: (amount: number) => Promise<void>;
+  onTopUp: (amount: number) => Promise<string>;
 }
 
 const QUICK_AMOUNTS = [5, 10, 20];
@@ -34,14 +34,11 @@ export function TopUpModal({ open, onOpenChange, onTopUp }: TopUpModalProps) {
     if (amount <= 0) return;
     setIsProcessing(true);
     try {
-      await onTopUp(amount);
-      toast({ title: 'Payment successful!', description: `${amount.toFixed(2)} CHF added to your wallet.` });
-      onOpenChange(false);
-      setSelectedAmount(null);
-      setCustomAmount('');
+      const url = await onTopUp(amount);
+      // Redirect to Stripe Checkout
+      window.location.href = url;
     } catch (e: any) {
       toast({ title: 'Payment failed', description: e.message, variant: 'destructive' });
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -54,7 +51,7 @@ export function TopUpModal({ open, onOpenChange, onTopUp }: TopUpModalProps) {
             <Wallet className="h-5 w-5 text-primary" />
             Top-Up Balance
           </DialogTitle>
-          <DialogDescription>Add funds to your wallet</DialogDescription>
+          <DialogDescription>Add funds to your wallet via Stripe</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
@@ -97,10 +94,13 @@ export function TopUpModal({ open, onOpenChange, onTopUp }: TopUpModalProps) {
             {isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Processing payment...
+                Redirecting to payment...
               </>
             ) : (
-              `Proceed to Payment — ${amount.toFixed(2)} CHF`
+              <>
+                <ExternalLink className="h-4 w-4" />
+                {`Pay ${amount.toFixed(2)} CHF with Stripe`}
+              </>
             )}
           </Button>
         </div>

@@ -63,12 +63,73 @@ serve(async (req) => {
     // ===== checkout.session.completed =====
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const serverId = session.metadata?.serverId;
-      const subscriptionId = session.subscription as string;
 
-      if (!serverId) {
-        logStep("No serverId in metadata, skipping");
-      } else {
+      // --- Wallet top-up flow ---
+      if (session.metadata?.type === "wallet_topup") {
+        const userId = session.metadata.userId;
+        const amountTotal = (session.amount_total || 0) / 100; // centimes → CHF
+        const sessionId = session.id;
+        logStep("Wallet top-up detected", { userId, amountTotal, sessionId });
+
+        if (userId && amountTotal > 0) {
+          // Check idempotency — skip if already credited
+          const { data: existing } = await supabaseClient
+            .from("wallet_transactions")
+            .select("id")
+            .eq("stripe_session_id", sessionId)
+            .maybeSingle();
+
+          if (existing) {
+            logStep("Wallet top-up already processed, skipping", { sessionId });
+          } else {
+            // Increment wallet balance
+            const { data: profile } = await supabaseClient
+              .from("profiles")
+              .select("wallet_balance")
+              .eq("id", userId)
+              .single();
+
+            const currentBalance = Number(profile?.wallet_balance) || 0;
+            const newBalance = currentBalance + amountTotal;
+
+            const { error: balanceErr } = await supabaseClient
+              .from("profiles")
+              .update({ wallet_balance: newBalance })
+              .eq("id", userId);
+
+            if (balanceErr) {
+              logStep("Wallet balance update error", { error: balanceErr.message });
+            } else {
+              logStep("Wallet balance updated", { newBalance });
+            }
+
+            // Record transaction
+            const { error: txErr } = await supabaseClient
+              .from("wallet_transactions")
+              .insert({
+                user_id: userId,
+                amount: amountTotal,
+                type: "credit",
+                description: `Top-up: ${amountTotal.toFixed(2)} CHF (Stripe)`,
+                stripe_session_id: sessionId,
+              });
+
+            if (txErr) {
+              logStep("Wallet transaction insert error", { error: txErr.message });
+            } else {
+              logStep("Wallet transaction recorded");
+            }
+          }
+        }
+      }
+      // --- Server upgrade flow ---
+      else {
+        const serverId = session.metadata?.serverId;
+        const subscriptionId = session.subscription as string;
+
+        if (!serverId) {
+          logStep("No serverId in metadata, skipping");
+        } else {
         logStep("Processing checkout completion", { serverId, subscriptionId });
 
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -126,6 +187,7 @@ serve(async (req) => {
           }
         } catch (emailError) {
           logStep("Email sending failed (non-blocking)", { error: String(emailError) });
+        }
         }
       }
     }
