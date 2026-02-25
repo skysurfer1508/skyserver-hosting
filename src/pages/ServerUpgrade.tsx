@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useWallet } from '@/hooks/useWallet';
+import { TopUpModal } from '@/components/dashboard/TopUpModal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -10,7 +12,7 @@ import { useServerRequest } from '@/hooks/useServerRequest';
 import { useGameLimits } from '@/hooks/useGameLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Cpu, MemoryStick, AlertTriangle, Zap, ArrowLeft, Check, Headset, Shield, Clock, Package } from 'lucide-react';
+import { Loader2, Cpu, MemoryStick, AlertTriangle, Zap, ArrowLeft, Check, Headset, Shield, Clock, Package, Wallet, Plus } from 'lucide-react';
 import { STRIPE_PRICES, STRIPE_COUPON_BULK } from '@/config/constants';
 
 const PRICE_PER_UNIT = 1.50;
@@ -33,6 +35,9 @@ export default function ServerUpgrade() {
   const [cpuQuantity, setCpuQuantity] = useState(1);
   const [selectedPackage, setSelectedPackage] = useState<SelectedPackage>('custom');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { balance, deduct, topUp, refetch: refetchWallet } = useWallet();
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [isWalletPaying, setIsWalletPaying] = useState(false);
 
   const gameLimit = request ? gameLimits.find(g => g.game_name === request.game_type) : null;
   const BASE_RAM_GB = gameLimit ? gameLimit.base_ram_mb / 1024 : 2.5;
@@ -43,6 +48,11 @@ export default function ServerUpgrade() {
   const customTotal = ramPrice.discounted + cpuPrice.discounted;
   const customOriginalTotal = ramPrice.original + cpuPrice.original;
   const hasAnyDiscount = ramPrice.hasDiscount || cpuPrice.hasDiscount;
+
+  const totalCost =
+    selectedPackage === 'heavy-duty-ram' ? 13
+    : selectedPackage === 'heavy-duty-cpu' ? 10
+    : customTotal;
 
   const currentRamBoostGB = (request?.ram_boost || 0) / 1024;
   const currentCpuBoost = request?.cpu_boost || 0;
@@ -391,37 +401,91 @@ export default function ServerUpgrade() {
             </Alert>
 
             {/* Checkout */}
-            <div className="rounded-lg bg-muted/30 border border-border/50 p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Monthly Total</p>
-                <p className="text-2xl font-bold">
-                  {selectedPackage === 'heavy-duty-ram'
-                    ? '13.00'
-                    : selectedPackage === 'heavy-duty-cpu'
-                    ? '10.00'
-                    : customTotal.toFixed(2)}{' '}
-                  CHF
-                </p>
+            <div className="rounded-lg bg-muted/30 border border-border/50 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Monthly Total</p>
+                  <p className="text-2xl font-bold">{totalCost.toFixed(2)} CHF</p>
+                </div>
+                <Button
+                  size="lg"
+                  className="glow-primary gap-2"
+                  disabled={!selectedPackage || isCheckingOut}
+                  onClick={handleCheckout}
+                >
+                  {isCheckingOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Redirecting...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4" />
+                      Go to Checkout (Stripe)
+                    </>
+                  )}
+                </Button>
               </div>
-              <Button
-                size="lg"
-                className="glow-primary gap-2"
-                disabled={!selectedPackage || isCheckingOut}
-                onClick={handleCheckout}
-              >
-                {isCheckingOut ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Redirecting...
-                  </>
+
+              {/* Wallet Payment Option */}
+              <div className="border-t border-border/50 pt-4">
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  Pay with Wallet ({balance.toFixed(2)} CHF)
+                </p>
+                {balance >= totalCost && selectedPackage ? (
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 border-success/30 text-success hover:bg-success/10 hover:text-success"
+                    disabled={isWalletPaying}
+                    onClick={async () => {
+                      setIsWalletPaying(true);
+                      try {
+                        const desc = selectedPackage === 'heavy-duty-ram'
+                          ? 'Heavy-Duty RAM upgrade'
+                          : selectedPackage === 'heavy-duty-cpu'
+                          ? 'Heavy-Duty CPU upgrade'
+                          : `Custom upgrade (${ramQuantity}GB RAM + ${cpuQuantity * 100}% CPU)`;
+                        await deduct(totalCost, desc);
+                        toast({ title: 'Upgrade purchased!', description: `${totalCost.toFixed(2)} CHF deducted from your wallet.` });
+                        navigate('/dashboard');
+                      } catch (e: any) {
+                        toast({ title: 'Payment failed', description: e.message, variant: 'destructive' });
+                      } finally {
+                        setIsWalletPaying(false);
+                      }
+                    }}
+                  >
+                    {isWalletPaying ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Wallet className="h-4 w-4" />
+                        Pay with Wallet — {totalCost.toFixed(2)} CHF
+                      </>
+                    )}
+                  </Button>
                 ) : (
-                  <>
-                    <Zap className="h-4 w-4" />
-                    Go to Checkout
-                  </>
+                  <div className="space-y-2">
+                    <Alert className="border-warning/30 bg-warning/10 py-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                      <AlertDescription className="text-warning/80 text-xs">
+                        Insufficient balance. You need {(totalCost - balance).toFixed(2)} CHF more.
+                      </AlertDescription>
+                    </Alert>
+                    <Button variant="outline" size="sm" className="gap-1" onClick={() => setTopUpOpen(true)}>
+                      <Plus className="h-3.5 w-3.5" />
+                      Top-Up Balance
+                    </Button>
+                  </div>
                 )}
-              </Button>
+              </div>
             </div>
+
+            <TopUpModal open={topUpOpen} onOpenChange={setTopUpOpen} onTopUp={topUp} />
           </>
         )}
       </div>
