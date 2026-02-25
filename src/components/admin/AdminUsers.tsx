@@ -26,7 +26,7 @@ import {
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Search, Loader2, Shield, Ban, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Search, Loader2, Shield, Ban, Trash2, AlertTriangle, Wallet } from 'lucide-react';
 
 export function AdminUsers() {
   const { users, isLoading, toggleBan, toggleVerification, toggleAdmin, refetch } = useAdminUsers();
@@ -190,6 +190,7 @@ export function AdminUsers() {
                     <TableHead>Email</TableHead>
                     <TableHead>Discord</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
                     <TableHead className="text-center">Verified</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-center">Ban</TableHead>
@@ -226,6 +227,9 @@ export function AdminUsers() {
                         ) : (
                           <Badge variant="secondary">User</Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        {user.wallet_balance.toFixed(2)} CHF
                       </TableCell>
                       <TableCell className="text-center">
                         <Switch
