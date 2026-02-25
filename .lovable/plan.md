@@ -1,112 +1,81 @@
 
-# Prepaid Wallet System
+
+# Connect Wallet Top-Up to Real Stripe Payments
 
 ## Overview
-Add a wallet with mock balance and transaction history to the dashboard, plus a "Pay with Wallet" option on the Server Upgrade page. All state is stored in a new `wallet_balance` column in the `profiles` table and a new `wallet_transactions` table.
+Replace the mocked wallet top-up (fake 2s delay + direct DB write) with a secure Stripe Checkout flow. The wallet balance is only credited server-side after Stripe confirms payment via webhook.
 
----
+## User Flow
+1. User clicks "Top-Up Balance", selects an amount (e.g. 10.00 CHF)
+2. Frontend calls the `create-wallet-topup` edge function
+3. User is redirected to Stripe Checkout to pay
+4. After payment, Stripe redirects back to `/dashboard?topup=success&session_id=...`
+5. The existing `stripe-webhook` receives `checkout.session.completed`, detects it's a wallet top-up (via metadata), and credits the balance server-side
+6. Dashboard detects the URL params, shows a success toast, and refreshes the wallet
 
-## 1. Database Changes (2 migrations)
+## Changes
 
-### Migration A: Add `wallet_balance` to `profiles`
+### 1. Database Migration: Add `stripe_session_id` to `wallet_transactions`
+Adds a unique column to prevent duplicate credits from the same Stripe session.
 ```sql
-ALTER TABLE public.profiles ADD COLUMN wallet_balance numeric(10,2) NOT NULL DEFAULT 0.00;
+ALTER TABLE public.wallet_transactions ADD COLUMN stripe_session_id text UNIQUE;
 ```
 
-### Migration B: Create `wallet_transactions` table
-```sql
-CREATE TABLE public.wallet_transactions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  amount numeric(10,2) NOT NULL,
-  type text NOT NULL CHECK (type IN ('credit', 'debit')),
-  description text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+### 2. New Edge Function: `create-wallet-topup`
+Creates a Stripe Checkout session in `mode: "payment"` with a dynamic `price_data` amount.
 
-ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
+- Authenticates user via Authorization header
+- Looks up or creates Stripe customer (reuses `stripe_customer_id` from profiles)
+- Uses `price_data` with dynamic `unit_amount` (since top-up amounts vary)
+- Sets metadata `{ type: "wallet_topup", userId: user.id }` so the webhook can identify it
+- `success_url`: `/dashboard?topup=success&session_id={CHECKOUT_SESSION_ID}`
+- `cancel_url`: `/dashboard?topup=cancelled`
 
-CREATE POLICY "Users can view own transactions"
-  ON public.wallet_transactions FOR SELECT
-  USING (auth.uid() = user_id);
+### 3. Update Edge Function: `stripe-webhook`
+Add a new handler inside the existing `checkout.session.completed` block:
 
-CREATE POLICY "Users can insert own transactions"
-  ON public.wallet_transactions FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+- Check `session.metadata.type === "wallet_topup"`
+- If so, extract `userId` and `amount_total` from the session
+- Use service role to increment `profiles.wallet_balance`
+- Insert a `wallet_transactions` record with type `credit` and the `stripe_session_id` for idempotency
+- Skip the existing server-upgrade logic for wallet top-ups
 
-CREATE POLICY "Admins can view all transactions"
-  ON public.wallet_transactions FOR SELECT
-  USING (public.is_admin(auth.uid()));
+### 4. Update `supabase/config.toml`
+Add entry for the new function:
+```toml
+[functions.create-wallet-topup]
+verify_jwt = false
 ```
 
----
+### 5. Update `src/hooks/useWallet.tsx`
+- Replace the mocked `topUp` function: call `supabase.functions.invoke('create-wallet-topup', { body: { amount } })`, then redirect to the returned Stripe URL
+- Remove the fake `setTimeout` and direct DB writes from `topUp`
+- Add a `verifyTopUp()` function that simply calls `refetch` (the webhook already credited the balance)
 
-## 2. New Hook: `src/hooks/useWallet.tsx`
+### 6. Update `src/components/dashboard/TopUpModal.tsx`
+- Instead of showing "Processing payment..." spinner, redirect user to Stripe Checkout
+- The `onTopUp` prop now returns a URL; the modal redirects via `window.location.href`
 
-Provides wallet state and operations:
-- `balance`: current wallet balance (from `profiles.wallet_balance`)
-- `transactions`: recent transaction history (from `wallet_transactions`)
-- `isLoading`: loading state
-- `topUp(amount)`: simulates a payment (2s delay), then updates `profiles.wallet_balance` via Supabase update and inserts a 'credit' row into `wallet_transactions`
-- `deduct(amount, description)`: subtracts from balance, inserts a 'debit' row
-- `refetch()`: re-fetches balance and transactions
+### 7. Update `src/pages/Dashboard.tsx`
+- On mount, check URL for `?topup=success`
+- If present, show a success toast, refetch wallet, and clean up URL params
+- If `?topup=cancelled`, show an info toast and clean up
 
----
+### 8. Security: Remove client-side `wallet_balance` updates
+Currently the `useWallet` hook directly updates `profiles.wallet_balance` from the client. With the new flow:
+- `topUp` no longer writes to the DB -- only the webhook does (using service role)
+- `deduct` still writes from the client for now (wallet-based server purchases), which is acceptable since RLS allows users to update their own profile
+- Future improvement: move `deduct` server-side too
 
-## 3. New Component: `src/components/dashboard/WalletCard.tsx`
-
-A card displayed in the Dashboard sidebar (Server tab) showing:
-- Current balance formatted as "XX.XX CHF" with a wallet icon
-- "Top-Up Balance" button that opens a modal
-- Recent transactions list (scrollable, max 5 entries) with green/red color coding
-
----
-
-## 4. New Component: `src/components/dashboard/TopUpModal.tsx`
-
-A dialog triggered by the "Top-Up Balance" button:
-- Quick-select buttons: 5.00, 10.00, 20.00 CHF
-- Custom amount input field
-- "Proceed to Payment" button that:
-  1. Shows a loading spinner for 2 seconds (simulated payment)
-  2. Calls `topUp(amount)` from the wallet hook
-  3. Shows a success toast
-  4. Closes the modal
-
----
-
-## 5. Update Dashboard (`src/pages/Dashboard.tsx`)
-
-Add the WalletCard to the Server tab sidebar (between PlatformStatusCard and NewsFeed):
-```
-<WalletCard />
-```
-
----
-
-## 6. Update Server Upgrade Page (`src/pages/ServerUpgrade.tsx`)
-
-In the checkout section at the bottom of the page, add wallet payment logic:
-
-- Import and use the `useWallet` hook
-- Calculate the total cost based on selected package
-- Below the existing "Go to Checkout" button, add a wallet payment section:
-  - If `balance >= total`: Show a green "Pay with Wallet Balance (XX.XX CHF)" button
-  - If `balance < total`: Show "Insufficient Balance" warning + "Top-Up Balance" button (opens TopUpModal)
-- When "Pay with Wallet" is clicked:
-  1. Call `deduct(total, description)` 
-  2. Show success toast
-  3. Navigate back to dashboard
-
----
-
-## 7. Files Summary
+## Files Summary
 
 | File | Action |
 |------|--------|
-| Database migration | Add `wallet_balance` to profiles, create `wallet_transactions` table |
-| `src/hooks/useWallet.tsx` | New hook for wallet state and operations |
-| `src/components/dashboard/WalletCard.tsx` | New wallet card with balance + transactions |
-| `src/components/dashboard/TopUpModal.tsx` | New top-up modal with quick amounts + custom input |
-| `src/pages/Dashboard.tsx` | Add WalletCard to sidebar |
-| `src/pages/ServerUpgrade.tsx` | Add wallet payment option in checkout section |
+| Database migration | Add `stripe_session_id` column to `wallet_transactions` |
+| `supabase/functions/create-wallet-topup/index.ts` | New -- creates Stripe Checkout session for wallet top-up |
+| `supabase/functions/stripe-webhook/index.ts` | Update -- handle `wallet_topup` metadata in checkout.session.completed |
+| `supabase/config.toml` | Add config for `create-wallet-topup` |
+| `src/hooks/useWallet.tsx` | Replace mock topUp with Stripe redirect |
+| `src/components/dashboard/TopUpModal.tsx` | Redirect to Stripe instead of fake processing |
+| `src/pages/Dashboard.tsx` | Handle `?topup=success` redirect and show toast |
+
