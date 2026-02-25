@@ -1,0 +1,1 @@
+ALTER TABLE public.wallet_transactions ADD COLUMN stripe_session_id text UNIQUE;

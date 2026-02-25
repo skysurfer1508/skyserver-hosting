@@ -355,6 +355,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          stripe_session_id: string | null
           type: string
           user_id: string
         }
@@ -363,6 +364,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          stripe_session_id?: string | null
           type: string
           user_id: string
         }
@@ -371,6 +373,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          stripe_session_id?: string | null
           type?: string
           user_id?: string
         }

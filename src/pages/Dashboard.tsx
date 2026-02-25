@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
+import { useWallet } from '@/hooks/useWallet';
+import { toast } from '@/hooks/use-toast';
 import { MaintenanceBanner } from '@/components/dashboard/MaintenanceBanner';
 import { ServerStatusCard } from '@/components/dashboard/ServerStatusCard';
 import { PlatformStatusCard } from '@/components/dashboard/PlatformStatusCard';
@@ -29,7 +32,25 @@ export default function Dashboard() {
   const { status, panelOnline, nodeOnline, lastChecked, refresh } = usePlatformStatus();
   const { isProfileIncomplete, isChecking, markComplete } = useProfileCompletion();
   const { isAdminOnline } = useAdminStatus();
+  const { refetch: refetchWallet } = useWallet();
   const [activeTab, setActiveTab] = useState('server');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle Stripe top-up redirect
+  useEffect(() => {
+    const topup = searchParams.get('topup');
+    if (topup === 'success') {
+      toast({ title: '💰 Top-up successful!', description: 'Your wallet balance has been updated.' });
+      refetchWallet();
+      searchParams.delete('topup');
+      searchParams.delete('session_id');
+      setSearchParams(searchParams, { replace: true });
+    } else if (topup === 'cancelled') {
+      toast({ title: 'Top-up cancelled', description: 'No charges were made.' });
+      searchParams.delete('topup');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
 
   // Show loading state while checking profile
   if (isChecking) {
