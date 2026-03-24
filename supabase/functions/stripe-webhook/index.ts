@@ -138,7 +138,7 @@ serve(async (req) => {
 
         const { error } = await supabaseClient
           .from("server_requests")
-          .update({ ram_boost: ramBoost, cpu_boost: cpuBoost, stripe_subscription_id: subscriptionId })
+          .update({ ram_boost: ramBoost, cpu_boost: cpuBoost, stripe_subscription_id: subscriptionId, boost_status: 'pending' })
           .eq("id", serverId);
 
         if (error) {
@@ -212,7 +212,7 @@ serve(async (req) => {
 
           const { error } = await supabaseClient
             .from("server_requests")
-            .update({ ram_boost: ramBoost, cpu_boost: cpuBoost, stripe_subscription_id: subscriptionId })
+            .update({ ram_boost: ramBoost, cpu_boost: cpuBoost, stripe_subscription_id: subscriptionId, boost_status: 'pending' })
             .eq("id", serverId);
 
           if (error) {
@@ -246,9 +246,9 @@ serve(async (req) => {
 
       // Reset boosts
       if (serverId) {
-        await supabaseClient.from("server_requests").update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null }).eq("id", serverId);
+        await supabaseClient.from("server_requests").update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null, boost_status: 'none' }).eq("id", serverId);
       } else {
-        await supabaseClient.from("server_requests").update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null }).eq("stripe_subscription_id", subscriptionId);
+        await supabaseClient.from("server_requests").update({ ram_boost: 0, cpu_boost: 0, stripe_subscription_id: null, boost_status: 'none' }).eq("stripe_subscription_id", subscriptionId);
       }
 
       logStep("Boosts reset for cancelled subscription");

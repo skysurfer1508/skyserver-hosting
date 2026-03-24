@@ -175,6 +175,7 @@ export type Database = {
       server_requests: {
         Row: {
           assigned_ip: string | null
+          boost_status: string
           cpu_boost: number
           created_at: string
           credentials_encrypted: boolean | null
@@ -200,6 +201,7 @@ export type Database = {
         }
         Insert: {
           assigned_ip?: string | null
+          boost_status?: string
           cpu_boost?: number
           created_at?: string
           credentials_encrypted?: boolean | null
@@ -225,6 +227,7 @@ export type Database = {
         }
         Update: {
           assigned_ip?: string | null
+          boost_status?: string
           cpu_boost?: number
           created_at?: string
           credentials_encrypted?: boolean | null

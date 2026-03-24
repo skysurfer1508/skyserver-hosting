@@ -129,6 +129,10 @@ export function BillingPurchases() {
                     <Badge variant="outline" className="border-warning text-warning bg-warning/10">
                       Canceling on {new Date(state.cancelAt!).toLocaleDateString()}
                     </Badge>
+                  ) : (sub as any).boost_status === 'pending' ? (
+                    <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+                      Pending Approval
+                    </Badge>
                   ) : (
                     <Badge className="bg-success/20 text-success border-success/30">Active</Badge>
                   )}

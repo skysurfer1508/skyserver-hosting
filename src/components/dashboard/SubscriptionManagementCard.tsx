@@ -50,7 +50,13 @@ export function SubscriptionManagementCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
-          <Badge className="bg-success/20 text-success border-success/30">Active</Badge>
+          {(request as any).boost_status === 'pending' ? (
+            <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+              Pending Approval
+            </Badge>
+          ) : (
+            <Badge className="bg-success/20 text-success border-success/30">Active</Badge>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
