@@ -2,13 +2,14 @@ import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminOverview } from '@/components/admin/AdminOverview';
 import { AdminRequests } from '@/components/admin/AdminRequests';
+import { AdminServers } from '@/components/admin/AdminServers';
 import { AdminUsers } from '@/components/admin/AdminUsers';
 import { AdminSettings } from '@/components/admin/AdminSettings';
 import { AdminAnnouncements } from '@/components/admin/AdminAnnouncements';
 import { AdminFeedback } from '@/components/admin/AdminFeedback';
 import { AdminUpgrades } from '@/components/admin/AdminUpgrades';
 import { AdminStatusToggle } from '@/components/admin/AdminStatusToggle';
-import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox, Zap } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox, Zap, Server } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function Admin() {
