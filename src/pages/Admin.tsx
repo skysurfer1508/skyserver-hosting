@@ -2,13 +2,14 @@ import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminOverview } from '@/components/admin/AdminOverview';
 import { AdminRequests } from '@/components/admin/AdminRequests';
+import { AdminServers } from '@/components/admin/AdminServers';
 import { AdminUsers } from '@/components/admin/AdminUsers';
 import { AdminSettings } from '@/components/admin/AdminSettings';
 import { AdminAnnouncements } from '@/components/admin/AdminAnnouncements';
 import { AdminFeedback } from '@/components/admin/AdminFeedback';
 import { AdminUpgrades } from '@/components/admin/AdminUpgrades';
 import { AdminStatusToggle } from '@/components/admin/AdminStatusToggle';
-import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox, Zap } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Users, Settings, Megaphone, Inbox, Zap, Server } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function Admin() {
@@ -32,7 +33,7 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="flex w-full overflow-x-auto scrollbar-hide lg:w-[700px]">
+          <TabsList className="flex w-full overflow-x-auto scrollbar-hide lg:w-[800px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -40,6 +41,10 @@ export default function Admin() {
             <TabsTrigger value="requests" className="gap-2">
               <ListTodo className="h-4 w-4" />
               <span className="hidden sm:inline">Requests</span>
+            </TabsTrigger>
+            <TabsTrigger value="servers" className="gap-2">
+              <Server className="h-4 w-4" />
+              <span className="hidden sm:inline">Servers</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
@@ -69,6 +74,10 @@ export default function Admin() {
 
           <TabsContent value="requests">
             <AdminRequests />
+          </TabsContent>
+
+          <TabsContent value="servers">
+            <AdminServers />
           </TabsContent>
 
           <TabsContent value="users">

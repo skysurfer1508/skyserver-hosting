@@ -1,55 +1,41 @@
-
-
-# Admin Upgrade Approval and Deletion
+# Split Admin Requests into "Requests" and "Servers" Tabs with Search
 
 ## Overview
-Add an approval workflow for server upgrades. When a user purchases an upgrade via Stripe, it arrives as "Pending" until an admin approves it. Admins can also delete upgrades (resetting boosts to zero) so users can purchase a new one.
+The current "Requests" tab in the admin panel mixes pending requests with active/suspended/expired servers. Split it into two clearly separated tabs and add a search field to each so admins can quickly find a specific request or server.
 
 ## Changes
 
-### 1. Database Migration
-Add a `boost_status` column to `server_requests`:
-```sql
-ALTER TABLE public.server_requests 
-  ADD COLUMN boost_status text NOT NULL DEFAULT 'none'
-  CHECK (boost_status IN ('none', 'pending', 'approved'));
-```
-- `none` = no boost purchased
-- `pending` = purchased but awaiting admin approval
-- `approved` = admin has applied the upgrade
+### 1. New tab structure in `src/pages/Admin.tsx`
+Add a new `Servers` tab next to the existing `Requests` tab:
+- **Requests** (`ListTodo` icon) — pending and rejected requests only
+- **Servers** (new, `Server` icon) — approved/active, suspended, and auto-expired servers
 
-### 2. Update Stripe Webhook
-In `supabase/functions/stripe-webhook/index.ts`, when a checkout or invoice payment sets `ram_boost`/`cpu_boost`, also set `boost_status = 'pending'`.
+### 2. Split `AdminRequests.tsx` into two components
+Refactor the existing logic into two focused components that share the same `useAdminRequests` hook:
 
-When a subscription is deleted, reset `boost_status` back to `'none'`.
+- **`AdminRequests.tsx`** — shows requests with status `pending` or `rejected` (excluding auto-expired ones that originated from active servers). Status filter limited to: All / Pending / Rejected. Actions: Approve, Reject, Delete.
+- **`AdminServers.tsx`** (new) — shows requests with status `active`, `suspended`, or auto-expired (`rejected` with reason "Server lease expired automatically."). Status filter: All / Active / Suspended / Expired. Actions: Reactivate (for suspended/expired), Delete, view details.
 
-### 3. Update AdminUpgrades Component
-Replace the static "Action Required" badge with dynamic status based on `boost_status`. Add two action buttons per row:
-- **Approve** button (for pending upgrades) -- updates `boost_status` to `'approved'` via a direct Supabase update
-- **Delete** button -- resets `ram_boost`, `cpu_boost`, `stripe_subscription_id`, and `boost_status` to defaults, freeing the user to buy again
+Shared helpers (`getExpiryInfo`, `getStatusBadge`, `gameLabels`) are moved into a small `src/components/admin/requestsShared.tsx` (or kept duplicated minimally) to avoid cross-imports.
 
-Add confirmation dialogs for both actions.
+### 3. Search field on both tabs
+Add an `Input` with a search icon above the table in both `AdminRequests` and `AdminServers`. The search is case-insensitive and matches against:
+- User email
+- Discord username
+- Server name
+- Game type
+- Assigned IP (Servers tab only)
 
-### 4. Update User-Facing BillingPurchases Component
-Show the `boost_status` to users:
-- `pending` = "Pending Approval" badge (amber)
-- `approved` = "Active" badge (green)
+The search input sits alongside the existing status filter `Select` in the card header.
 
-This replaces the current always-"Active" badge.
-
-### 5. Update SubscriptionManagementCard
-Same status logic -- show "Pending Approval" or "Active" based on `boost_status`.
-
-### 6. Update useAdminRequests Hook
-The `ServerRequest` interface already includes all needed fields. The admin update calls will use direct Supabase queries within the AdminUpgrades component.
+### 4. No backend or schema changes
+All filtering happens client-side over the data already returned by `useAdminRequests`. No migrations, no edge function changes.
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| Database migration | Add `boost_status` column |
-| `supabase/functions/stripe-webhook/index.ts` | Set `boost_status = 'pending'` on purchase, `'none'` on deletion |
-| `src/components/admin/AdminUpgrades.tsx` | Add Approve/Delete buttons with confirmation dialogs |
-| `src/components/dashboard/BillingPurchases.tsx` | Show pending/approved status |
-| `src/components/dashboard/SubscriptionManagementCard.tsx` | Show pending/approved status |
-
+| `src/pages/Admin.tsx` | Add new `Servers` tab + trigger |
+| `src/components/admin/AdminRequests.tsx` | Trim to pending/rejected only; add search input |
+| `src/components/admin/AdminServers.tsx` | New — active/suspended/expired servers with search |
+| `src/components/admin/requestsShared.tsx` | New — shared `getExpiryInfo`, `getStatusBadge`, `gameLabels` helpers |
