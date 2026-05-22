@@ -33,7 +33,7 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="flex w-full overflow-x-auto scrollbar-hide lg:w-[700px]">
+          <TabsList className="flex w-full overflow-x-auto scrollbar-hide lg:w-[800px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -41,6 +41,10 @@ export default function Admin() {
             <TabsTrigger value="requests" className="gap-2">
               <ListTodo className="h-4 w-4" />
               <span className="hidden sm:inline">Requests</span>
+            </TabsTrigger>
+            <TabsTrigger value="servers" className="gap-2">
+              <Server className="h-4 w-4" />
+              <span className="hidden sm:inline">Servers</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
