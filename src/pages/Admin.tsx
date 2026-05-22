@@ -76,6 +76,10 @@ export default function Admin() {
             <AdminRequests />
           </TabsContent>
 
+          <TabsContent value="servers">
+            <AdminServers />
+          </TabsContent>
+
           <TabsContent value="users">
             <AdminUsers />
           </TabsContent>
